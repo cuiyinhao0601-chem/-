@@ -1,0 +1,3296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05080f">
+<title>分子运动与光谱 · HCl / CO₂</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#04070c;--line:rgba(118,166,221,.15);--line-hot:rgba(111,207,255,.55);
+  --text:#e9f3ff;--muted:#7f94ae;--accent:#71d7ff;--ok:#77e6b2;
+  --com:#ffd166;--disp:#5fd3ff;--mu:#c0a3ff;--alpha:#7df0b0;--hot:#ff9a62;
+  --mono:"SFMono-Regular","Cascadia Code",Consolas,"Liberation Mono",monospace;
+  --serif:"STIX Two Math","Cambria Math","Times New Roman",Georgia,serif;
+  --r:16px;--shadow:0 22px 58px rgba(0,0,0,.42);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text)}
+body{font-family:"SF Pro Display","Segoe UI","Noto Sans SC","PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,sans-serif;font-size:13.5px;line-height:1.5;overflow:hidden;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:-15%;z-index:0;pointer-events:none;background:radial-gradient(circle at 12% 8%,rgba(59,131,202,.16),transparent 33%),radial-gradient(circle at 88% 12%,rgba(144,104,255,.09),transparent 30%),radial-gradient(circle at 52% 92%,rgba(31,190,219,.06),transparent 38%),linear-gradient(135deg,#05080f,#04070c 55%,#060b13)}
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;background-image:linear-gradient(rgba(124,170,220,.026) 1px,transparent 1px),linear-gradient(90deg,rgba(124,170,220,.026) 1px,transparent 1px);background-size:46px 46px;-webkit-mask-image:radial-gradient(ellipse at 50% 42%,#000,transparent 72%);mask-image:radial-gradient(ellipse at 50% 42%,#000,transparent 72%)}
+button{font:inherit;color:inherit}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+canvas:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+::selection{background:rgba(98,207,255,.3);color:#fff}
+b,strong{font-weight:600}
+sub,sup{font-size:.7em;line-height:0}
+
+.app{position:relative;z-index:1;height:100vh;height:100dvh;min-height:600px;display:flex;flex-direction:column;padding:14px 18px 16px;gap:11px}
+
+/* ---------- top bar ---------- */
+.topbar{flex:none;min-height:54px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.mark{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;flex:none;border:1px solid rgba(121,197,255,.22);background:radial-gradient(circle at 50% 50%,rgba(255,181,112,.10),transparent 62%),linear-gradient(145deg,rgba(21,39,60,.9),rgba(7,13,23,.86));box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 30px rgba(0,0,0,.3)}
+.mark svg{width:34px;height:34px;overflow:visible}
+.eyebrow{font-size:9.5px;line-height:1.2;letter-spacing:.19em;text-transform:uppercase;color:#6d88a5;font-weight:650;white-space:nowrap}
+.eyebrow em{font-style:normal;color:var(--accent)}
+.brand h1{margin:2px 0 0;font-size:20px;line-height:1.2;font-weight:630;letter-spacing:.015em;color:#f1f8ff;white-space:nowrap}
+.brand h1 span{color:#8ea9c7;font-weight:400;font-size:13px;letter-spacing:.04em;margin-left:6px}
+.top-note{display:flex;align-items:center;gap:7px;margin-left:auto;color:#7d96b1;font-size:11px;white-space:nowrap}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--ok);animation:pulse 2.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(119,230,178,.35)}60%{box-shadow:0 0 0 7px rgba(119,230,178,0)}100%{box-shadow:0 0 0 0 rgba(119,230,178,0)}}
+.badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;background:rgba(16,29,45,.62);color:#8fa7c0;padding:4px 10px;font-size:10px;white-space:nowrap}
+.badge i{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.badge.warm{color:#ffc79c;border-color:rgba(255,154,98,.28);background:rgba(80,42,22,.22)}
+.badge.warm i{background:var(--hot);box-shadow:0 0 8px var(--hot)}
+.top-actions{display:flex;align-items:center;gap:8px}
+
+/* ---------- layout ---------- */
+.layout{flex:1;min-height:0;display:grid;gap:11px;grid-template-columns:320px minmax(0,1fr) 356px;align-items:stretch}
+.panel{min-height:0;border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(158deg,rgba(12,22,36,.90),rgba(6,12,20,.90));box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.035);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.controls,.inspector{padding:14px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(110,150,190,.3) transparent}
+.controls::-webkit-scrollbar,.inspector::-webkit-scrollbar{width:6px}
+.controls::-webkit-scrollbar-thumb,.inspector::-webkit-scrollbar-thumb{background:rgba(110,150,190,.24);border-radius:3px}
+.panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:4px}
+.kicker{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#64809c;font-weight:700}
+.panel-head h2{margin:2px 0 0;font-size:16.5px;line-height:1.25;font-weight:620;color:#eef7ff}
+.desc{margin:3px 0 11px;color:#7289a3;font-size:10.5px;line-height:1.6}
+.section{padding-top:12px;margin-top:12px;border-top:1px solid rgba(120,166,220,.11)}
+.section:first-of-type{padding-top:0;margin-top:0;border-top:0}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:7px}
+.section-head span:first-child{font-size:10.5px;font-weight:650;letter-spacing:.09em;color:#8fa7c1;text-transform:uppercase}
+.hint{font-family:var(--mono);font-size:8.5px;letter-spacing:.04em;color:#536a82;white-space:nowrap}
+.note{margin:8px 0 0;padding:7px 8px;border-left:1px solid rgba(112,202,251,.3);background:rgba(66,148,201,.05);border-radius:0 5px 5px 0;font-size:9.5px;line-height:1.62;color:#69829c}
+.note b{color:#a8c8dd;font-weight:500}
+
+/* ---------- molecule tabs ---------- */
+.mol-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mol-tabs button{display:flex;flex-direction:column;gap:2px;align-items:flex-start;border:1px solid rgba(119,164,216,.14);border-radius:10px;background:rgba(8,16,27,.66);padding:8px 10px;cursor:pointer;transition:.16s;text-align:left;min-width:0}
+.mol-tabs button:hover{border-color:rgba(112,198,248,.35);background:rgba(17,32,51,.7)}
+.mol-tabs button b{font-family:var(--serif);font-size:18px;line-height:1.15;color:#c6d9ed;letter-spacing:.02em}
+.mol-tabs button span{font-size:9px;color:#607891;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.mol-tabs button.active{border-color:rgba(105,213,255,.55);background:linear-gradient(150deg,rgba(27,72,105,.55),rgba(11,27,44,.75));box-shadow:inset 0 1px 0 rgba(180,239,255,.1)}
+.mol-tabs button.active b{color:#f0fbff}
+.mol-tabs button.active span{color:#9bdbff}
+
+/* ---------- motion switches ---------- */
+.mol-tabs .wide{grid-column:1/-1;flex-direction:row;align-items:center;gap:9px;padding:6px 10px}
+.mol-tabs .wide b{font-size:15px}
+.cust-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cust-grid label{display:flex;align-items:center;gap:5px;border:1px solid rgba(112,162,210,.14);border-radius:7px;background:rgba(8,16,27,.5);padding:3px 6px}
+.cust-grid label span{font-family:var(--serif);font-size:11px;color:#8fa9c0;font-style:italic}
+.cust-grid select{flex:1;min-width:0;border:0;background:transparent;color:#cfe6f6;font-family:var(--mono);font-size:10px;outline:none;padding:2px 0}
+.cust-grid select option{background:#0b1622;color:#cfe6f6}
+.cust-row2{display:flex;align-items:center;gap:7px;margin-top:6px;font-size:9.5px;color:#7f99b2}
+.cust-row2 .seg{margin-left:auto}
+.motion{border:1px solid rgba(112,162,210,.12);border-radius:9px;background:rgba(9,18,29,.42);padding:7px 8px 6px;margin-top:6px;transition:.16s}
+.motion:first-of-type{margin-top:0}
+.motion.on{border-color:rgba(105,199,244,.26);background:rgba(17,39,58,.5)}
+.m-head{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none}
+.m-head b{font-size:12.5px;color:#c6d9ed;font-weight:600}
+.m-head .m-tag{margin-left:auto;font-family:var(--mono);font-size:8px;color:#5d7891;border:1px solid rgba(112,162,210,.14);border-radius:4px;padding:1px 5px;white-space:nowrap}
+.motion.on .m-tag{color:#8fd4f5;border-color:rgba(105,199,244,.3)}
+.m-tag.hot{color:#ffc79c!important;border-color:rgba(255,154,98,.3)!important}
+.switch{position:relative;display:inline-flex;width:30px;height:17px;flex:none}
+.switch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;z-index:2}
+.switch i{position:absolute;inset:0;border-radius:999px;background:rgba(96,120,145,.32);border:1px solid rgba(120,160,200,.22);transition:.18s}
+.switch i::after{content:"";position:absolute;left:2px;top:2px;width:11px;height:11px;border-radius:50%;background:#93a9bf;transition:.18s}
+.switch input:checked + i{background:rgba(38,148,190,.5);border-color:rgba(105,213,255,.55)}
+.switch input:checked + i::after{transform:translateX(13px);background:#eafcff;box-shadow:0 0 8px rgba(113,215,255,.7)}
+.m-slider{display:flex;align-items:center;gap:7px;margin-top:4px;font-family:var(--mono);font-size:8.5px;color:#6b8299}
+.m-slider input{flex:1;min-width:40px}
+.m-slider b{font-weight:500;color:#a9c8de;min-width:38px;text-align:right;font-size:9px}
+.m-note{margin:3px 0 0;font-size:9px;line-height:1.5;color:#5a738b}
+.m-note b{color:#8fb0c8;font-weight:500}
+
+/* ---------- mode list ---------- */
+.mode-list{display:flex;flex-direction:column;gap:4px}
+.mode-btn{display:flex;align-items:center;gap:8px;border:1px solid rgba(112,162,210,.12);border-radius:8px;background:rgba(8,16,27,.5);padding:6px 8px;text-align:left;cursor:pointer;transition:.15s;color:#a9bfd3}
+.mode-btn:hover{border-color:rgba(104,201,248,.34);background:rgba(21,41,61,.6)}
+.mode-btn .mb-sym{font-family:var(--serif);font-size:15px;line-height:1;color:#cfe3f2;min-width:22px}
+.mode-btn .mb-body{flex:1;min-width:0}
+.mode-btn .mb-body b{display:block;font-size:11px;color:#bcd2e4;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mode-btn .mb-body span{display:block;font-family:var(--mono);font-size:8px;color:#5d7891;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mode-btn .mb-tags{display:flex;gap:3px;flex:none}
+.mode-btn .mb-tags i{font-style:normal;font-family:var(--mono);font-size:7px;line-height:1.5;padding:0 4px;border-radius:3px;border:1px solid rgba(112,162,210,.14);color:#5f7890}
+.mode-btn .mb-tags i.ir.on{color:#ffb98f;border-color:rgba(255,154,98,.4);background:rgba(120,60,26,.22)}
+.mode-btn .mb-tags i.ra.on{color:#8ff0c0;border-color:rgba(119,230,178,.4);background:rgba(28,90,64,.22)}
+.mode-btn.active{border-color:rgba(105,213,255,.5);background:linear-gradient(150deg,rgba(24,68,98,.6),rgba(10,25,41,.8));box-shadow:inset 0 1px 0 rgba(180,239,255,.08);color:#e8f8ff}
+.mode-btn.active .mb-body b{color:#f0fbff}
+.bend-row{display:flex;align-items:center;gap:7px;margin-top:7px;padding:6px 8px;border:1px dashed rgba(119,164,216,.2);border-radius:8px;background:rgba(10,22,35,.4);font-size:9.5px;color:#7f99b2}
+.bend-row em{margin-left:auto;font-style:normal;font-family:var(--mono);font-size:8px;color:#6f92ad;white-space:nowrap}
+.bend-row .seg{margin-left:auto}
+.bend-row em + .seg{margin-left:0}
+
+/* ---------- buttons ---------- */
+.btn-row{display:flex;align-items:center;gap:6px}
+.btn{flex:1;border:1px solid rgba(112,162,210,.18);border-radius:8px;background:rgba(12,24,38,.7);color:#a9c2d8;padding:7px 9px;cursor:pointer;font-size:11px;transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:rgba(111,196,244,.4);color:#e6f8ff;background:rgba(20,42,62,.8)}
+.btn.primary{border-color:rgba(105,213,255,.45);background:linear-gradient(150deg,rgba(26,86,120,.75),rgba(12,36,55,.85));color:#dff8ff}
+.btn.primary:hover{background:linear-gradient(150deg,rgba(32,104,142,.85),rgba(15,45,68,.9));color:#fff}
+.btn svg{width:11px;height:11px;flex:none}
+.btn.small{flex:none;padding:5px 8px;font-size:9.5px}
+.hint-btn{width:100%;border:1px dashed rgba(105,199,244,.3);border-radius:7px;background:rgba(20,54,76,.24);color:#9fd5ee;padding:5px 8px;font-size:9.5px;cursor:pointer;transition:.15s}
+.hint-btn:hover{background:rgba(28,78,108,.36);border-color:rgba(105,213,255,.55);color:#dcf7ff}
+.hint-btn.on{border-style:solid;border-color:rgba(255,154,98,.55);background:rgba(90,44,22,.32);color:#ffd7b6}
+.seg{display:inline-flex;gap:2px;padding:2px;border:1px solid rgba(118,166,221,.13);border-radius:8px;background:rgba(5,11,18,.5);flex:none}
+.seg button{border:0;border-radius:6px;background:transparent;color:#6f879f;padding:4px 8px;font-size:9.5px;cursor:pointer;white-space:nowrap;transition:.14s}
+.seg button:hover{color:#c9e9ff;background:rgba(81,161,213,.08)}
+.seg button.active{background:rgba(41,101,143,.32);color:#d9f4ff;box-shadow:inset 0 0 0 1px rgba(107,196,244,.14)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.chips button{border:1px solid rgba(112,162,210,.14);border-radius:999px;background:rgba(8,16,27,.5);color:#617b93;padding:3px 8px;font-size:9px;cursor:pointer;transition:.14s}
+.chips button::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:#4d647a;margin-right:5px;vertical-align:1px}
+.chips button.on{color:#b7d9ec;border-color:rgba(105,199,244,.3);background:rgba(22,54,76,.4)}
+.chips button.on::before{background:var(--accent);box-shadow:0 0 6px rgba(113,215,255,.6)}
+
+/* ---------- stage ---------- */
+.stage{position:relative;min-width:0;min-height:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:radial-gradient(circle at 50% 39%,rgba(43,104,150,.17),transparent 39%),radial-gradient(circle at 50% 50%,rgba(16,42,68,.26),transparent 70%),linear-gradient(160deg,rgba(8,16,27,.94),rgba(4,9,16,.97));box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.035)}
+.stage::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.7;background-image:linear-gradient(rgba(109,174,226,.032) 1px,transparent 1px),linear-gradient(90deg,rgba(109,174,226,.032) 1px,transparent 1px);background-size:54px 54px;-webkit-mask-image:radial-gradient(ellipse at 50% 50%,#000 10%,transparent 79%);mask-image:radial-gradient(ellipse at 50% 50%,#000 10%,transparent 79%)}
+.stage-head{position:relative;z-index:5;flex:none;min-height:46px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 12px;border-bottom:1px solid rgba(118,166,221,.1);background:linear-gradient(180deg,rgba(12,22,36,.72),rgba(8,15,25,.18))}
+.status{display:flex;align-items:center;gap:6px;color:#607991;font-size:9px;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status .dot{width:5px;height:5px;border-radius:50%;background:var(--ok);box-shadow:0 0 7px rgba(119,230,178,.5);flex:none}
+.status.paused .dot{background:#8fa3b7;box-shadow:none}
+.status.hold .dot{background:var(--hot);box-shadow:0 0 7px rgba(255,154,98,.6)}
+.stage-viewport{position:relative;flex:1;min-height:0;overflow:hidden}
+#scene{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#scene.dragging{cursor:grabbing}
+.hud{position:absolute;left:13px;top:11px;z-index:4;pointer-events:none;padding:6px 9px;border:1px solid rgba(118,178,225,.12);border-radius:8px;background:linear-gradient(145deg,rgba(8,17,28,.66),rgba(7,13,22,.3));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-width:56%}
+.hud .hk{font-family:var(--mono);font-size:7.5px;letter-spacing:.16em;color:#516a82;text-transform:uppercase}
+.hud .hs{display:flex;align-items:baseline;gap:7px;margin-top:1px;white-space:nowrap}
+.hud .hs b{font-family:var(--serif);font-size:15px;font-weight:500;color:#dff6ff}
+.hud .hs span{font-size:9.5px;color:#7993ad;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legend{position:absolute;right:12px;top:11px;z-index:4;pointer-events:none;display:flex;flex-direction:column;gap:2px;padding:6px 8px;border:1px solid rgba(118,178,225,.1);border-radius:8px;background:rgba(6,12,20,.44);font-size:8.5px;color:#8da8c1}
+.legend span{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.legend i{width:6px;height:6px;border-radius:50%;display:inline-block;flex:none}
+.legend i.c{background:var(--com);box-shadow:0 0 7px rgba(255,209,102,.55)}
+.legend i.d{background:var(--disp);box-shadow:0 0 7px rgba(95,211,255,.55)}
+.legend i.m{background:var(--mu);box-shadow:0 0 7px rgba(192,163,255,.55)}
+.legend i.a{background:var(--alpha);box-shadow:0 0 7px rgba(125,240,176,.55)}
+.tip{position:absolute;left:50%;bottom:9px;transform:translateX(-50%);z-index:3;color:#4f677e;font-size:8.5px;white-space:nowrap;pointer-events:none}
+.tip b{color:#89a7c0;font-weight:500}
+.quickbar{display:none}
+
+/* ---------- inspector ---------- */
+.tabs{display:flex;gap:3px;padding:3px;border:1px solid rgba(118,166,221,.12);border-radius:9px;background:rgba(5,11,18,.48);margin:7px 0 8px}
+.tabs button{flex:1;border:0;border-radius:6px;background:transparent;color:#6f879f;padding:5px 4px;font-size:10px;cursor:pointer;white-space:nowrap;transition:.14s}
+.tabs button:hover{color:#c9e9ff;background:rgba(81,161,213,.08)}
+.tabs button.active{background:rgba(41,101,143,.3);color:#d9f4ff;box-shadow:inset 0 0 0 1px rgba(107,196,244,.14)}
+.notice{margin:-2px 0 8px;padding:5px 8px;border:1px solid rgba(255,154,98,.28);border-left:2px solid rgba(255,154,98,.6);border-radius:4px;background:rgba(90,44,22,.24);font-size:9px;line-height:1.5;color:#ffc79c}
+.act-row.head b{text-align:center;font-weight:500}
+.spec-card{position:relative;border:1px solid rgba(112,174,222,.13);border-radius:10px;background:rgba(6,13,22,.5);padding:6px 6px 2px}
+#specCanvas{display:block;width:100%;height:186px;touch-action:pan-y}
+.caption{margin:2px 2px 4px;font-size:8.5px;line-height:1.45;color:#526b82}
+.caption b{color:#8fa9be;font-weight:500}
+#compareWrap{margin-top:7px}
+.detail{margin-top:8px;border:1px solid rgba(112,174,222,.14);border-radius:9px;background:linear-gradient(150deg,rgba(15,32,48,.62),rgba(8,16,26,.55));padding:8px 9px}
+.detail .d-title{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.detail .d-title b{font-family:var(--serif);font-size:15px;color:#eaf8ff;font-weight:500;letter-spacing:.01em}
+.detail .d-title span{font-family:var(--mono);font-size:9px;color:#8fdcff}
+.detail .d-sub{margin-top:2px;font-size:9px;color:#6d87a0;line-height:1.5}
+.drows{margin-top:6px;display:grid;grid-template-columns:auto 1fr;gap:2px 8px;font-size:9.5px;line-height:1.5}
+.drows dt{color:#5e7892;font-family:var(--mono);font-size:8.5px;white-space:nowrap}
+.drows dd{margin:0;color:#b6d3e6;font-family:var(--mono);font-size:9px}
+.drows dd .hi{color:#ffcf9a}
+.detail .d-note{margin-top:6px;padding-top:6px;border-top:1px solid rgba(118,174,221,.1);font-size:9px;line-height:1.6;color:#6c859d}
+.detail .d-note b{color:#a9c8dd;font-weight:500}
+.detail .d-actions{display:flex;gap:4px;margin-top:6px}
+.detail .d-actions button{flex:1;border:1px solid rgba(105,199,244,.24);border-radius:6px;background:rgba(20,54,76,.28);color:#a8d6ea;font-size:9px;padding:3px 4px;cursor:pointer}
+.detail .d-actions button:hover{background:rgba(28,78,108,.4);color:#e2f9ff}
+.detail .d-actions button.on{border-color:rgba(255,154,98,.5);background:rgba(90,44,22,.3);color:#ffd7b6}
+.energy-card{margin-top:9px;border:1px solid rgba(112,174,222,.13);border-radius:10px;background:rgba(8,17,28,.42);padding:8px 9px 4px}
+.card-head{display:flex;justify-content:space-between;gap:8px;font-size:9px;color:#7b93ab;align-items:baseline}
+.card-head span:last-child{font-family:var(--mono);font-size:8px;color:#5f7890;white-space:nowrap}
+#levelCanvas{display:block;width:100%;height:204px;margin-top:2px}
+#modeMap{display:block;width:100%;height:112px;margin-top:2px;cursor:pointer}
+.act-table{margin-top:4px}
+.act-row{display:grid;grid-template-columns:1fr 52px 42px 42px;gap:4px;align-items:center;padding:4px 5px;border-radius:5px;border-bottom:1px solid rgba(118,174,221,.06);font-size:9px;color:#8ba4ba;cursor:pointer;transition:.12s}
+.act-row.head{color:#4f6b82;font-size:8px;cursor:default;border-bottom-color:rgba(118,174,221,.14)}
+.act-row:hover:not(.head){background:rgba(30,70,100,.22)}
+.act-row.active{background:rgba(38,103,143,.22);color:#dcf4ff;box-shadow:inset 2px 0 0 var(--accent)}
+.act-row .an{font-family:var(--serif);font-size:10.5px;color:#bcd6e8;white-space:nowrap}
+.act-row .an sub{font-size:7px}
+.act-row b{font-family:var(--mono);font-weight:500;font-size:9px;text-align:right}
+.act-row .yn{font-size:8.5px;text-align:center;color:#556c83}
+.act-row .yn.y{color:var(--alpha)}
+.act-row .yn.ir{color:#ffb186}
+.act-row .yn.n{color:#4e657c}
+.tagline{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.tagline span{font-family:var(--mono);font-size:7.5px;color:#66829a;border:1px solid rgba(112,162,210,.13);border-radius:4px;padding:1px 5px;background:rgba(12,26,40,.4)}
+.photon-sub{font-size:8.5px;color:#6d87a0;margin:2px 0 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pregion{font-family:var(--mono);font-size:8px;color:#7b93ab;border:1px solid rgba(112,162,210,.16);border-radius:999px;padding:1px 7px;background:rgba(20,40,60,.4);white-space:nowrap}
+.pregion.ir{color:#ffb186;border-color:rgba(255,154,98,.35);background:rgba(90,44,22,.22)}
+.pregion.far{color:#9fd5ee;border-color:rgba(105,199,244,.3);background:rgba(20,54,76,.3)}
+.pregion.vis{color:#8ff0c0;border-color:rgba(125,240,176,.4);background:rgba(28,90,64,.24)}
+.pregion.nir{color:#ffd18a;border-color:rgba(255,209,102,.3);background:rgba(80,62,20,.22)}
+#photonCanvas{display:block;width:100%;height:56px;margin-top:2px}
+.photon-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:3px}
+.photon-grid div{min-width:0;border:1px solid rgba(112,162,210,.1);border-radius:5px;background:rgba(9,18,29,.3);padding:4px 6px}
+.photon-grid span{display:block;font-size:7.8px;color:#5e7892;white-space:nowrap}
+.photon-grid b{display:block;margin-top:1px;font-family:var(--mono);font-size:9px;font-weight:500;color:#c9e2f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ref-card{margin-top:9px;border:1px solid rgba(112,174,222,.13);border-radius:10px;background:rgba(8,17,28,.42);padding:2px 10px 4px}
+details.ref{border-top:1px solid rgba(118,174,221,.08);padding:3px 0}
+details.ref:first-child{border-top:0}
+details.ref summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px;padding:5px 0;font-size:10px;color:#a8c4d8;font-weight:600;letter-spacing:.04em}
+details.ref summary::-webkit-details-marker{display:none}
+details.ref summary::before{content:"▸";font-size:8px;color:#5f7f98;display:inline-block;transition:transform .15s}
+details.ref[open] summary::before{transform:rotate(90deg)}
+details.ref summary em{margin-left:auto;font-style:normal;font-family:var(--mono);font-size:8px;color:#5f7890}
+details.ref summary .when-open{display:none}
+details.ref[open] summary .when-closed{display:none}
+details.ref[open] summary .when-open{display:inline}
+details.ref[open] summary em{color:#8fd4f5}
+.ref-body{padding:0 0 6px}
+.formula-row{padding:4px 0;border-bottom:1px dashed rgba(118,174,221,.07)}
+.formula-row:last-child{border-bottom:0}
+.formula-row .fx{display:block;font-family:var(--serif);font-size:11.5px;color:#d9ecf9;line-height:1.55;letter-spacing:.01em}
+.formula-row .fx sub,.formula-row .fx sup{font-size:.66em}
+.formula-row .fn{display:block;margin-top:1px;font-size:8.5px;color:#6b859d;line-height:1.55}
+.ref-list{display:grid;grid-template-columns:auto 1fr;gap:3px 9px;margin:0;padding:2px 0 2px;font-size:9px;line-height:1.55}
+.ref-list dt{font-family:var(--serif);font-style:italic;color:#cfe6f6;font-size:10.5px;white-space:nowrap}
+.ref-list dd{margin:0;color:#7f99b2}
+.ref-list dd b{color:#a9c8dd;font-weight:500}
+.ref-hint{margin:2px 0 6px;font-size:8.5px;line-height:1.6;color:#5f7890}
+#openFormula{width:100%;margin:7px 0 2px;font-size:10.5px}
+.modal{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(2,7,12,.74);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.modal-card{width:min(780px,100%);max-height:88vh;max-height:88dvh;display:flex;flex-direction:column;border:1px solid rgba(118,174,221,.25);border-radius:14px;background:linear-gradient(180deg,rgba(13,26,40,.99),rgba(6,13,22,.99));box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.modal-head{flex:none;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:13px 16px 10px;border-bottom:1px solid rgba(118,174,221,.14)}
+.modal-head h2{margin:2px 0 0;font-size:17px;font-weight:600;color:#eef8ff;letter-spacing:.01em}
+.modal-head p{margin:3px 0 0;font-size:9.5px;color:#6d87a0}
+.modal-close{width:28px;height:28px;flex:none;border:1px solid rgba(118,174,221,.18);border-radius:50%;background:rgba(16,30,46,.8);color:#9db7cd;font-size:16px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.modal-close:hover{border-color:rgba(105,213,255,.55);color:#fff}
+.modal-body{overflow:auto;padding:4px 18px 20px;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(110,150,190,.3) transparent}
+.modal-body::-webkit-scrollbar{width:6px}
+.modal-body::-webkit-scrollbar-thumb{background:rgba(110,150,190,.24);border-radius:3px}
+.m-sec{padding:11px 0 5px;border-top:1px solid rgba(118,174,221,.09)}
+.m-sec:first-child{border-top:0}
+.m-sec h3{margin:0 0 4px;font-size:12.5px;color:#d7ecfa;font-weight:600;display:flex;gap:8px;align-items:baseline;letter-spacing:.01em}
+.m-sec h3 span{font-family:var(--mono);font-size:8.5px;color:#5f7f98;font-weight:400}
+.m-sec p{margin:4px 0;font-size:10.5px;line-height:1.85;color:#9fb8cc}
+.m-sec p b{color:#cfe6f5;font-weight:500}
+.m-sec i{font-family:var(--serif);font-style:italic;color:#dceefb}
+.math{margin:6px 0;padding:8px 12px;border:1px solid rgba(112,174,222,.14);border-radius:8px;background:rgba(10,22,34,.6);font-family:var(--serif);font-size:14px;line-height:1.95;color:#e8f6ff;text-align:center;overflow-x:auto}
+.math sub,.math sup{font-size:.66em}
+.math i{color:#fff}
+.conv{width:100%;border-collapse:collapse;margin:6px 0;font-size:9.5px}
+.conv th,.conv td{border-bottom:1px solid rgba(118,174,221,.08);padding:3px 6px;text-align:left;color:#9fb8cc;vertical-align:top}
+.conv th{color:#5f7f98;font-weight:500;font-size:9px}
+.conv td:first-child{white-space:nowrap;color:#cfe6f5;font-family:var(--mono)}
+@media(max-width:640px){.modal{padding:6px}.modal-card{max-height:93dvh}.modal-head{padding:11px 12px 8px}.modal-head h2{font-size:15px}.modal-head p{display:none}.modal-body{padding:2px 12px 16px}.m-sec p{font-size:10px}.math{font-size:12.5px;padding:7px 8px}}
+body.modal-open{overflow:hidden}
+.frac{display:inline-block;vertical-align:middle;text-align:center;margin:0 .16em;font-size:.94em;line-height:1.08;white-space:nowrap}
+.frac>span{display:block;padding:0 .2em}
+.frac .num{padding-bottom:.03em}
+.frac .den{border-top:1px solid currentColor;padding-top:.05em}
+.math .frac{font-size:1em}
+.formula-row .fx .frac{font-size:.92em}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;margin-top:10px;border-top:1px solid rgba(118,174,221,.11);border-left:1px solid rgba(118,174,221,.11)}
+.stat{padding:6px 7px 5px;border-right:1px solid rgba(118,174,221,.11);border-bottom:1px solid rgba(118,174,221,.11);background:rgba(9,18,29,.26);min-width:0}
+.stat span{display:block;font-size:8px;color:#5e7892;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat b{display:block;margin-top:1px;font-family:var(--mono);font-size:9.5px;font-weight:500;color:#c9e2f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat b i{font-style:normal;color:#6f8ba3;font-size:8px}
+
+@media(max-width:1280px){.layout{grid-template-columns:300px minmax(0,1fr) 332px}.brand h1{font-size:18.5px}.top-note{display:none}}
+@media(max-width:1100px){.layout{grid-template-columns:288px minmax(0,1fr) 316px}.legend{display:none}}
+@media(max-width:980px){
+  body{overflow:auto}
+  .app{height:auto;min-height:100dvh;padding:10px 11px 16px}
+  .layout{display:flex;flex-direction:column;flex:none;gap:9px}
+  .stage{order:1;height:62vh;height:62dvh;min-height:400px;flex:none}
+  .inspector{order:2;overflow:visible}
+  .controls{order:3;overflow:visible}
+  .quickbar{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid rgba(118,166,221,.1);background:rgba(7,14,23,.6);position:relative;z-index:5}
+  .quickbar .mol-tabs{flex:1;grid-template-columns:repeat(3,1fr);max-width:330px}
+  .quickbar .mol-tabs button{padding:3px 7px;flex-direction:row;align-items:center;gap:5px;border-radius:7px}
+  .quickbar .mol-tabs button b{font-size:12.5px}
+  .quickbar .mol-tabs button span{display:none}
+  .quickbar .qbtn{width:30px;height:26px;flex:none;border:1px solid rgba(112,162,210,.2);border-radius:7px;background:rgba(12,24,38,.7);color:#a9c2d8;cursor:pointer;display:grid;place-items:center;padding:0}
+  .quickbar .qbtn svg{width:11px;height:11px}
+  .quickbar .qsp{flex:1}
+  .stage-head{min-height:40px}
+  .tabs{max-width:520px}
+  #specCanvas{height:200px}
+  .stats{grid-template-columns:1fr 1fr 1fr}
+}
+@media(max-width:640px){
+  .app{padding:8px 8px 14px;gap:8px}
+  .topbar{min-height:44px;gap:10px}
+  .mark{width:36px;height:36px;border-radius:11px}
+  .mark svg{width:28px;height:28px}
+  .brand h1{font-size:16px;white-space:normal}
+  .brand h1 span{display:none}
+  .eyebrow{font-size:8px;letter-spacing:.12em}
+  .top-actions{display:none}
+  .stage{height:58vh;height:58dvh;min-height:350px}
+  .hud{left:9px;top:8px;padding:5px 7px}
+  .hud .hs b{font-size:13px}
+  .legend{display:none}
+  .tip{font-size:8px;bottom:6px}
+  .panel{padding:11px}
+  .quickbar{padding:5px 8px}
+  .quickbar .mol-tabs{max-width:none}
+  .stat b{font-size:9px}
+  .drows{grid-template-columns:auto 1fr}
+}
+@media(prefers-reduced-motion:reduce){.pulse{animation:none}}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none">
+          <line x1="17" y1="27" x2="31" y2="21" stroke="#7fa6c6" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="14" cy="28.5" r="5" fill="url(#hAt)"/>
+          <circle cx="34" cy="19.5" r="7" fill="url(#clAt)"/>
+          <path d="M6 40h4l2-5 3 10 3-8 2 3h4" stroke="#71d7ff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity=".75"/>
+          <path d="M34 39v-6M39 39v-9M44 39v-4" stroke="#ff9a62" stroke-width="1.6" stroke-linecap="round" opacity=".85"/>
+          <defs>
+            <radialGradient id="hAt" cx=".35" cy=".3" r=".8"><stop stop-color="#ffffff"/><stop offset=".55" stop-color="#cfe0f2"/><stop offset="1" stop-color="#7e95ad"/></radialGradient>
+            <radialGradient id="clAt" cx=".35" cy=".3" r=".8"><stop stop-color="#d9ffe6"/><stop offset=".5" stop-color="#6ee7a8"/><stop offset="1" stop-color="#2c8a5c"/></radialGradient>
+          </defs>
+        </svg>
+      </div>
+      <div>
+        <div class="eyebrow">MOLECULAR MOTION <em>·</em> IR &amp; RAMAN</div>
+        <h1>分子运动与光谱 <span>HCl · CO₂ · A–B</span></h1>
+      </div>
+    </div>
+    <div class="top-note"><span class="pulse"></span>平动 · 转动 · 振动 · 红外 / 拉曼选择规律</div>
+    <div class="top-actions"><span class="badge"><i></i>离线单文件 · 无外部依赖</span></div>
+  </header>
+
+  <main class="layout">
+    <aside class="panel controls">
+      <div class="panel-head"><div><div class="kicker">01 / 运动控制</div><h2>分子运动</h2></div><span class="badge" id="molBadge">HCl</span></div>
+      <p class="desc">平动、转动、振动三个开关互相独立。运动相位、相机与光谱选择分开保存：拖动画布只改相机，改播放速度只改时间进度。</p>
+
+      <div class="section">
+        <div class="section-head"><span>分子</span><span class="hint">MOLECULE</span></div>
+        <div class="mol-tabs" id="molTabs">
+          <button type="button" data-mol="HCl" class="active"><b>HCl</b><span>氯化氢 · 异核双原子</span></button>
+          <button type="button" data-mol="CO2"><b>CO<sub>2</sub></b><span>二氧化碳 · 线形三原子</span></button>
+          <button type="button" data-mol="CUSTOM" class="wide"><b>A–B</b><span>自定义二元分子 / 离子</span></button>
+        </div>
+      </div>
+
+      <div class="section" id="customBox" hidden>
+        <div class="section-head"><span>自定义二元分子</span><span class="hint" id="custRef">估算</span></div>
+        <div class="cust-grid">
+          <label><span>A</span><select id="custA" aria-label="元素 A"></select></label>
+          <label><span>B</span><select id="custB" aria-label="元素 B"></select></label>
+        </div>
+        <div class="cust-row2">
+          <span>电荷</span>
+          <div class="seg" id="custCharge"><button type="button" data-chg="0" class="active">中性</button><button type="button" data-chg="1">+1</button><button type="button" data-chg="-1">−1</button></div>
+        </div>
+        <p class="note" id="custNote"></p>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><span>三种运动</span><span class="hint">独立开关</span></div>
+
+        <div class="motion" id="motionTrans">
+          <label class="m-head"><span class="switch"><input type="checkbox" id="transOn"><i></i></span><b>平动</b><span class="m-tag">往返平移</span></label>
+          <div class="m-slider"><span>速度</span><input type="range" id="transSpeed" min="0.15" max="1.5" step="0.05" value="0.65" aria-label="平动速度"><b id="transSpeedVal">0.65</b><button class="mini-btn" type="button" id="transDir" title="手动反向">⇄</button></div>
+          <p class="m-note">到两端边界自动反向；⇄ 可随时手动反向。</p>
+        </div>
+
+        <div class="motion" id="motionRot">
+          <label class="m-head"><span class="switch"><input type="checkbox" id="rotOn"><i></i></span><b>转动</b><span class="m-tag">绕质心</span></label>
+          <div class="m-slider"><span>速度</span><input type="range" id="rotSpeed" min="0.15" max="1.5" step="0.05" value="0.8" aria-label="转动速度"><b id="rotSpeedVal">0.80</b></div>
+        </div>
+
+        <div class="motion on" id="motionVib">
+          <label class="m-head"><span class="switch"><input type="checkbox" id="vibOn" checked><i></i></span><b>振动</b><span class="m-tag hot" id="vibTag">慢放示意</span></label>
+          <div class="m-slider"><span>振幅</span><input type="range" id="ampRange" min="0.15" max="1" step="0.01" value="0.55" aria-label="振动振幅"><b id="ampVal">0.55</b></div>
+          <p class="m-note" id="vibNote">实际 ν ≈ 2886 cm⁻¹，周期约 1.2×10⁻¹⁴ s。</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><span>振动模式</span><span class="hint" id="modeHint">HCl</span></div>
+        <div class="mode-list" id="vibModes"></div>
+        <div class="bend-row" id="bendRow" hidden>
+          <span>弯曲平面</span>
+          <div class="seg" id="bendPlanes"><button type="button" data-plane="xy" class="active">A</button><button type="button" data-plane="xz">B</button></div>
+          <em>同频 · 二重简并</em>
+        </div>
+        <p class="note" id="modeNote"></p>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><span>播放</span><span class="hint">TIMELINE</span></div>
+        <div class="btn-row">
+          <button class="btn primary" type="button" data-act="play" aria-pressed="true"><svg viewBox="0 0 12 12" aria-hidden="true"><path data-glyph d="M2.5 1.5h2.2v9H2.5zM7.3 1.5h2.2v9H7.3z"/></svg><span data-play-label>暂停</span></button>
+          <button class="btn" type="button" data-act="reset"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2.2a3.8 3.8 0 1 1-3.7 3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M1.6 2.3v2.6h2.6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>重置</span></button>
+        </div>
+        <div class="m-slider"><span>整体速度</span><input type="range" id="speedRange" min="0.25" max="2" step="0.05" value="1" aria-label="播放速度"><b id="speedVal">1.00×</b></div>
+        <p class="m-note">只改变动画时间进度；光谱横坐标固定不变。</p>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><span>视角与标记</span><span class="hint">VIEW</span></div>
+        <div class="btn-row"><button class="btn small" type="button" id="resetCamBtn">重置视角</button><span class="hint" style="margin-left:auto">拖拽旋转 · 滚轮缩放</span></div>
+        <div class="chips" id="displayChips">
+          <button type="button" data-chip="com" class="on">质心</button>
+          <button type="button" data-chip="disp" class="on">位移箭头</button>
+          <button type="button" data-chip="dipole" class="on">偶极矩</button>
+          <button type="button" data-chip="trail" class="on">质心轨迹</button>
+          <button type="button" data-chip="symbols" class="on">元素符号</button>
+          <button type="button" data-chip="axes">参考轴</button>
+        </div>
+      </div>
+    </aside>
+
+    <section class="stage">
+      <div class="stage-head">
+        <div class="seg" id="viewTabs" role="group" aria-label="观察参考系">
+          <button type="button" data-view="fixed" class="active">固定视角</button>
+          <button type="button" data-view="follow">跟随质心</button>
+        </div>
+        <div class="status" id="status"><span class="dot"></span><span id="statusText">振动 · 慢放</span></div>
+      </div>
+      <div class="quickbar">
+        <div class="mol-tabs" id="molTabs2">
+          <button type="button" data-mol="HCl" class="active"><b>HCl</b><span>氯化氢</span></button>
+          <button type="button" data-mol="CO2"><b>CO<sub>2</sub></b><span>二氧化碳</span></button>
+          <button type="button" data-mol="CUSTOM"><b>A–B</b><span>自定义</span></button>
+        </div>
+        <span class="qsp"></span>
+        <button class="qbtn" type="button" data-act="play" aria-label="播放或暂停"><svg viewBox="0 0 12 12" aria-hidden="true"><path data-glyph d="M2.5 1.5h2.2v9H2.5zM7.3 1.5h2.2v9H7.3z"/></svg></button>
+        <button class="qbtn" type="button" data-act="reset" aria-label="重置"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2.2a3.8 3.8 0 1 1-3.7 3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M1.6 2.3v2.6h2.6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <div class="stage-viewport" id="viewport">
+        <canvas id="scene" tabindex="0" aria-label="3D 分子模型：可拖拽旋转、滚轮或双指缩放"></canvas>
+        <div class="hud"><div class="hk">CURRENT MODEL</div><div class="hs"><b id="hudTitle">HCl</b><span id="hudSub">伸缩振动 · 慢放</span></div></div>
+        <div class="legend" id="legend">
+          <span><i class="c"></i>质心 COM</span>
+          <span><i class="d"></i>原子位移</span>
+          <span><i class="m"></i>偶极矩 μ</span>
+          <span id="legendAlpha" hidden><i class="a"></i>极化率 α</span>
+        </div>
+        <div class="tip"><b>拖拽</b> 旋转观察 · <b>滚轮 / 双指</b> 缩放 · <b>双击</b> 重置视角</div>
+      </div>
+    </section>
+
+    <aside class="panel inspector">
+      <div class="panel-head"><div><div class="kicker">02 / 光谱</div><h2 id="specTitle">HCl 红外振转吸收</h2></div><span class="badge" id="specBadge">R(0)</span></div>
+      <div class="tabs" id="specTabs" role="tablist"></div>
+      <div class="notice" id="notice" hidden></div>
+      <div class="spec-card">
+        <canvas id="specCanvas" role="img" aria-label="吸收光谱"></canvas>
+        <p class="caption" id="specCaption"></p>
+      </div>
+      <div id="compareWrap"></div>
+      <div class="detail" id="detail"></div>
+      <div class="energy-card" id="energyCard">
+        <div class="card-head"><span id="energyHead">能级与跃迁</span><span id="energySub">E = BJ(J+1)</span></div>
+        <canvas id="levelCanvas" role="img" aria-label="能级图"></canvas>
+      </div>
+      <div class="energy-card" id="co2Card" hidden>
+        <div class="card-head"><span>三种正常模式</span><span>点击切换</span></div>
+        <canvas id="modeMap" role="img" aria-label="三种正常模式的位移示意"></canvas>
+        <div class="act-table" id="actTable"></div>
+        <div class="tagline" id="co2Tags"></div>
+        <p class="note" id="co2Note"></p>
+      </div>
+      <div class="energy-card" id="photonCard">
+        <div class="card-head"><span>光子能量 · 波长</span><span id="photonRegion" class="pregion">—</span></div>
+        <div class="photon-sub" id="photonSub">—</div>
+        <canvas id="photonCanvas" aria-label="电磁波谱位置示意"></canvas>
+        <div class="photon-grid">
+          <div><span>波数</span><b id="phNu">—</b></div>
+          <div><span>波长</span><b id="phLambda">—</b></div>
+          <div><span>光子能量</span><b id="phE">—</b></div>
+        </div>
+        <p class="note" id="phNote"></p>
+      </div>
+      <div class="stats" id="stats"></div>
+      <div class="ref-card">
+        <button class="btn primary" type="button" id="openFormula">公式详解 · 从最基础讲起</button>
+        <p class="ref-hint">弹窗里从 c = λν、E = hν 开始，逐条推到页面上的每个数；下面是速查。</p>
+        <details class="ref">
+          <summary><span>公式</span><em><span class="when-closed">展开</span><span class="when-open">收起</span></em></summary>
+          <div class="ref-body">
+            <div class="formula-row"><span class="fx">E<sub>J</sub> = B·J(J+1)</span><span class="fn">刚性转子转动项，单位 cm⁻¹；B 为转动常数</span></div>
+            <div class="formula-row"><span class="fx">ν̃<sub>J→J+1</sub> = 2B(J+1)</span><span class="fn">纯转动吸收，选择定则 ΔJ = +1；相邻线间隔恒为 2B</span></div>
+            <div class="formula-row"><span class="fx">ν̃<sub>P</sub> = ν̃<sub>0</sub> − 2B·J″</span><span class="fn">P 支：(v″=0, J″) → (v′=1, J″−1)，自 J″ = 1 起</span></div>
+            <div class="formula-row"><span class="fx">ν̃<sub>R</sub> = ν̃<sub>0</sub> + 2B(J″+1)</span><span class="fn">R 支：(v″=0, J″) → (v′=1, J″+1)，自 J″ = 0 起</span></div>
+            <div class="formula-row"><span class="fx">ν̃ = ν̃<sub>0</sub> + B·J′(J′+1) − B·J″(J″+1)</span><span class="fn">振转跃迁的一般式；两态 B 相同时与上两式一致</span></div>
+            <div class="formula-row"><span class="fx">r(t) = r<sub>0</sub> + A·sin φ(t)</span><span class="fn">HCl 伸缩；A 为振幅，画面中已放大</span></div>
+            <div class="formula-row"><span class="fx">r<sub>H</sub> = <span class="frac"><span class="num">r·m<sub>Cl</sub></span><span class="den">m<sub>H</sub>+m<sub>Cl</sub></span></span>　r<sub>Cl</sub> = <span class="frac"><span class="num">r·m<sub>H</sub></span><span class="den">m<sub>H</sub>+m<sub>Cl</sub></span></span></span><span class="fn">质心置原点时两原子到质心的距离，比例即位移比</span></div>
+            <div class="formula-row"><span class="fx">λ = <span class="frac"><span class="num">1</span><span class="den">ν̃</span></span></span><span class="fn">λ 用 cm、ν̃ 用 cm⁻¹；换算成纳米：λ(nm) = <span class="frac"><span class="num">10⁷</span><span class="den">ν̃</span></span></span></div>
+            <div class="formula-row"><span class="fx">E = hcν̃</span><span class="fn">E(J) = 1.9864×10⁻²³·ν̃；E(eV) = 1.2398×10⁻⁴·ν̃</span></div>
+            <div class="formula-row"><span class="fx">μ = Σ q<sub>i</sub>·r<sub>i</sub></span><span class="fn">点电荷模型的偶极矩；箭头由 δ⁻ 一端指向 δ⁺ 一端</span></div>
+          </div>
+        </details>
+        <details class="ref">
+          <summary><span>物理量说明</span><em><span class="when-closed">展开</span><span class="when-open">收起</span></em></summary>
+          <div class="ref-body">
+            <dl class="ref-list">
+              <dt>ν̃</dt><dd>波数，单位 cm⁻¹；与光子能量成正比，本页横轴都用它</dd>
+              <dt>λ</dt><dd>波长，nm 或 µm；λ = <span class="frac"><span class="num">1</span><span class="den">ν̃</span></span>，可见光约 380–780 nm</dd>
+              <dt>J</dt><dd>转动量子数（0, 1, 2…）；J″ 为吸收前，J′ 为吸收后</dd>
+              <dt>v</dt><dd>振动量子数（0, 1…）；本页振转带取 v″=0 → v′=1</dd>
+              <dt>B</dt><dd>转动常数，HCl 约 <b>10.4 cm⁻¹</b>，则 2B ≈ 20.8 cm⁻¹</dd>
+              <dt>ν̃<sub>0</sub></dt><dd>带中心（基频），HCl 约 <b>2886 cm⁻¹</b>；振转带以它为中心</dd>
+              <dt>r<sub>0</sub></dt><dd>平衡键长：HCl <b>1.274 Å</b>，CO₂ C=O <b>1.16 Å</b></dd>
+              <dt>A</dt><dd>振动振幅（Å）；滑杆控制，画面为教学放大</dd>
+              <dt>m</dt><dd>原子质量（u）；教学取值 H : Cl = 1 : 35.5</dd>
+              <dt>μ</dt><dd>偶极矩（e·Å）；用形式电荷点电荷模型估算，只看方向和相对大小</dd>
+              <dt>α</dt><dd>极化率（相对值）；CO₂ 对称伸缩时沿键轴增大，用椭圆示意</dd>
+              <dt>COM</dt><dd>质心；HCl 的质心几乎落在 Cl 上，CO₂ 的质心在 C 上</dd>
+            </dl>
+          </div>
+        </details>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<div class="modal" id="formulaModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <div>
+        <div class="kicker">DERIVATION · FROM FIRST PRINCIPLES</div>
+        <h2 id="modalTitle">公式详解 · 从最基础讲起</h2>
+        <p>光 → 质心 → 转动 → 振动 → 振转 → 多原子 → 单位与近似</p>
+      </div>
+      <button class="modal-close" type="button" id="formulaClose" aria-label="关闭">×</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="m-sec">
+        <h3><span>01</span>光：波长、频率、波数、能量</h3>
+        <p>最原始的两个关系是波速公式和光子能量公式：</p>
+        <div class="math">c = λ·ν　　　E = h·ν</div>
+        <p>其中 <i>λ</i> 是波长、<i>ν</i> 是频率、<i>h</i> 是普朗克常数。化学里习惯用<b>波数</b> <i>ν̃</i>（单位 cm⁻¹），它就是 1 cm 里包含多少个完整波：</p>
+        <div class="math">ν̃ = <span class="frac"><span class="num">1</span><span class="den">λ</span></span> = <span class="frac"><span class="num">ν</span><span class="den">c</span></span>　　　E = hc·ν̃　　　λ = <span class="frac"><span class="num">1</span><span class="den">ν̃</span></span></div>
+        <p>代入常数 <i>h</i> = 6.626×10⁻³⁴ J·s、<i>c</i> = 2.998×10⁸ m/s，得 <i>hc</i> = 1.986×10⁻²⁵ J·m。于是 <b>1 cm⁻¹</b> 对应：能量 <i>hc</i>×100 = 1.986×10⁻²³ J；频率 <i>ν</i> = <i>c</i>×100 = 2.998×10¹⁰ Hz；换算成 1.240×10⁻⁴ eV 或 11.96 J/mol。</p>
+        <div class="math">1 cm⁻¹ → 1.986×10⁻²³ J ＝ 1.240×10⁻⁴ eV ＝ 11.96 J/mol（ν = 2.998×10¹⁰ Hz）</div>
+        <p>本页横轴用 <i>ν̃</i>；选中一条谱线后，先算 <i>λ</i> = <span class="frac"><span class="num">10⁷</span><span class="den"><i>ν̃</i></span></span>（nm），再算 <i>E</i> = <i>hcν̃</i>，最后看 <i>λ</i> 落在哪个波段。</p>
+      </div>
+
+      <div class="m-sec">
+        <h3><span>02</span>双原子分子：质心与约化质量</h3>
+        <p>把质心取在原点，两原子的坐标满足 <i>m</i><sub>H</sub><i>r</i><sub>H</sub> + <i>m</i><sub>Cl</sub><i>r</i><sub>Cl</sub> = 0，而键长 <i>r</i> = <i>r</i><sub>Cl</sub> − <i>r</i><sub>H</sub>。两式联立：</p>
+        <div class="math">r<sub>H</sub> = <span class="frac"><span class="num">−r·m<sub>Cl</sub></span><span class="den">m<sub>H</sub>+m<sub>Cl</sub></span></span>　　　r<sub>Cl</sub> = <span class="frac"><span class="num">+r·m<sub>H</sub></span><span class="den">m<sub>H</sub>+m<sub>Cl</sub></span></span></div>
+        <p>这正是本页 HCl 两个原子位置的来源。它们到质心的距离之比等于质量的反比，也就是 H : Cl ≈ 35.5 : 1，所以 H 的位移是 Cl 的 35.5 倍（用精确原子质量约 35.2，本页取 35.5 便于口算）。</p>
+        <p>两个原子相对运动时，真正起作用的不是单个质量，而是<b>约化质量</b>：</p>
+        <div class="math">μ = <span class="frac"><span class="num">m<sub>H</sub>m<sub>Cl</sub></span><span class="den">m<sub>H</sub>+m<sub>Cl</sub></span></span> = 0.980 u = 1.628×10⁻²⁷ kg</div>
+      </div>
+
+      <div class="m-sec">
+        <h3><span>03</span>转动：刚性转子与转动常数 B</h3>
+        <p>把双原子分子看成两个质点的刚性转子，转动惯量</p>
+        <div class="math">I = μ·r²</div>
+        <p>量子力学给出角动量大小 |<i>L</i>| = ħ√(<i>J</i>(<i>J</i>+1))，<i>J</i> = 0, 1, 2, …；转动能是</p>
+        <div class="math">E<sub>rot</sub> = <span class="frac"><span class="num">L²</span><span class="den">2I</span></span> = <span class="frac"><span class="num">ħ²</span><span class="den">2I</span></span>·J(J+1) = <span class="frac"><span class="num">h²</span><span class="den">8π²I</span></span>·J(J+1)</div>
+        <p>把它除以 <i>hc</i> 换成波数，并定义<b>转动常数</b></p>
+        <div class="math">B = <span class="frac"><span class="num">h</span><span class="den">8π²cI</span></span>　⇒　E<sub>rot</sub> = hcB·J(J+1)　（即 <span class="frac"><span class="num">E</span><span class="den">B</span></span> = J(J+1)，单位 cm⁻¹）</div>
+        <p>用 HCl 的 <i>B</i> = 10.4 cm⁻¹ 反推：<i>I</i> = <span class="frac"><span class="num">h</span><span class="den">8π²cB</span></span> = 2.69×10⁻⁴⁷ kg·m²，<i>r</i> = √(<span class="frac"><span class="num"><i>I</i></span><span class="den"><i>μ</i></span></span>) = 1.29 Å，与页面取的 1.274 Å 一致，说明这套公式是自洽的。</p>
+        <p>吸收光子时角动量守恒（光子带一个 ħ），选择定则 Δ<i>J</i> = ±1；吸收只能取 +1，于是</p>
+        <div class="math">ν̃ = B(J+1)(J+2) − BJ(J+1) = 2B(J+1)</div>
+        <p>相邻两条线的间隔恒为 2<i>B</i> = 20.8 cm⁻¹，第一条在 <i>J</i> = 0→1，即 20.8 cm⁻¹。</p>
+      </div>
+
+      <div class="m-sec">
+        <h3><span>04</span>振动：简谐近似与力常数</h3>
+        <p>把化学键近似成弹簧，角频率 <i>ω</i> = √(<i>k</i>/<i>μ</i>)，<i>k</i> 是力常数。量子化后</p>
+        <div class="math">E<sub>vib</sub> = (v + ½)ħω，v = 0,1,2,…　⇒　ν̃<sub>osc</sub> = <span class="frac"><span class="num">1</span><span class="den">2πc</span></span>·√(<span class="frac"><span class="num">k</span><span class="den">μ</span></span>)</div>
+        <p>用 HCl 的 2886 cm⁻¹ 反推：<i>k</i> = <i>μ</i>(2π<i>cν̃</i>)² = 481 N/m，正是典型单键的力常数。经典图像就是画面里的</p>
+        <div class="math">r(t) = r<sub>0</sub> + A·sin(2πνt)</div>
+        <p>真实振动周期是 <span class="frac"><span class="num">1</span><span class="den"><i>cν̃</i></span></span> = 1.16×10⁻¹⁴ s，页面放慢了约 10¹⁴ 倍，所以标了“慢放示意”。</p>
+      </div>
+
+      <div class="m-sec">
+        <h3><span>05</span>振转带：P 支、R 支与缺失的 Q 支</h3>
+        <p>同时考虑振动与转动：</p>
+        <div class="math">E(v,J) = (v+½)hν + hcB·J(J+1)</div>
+        <p>吸收一个红外光子：Δ<i>v</i> = +1（基频），同时 Δ<i>J</i> = ±1。</p>
+        <div class="math">ΔJ = +1：ν̃ = ν̃<sub>0</sub> + 2B(J″+1)　（R 支）<br>ΔJ = −1：ν̃ = ν̃<sub>0</sub> − 2B·J″　（P 支）</div>
+        <p>为什么没有 Δ<i>J</i> = 0 的 Q 支？双原子分子的跃迁偶极矩沿键轴，光子带走一个角动量单位，转动量子数必须改变 1，所以 Q 支被禁阻——带中心是空的。页面里 P 支从 <i>J</i>″ = 1 起、R 支从 <i>J</i>″ = 0 起，两支关于 <i>ν̃</i><sub>0</sub> 对称，间隔都是 2<i>B</i>。</p>
+      </div>
+
+      <div class="m-sec">
+        <h3><span>06</span>多原子分子：CO₂ 的正常模式与选律</h3>
+        <p>线形三原子分子有 3<i>N</i>−5 = 4 个振动自由度，其中弯曲是二重简并的，所以只有 3 个不同的频率：ν₁ 对称伸缩 1333、ν₂ 弯曲 667、ν₃ 反对称伸缩 2349 cm⁻¹。每个正常模式是一组按质量加权的集体位移；把质心固定后，原子位移由质量比决定（页面每帧都重新扣质心）。</p>
+        <p>选律的根源是“振动时某个物理量是否变化”：</p>
+        <div class="math">红外活性 ⇔ (<span class="frac"><span class="num">∂μ</span><span class="den">∂Q</span></span>)<sub>0</sub> ≠ 0　　　拉曼活性 ⇔ (<span class="frac"><span class="num">∂α</span><span class="den">∂Q</span></span>)<sub>0</sub> ≠ 0</div>
+        <p><b>ν₁</b>：两个 C=O 键偶极始终严格抵消，μ ≡ 0，偶极矩不随振动变化 → 红外非活性；但键长变化使极化率 α 变化 → 拉曼活性。</p>
+        <p><b>ν₂、ν₃</b>：振动过程中 μ 出现并在半周期后反向 → 红外活性；α 的主要部分不随该模式变化 → 拉曼非活性。弯曲的两个互相垂直的平面频率相同（二重简并），所以只有一个 667 cm⁻¹ 的带位置。</p>
+      </div>
+
+      <div class="m-sec">
+        <h3><span>07</span>单位换算与可见光</h3>
+        <table class="conv">
+          <tr><th>换算</th><th>数值</th></tr>
+          <tr><td>1 cm⁻¹</td><td>2.998×10¹⁰ Hz；1.986×10⁻²³ J；1.240×10⁻⁴ eV；11.96 J/mol</td></tr>
+          <tr><td>1 eV</td><td>8065.5 cm⁻¹</td></tr>
+          <tr><td>1 µm</td><td>10⁴ cm⁻¹</td></tr>
+          <tr><td>1 nm</td><td>10⁷ cm⁻¹</td></tr>
+          <tr><td>380–780 nm</td><td>12820–26316 cm⁻¹ = 1.59–3.26 eV（可见光）</td></tr>
+        </table>
+        <p>本页所有跃迁都不在可见光区：HCl 转动 20.8 cm⁻¹（远红外，481 µm）、HCl 振转 2886 cm⁻¹（中红外，3.46 µm）、CO₂ 667 / 1333 / 2349 cm⁻¹（中红外，15.0 / 7.50 / 4.26 µm）。所以这些吸收都看不见，只能靠红外或远红外光谱探测。</p>
+      </div>
+
+      <div class="m-sec">
+        <h3><span>08</span>本页用到的近似</h3>
+        <p>刚性转子（转动与振动不耦合）、两个振动能级的 <i>B</i> 相同；简谐振动；偶极矩用形式电荷点电荷模型，只看方向与相对大小；振幅放大、振动慢放，界面都已标注；CO₂ 只画带位置，不分辨转动细结构，也未处理费米共振。</p>
+      </div>
+
+      <div class="m-sec">
+        <h3><span>09</span>自己核对</h3>
+        <p>任选一条谱线，卡片里的三个数应满足 <i>λ</i>(nm) = <span class="frac"><span class="num">10⁷</span><span class="den"><i>ν̃</i></span></span>、<i>E</i>(eV) = 1.2398×10⁻⁴·<i>ν̃</i>。例如 R(0)：2906.8 cm⁻¹ → 3.44 µm → 0.360 eV，落点在电磁波谱条的“中红外”。</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ============================================================
+   00 · 基础工具 / 数据 / 状态
+   ============================================================ */
+const TAU = Math.PI * 2;
+const DEG = Math.PI / 180;
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const fmt = (x, d = 2) => (Math.abs(x) < 5e-4 ? 0 : x).toFixed(d);
+const sgn = x => (x < 0 ? '−' : '+');
+
+/* 物理与教学参数（可在此集中修改） */
+const B_HCL = 10.4;          // 转动常数 / cm-1
+const NU0_HCL = 2886;        // HCl 基频带中心 / cm-1
+const M_H = 1.0;             // 教学质量比 1 : 35.5
+const M_CL = 35.5;
+const M_C = 12.0;
+const M_O = 16.0;
+const RANGE_T = 0.26;        // 平动范围（场景单位，约半个分子长度）
+const AMP_HCL = 0.15;        // HCl 伸缩振幅上限（场景单位）
+const AMP_STRETCH = 0.13;    // CO2 伸缩键长变化上限（场景单位）
+const BEND_MAX = 14;         // CO2 弯曲半角上限 / 度
+const U_KG = 1.66053906660e-27;   // 1 u / kg
+const C_CM = 2.99792458e10;       // 光速 / cm·s⁻¹
+const H_PLANCK = 6.62607015e-34;  // J·s
+
+const MOLS = {
+  HCl: {
+    key: 'HCl', formula: 'HCl', plain: 'HCl', name: '氯化氢',
+    r0: 1.274,               // 平衡键长 / Å
+    k: 0.50,                 // 场景单位 / Å
+    frame: 0.94,             // 默认取景半高（场景单位）
+    atoms: [
+      { el: 'H', mass: M_H, rad: 0.145, base: '#8ea3ba', light: '#ffffff', dark: '#5f7288', label: '#0a1a28', halo: 'rgba(236,245,255,.5)' },
+      { el: 'Cl', mass: M_CL, rad: 0.260, base: '#2f9e6d', light: '#d2ffe5', dark: '#0f5c3c', label: '#effff6', halo: 'rgba(3,12,9,.55)' }
+    ],
+    q: [+0.18, -0.18]        // 形式电荷（只用于偶极矩箭头的方向与相对大小）
+  },
+  CO2: {
+    key: 'CO2', formula: 'CO<sub>2</sub>', plain: 'CO₂', name: '二氧化碳',
+    L0: 1.16,
+    k: 0.44,
+    frame: 0.99,
+    atoms: [
+      { el: 'C', mass: M_C, rad: 0.185, base: '#7d93ab', light: '#eaf3ff', dark: '#41556b', label: '#08131f', halo: 'rgba(236,245,255,.5)' },
+      { el: 'O', mass: M_O, rad: 0.195, base: '#c8443a', light: '#ffb8ae', dark: '#6e130e', label: '#fff3f0', halo: 'rgba(8,5,5,.5)' },
+      { el: 'O', mass: M_O, rad: 0.195, base: '#c8443a', light: '#ffb8ae', dark: '#6e130e', label: '#fff3f0', halo: 'rgba(8,5,5,.5)' }
+    ],
+    q: [+0.70, -0.35, -0.35]
+  }
+};
+
+/* 自定义二元分子可用的元素：m/u、共价半径/Å、鲍林电负性、配色 */
+function mkEl(sym, m, r, en, base, light, dark, label, halo) {
+  return { sym, m, r, en, base, light, dark, label, halo };
+}
+const ELEMENTS = {
+  H:  mkEl('H', 1.008, 0.31, 2.20, '#8ea3ba', '#ffffff', '#5f7288', '#0a1a28', 'rgba(236,245,255,.5)'),
+  D:  mkEl('D', 2.014, 0.31, 2.20, '#7fb6c9', '#e6faff', '#4f7f91', '#08202b', 'rgba(236,245,255,.5)'),
+  C:  mkEl('C', 12.011, 0.76, 2.55, '#7d93ab', '#eaf3ff', '#41556b', '#08131f', 'rgba(236,245,255,.5)'),
+  N:  mkEl('N', 14.007, 0.71, 3.04, '#4f7fe0', '#cfe0ff', '#1e3a7a', '#f2f7ff', 'rgba(3,8,14,.55)'),
+  O:  mkEl('O', 15.999, 0.66, 3.44, '#c8443a', '#ffb8ae', '#6e130e', '#fff3f0', 'rgba(8,5,5,.5)'),
+  F:  mkEl('F', 18.998, 0.57, 3.98, '#4fbf8a', '#d6ffe9', '#1d6b4a', '#04241a', 'rgba(236,255,246,.4)'),
+  Cl: mkEl('Cl', 35.45, 1.02, 3.16, '#2f9e6d', '#d2ffe5', '#0f5c3c', '#effff6', 'rgba(3,12,9,.55)'),
+  Br: mkEl('Br', 79.904, 1.20, 2.96, '#a35a3a', '#ffd2bd', '#5c2a16', '#fff1ea', 'rgba(12,5,3,.5)'),
+  I:  mkEl('I', 126.90, 1.39, 2.66, '#7a4fd0', '#e3d4ff', '#3d2470', '#f6f1ff', 'rgba(4,2,10,.55)'),
+  S:  mkEl('S', 32.06, 1.05, 2.58, '#c9a92e', '#fff3b0', '#6b5a10', '#221c00', 'rgba(236,245,255,.45)')
+};
+const EL_ORDER = ['H', 'D', 'C', 'N', 'O', 'F', 'Cl', 'Br', 'I', 'S'];
+
+/* 常见双原子分子的实验参考值（ν̃ 基频 cm⁻¹；B cm⁻¹）；未收录的组合用模型估算 */
+const DIATOM_REF = {
+  'H|H': { nu: 4401, B: 60.85 },
+  'H|F': { nu: 4138, B: 20.96 },
+  'H|Cl': { nu: 2886, B: 10.40 },
+  'D|Cl': { nu: 2145, B: 5.45 },
+  'H|Br': { nu: 2649, B: 8.47 },
+  'H|I': { nu: 2309, B: 6.55 },
+  'C|O': { nu: 2170, B: 1.931 },
+  'N|N': { nu: 2359, B: 1.998 },
+  'O|O': { nu: 1580, B: 1.446 },
+  'N|O': { nu: 1904, B: 1.672 },
+  'I|I': { nu: 214, B: 0.0374 },
+  'O|H|-1': { nu: 3556, B: 18.90 },
+  'C|N|-1': { nu: 2069, B: 1.891 }
+};
+
+function niceTicks(lo, hi, n) {
+  const span = hi - lo;
+  if (!(span > 0)) return [lo];
+  const raw = span / n;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag;
+  const out = [];
+  const start = Math.ceil(lo / step - 1e-9) * step;
+  for (let v = start; v <= hi + step * 1e-6; v += step) out.push(+v.toFixed(10));
+  return out;
+}
+function fmtNu(nu) {
+  const a = Math.abs(nu);
+  return a < 1 ? nu.toFixed(3) : a < 10 ? nu.toFixed(2) : nu.toFixed(1);
+}
+
+/* 正常模式定义：nu 为代表性波数，IR / Raman 活性按 D∞h 的对称性 */
+const MODES = {
+  HCl: [
+    {
+      id: 'hcl', sym: 'ν', name: 'H–Cl 伸缩', nu: NU0_HCL,
+      ir: true, raman: true, sub: '唯一的伸缩模式',
+      note: '异核双原子只有一个伸缩模式。H 的位移约是 Cl 的 35.5 倍，质心几乎落在 Cl 上。'
+    }
+  ],
+  CO2: [
+    {
+      id: 'v1', sym: 'ν₁', name: '对称伸缩', nu: 1333,
+      ir: false, raman: true, sub: '两条 C–O 同伸同缩',
+      note: '两个 C–O 键同时伸长或缩短，分子始终保持中心对称，μ 恒为 0 → 红外非活性；极化率 α 随键长变化 → 拉曼活性。'
+    },
+    {
+      id: 'v2', sym: 'ν₂', name: '弯曲', nu: 667,
+      ir: true, raman: false, bend: true, sub: 'O–C–O 键角变化 · 二重简并',
+      note: '两个 O 向同侧横向位移、C 反向，μ 在弯曲平面内振荡 → 红外活性。两个互相垂直的弯曲平面频率相同，是二重简并的一对分量。'
+    },
+    {
+      id: 'v3', sym: 'ν₃', name: '反对称伸缩', nu: 2349,
+      ir: true, raman: false, sub: '一条伸长时另一条缩短',
+      note: '两个 O 同向位移、C 反向，一伸一缩；μ 沿分子轴振荡 → 红外活性。顺反伸缩不改变极化率的主要部分 → 拉曼非活性。'
+    }
+  ]
+};
+
+const MODE_IR = { v1: false, v2: true, v3: true };
+const MODE_RAMAN = { v1: true, v2: false, v3: false };
+
+const CO2_BANDS = [
+  { mode: 'v1', nu: 1333, sym: 'ν₁', name: '对称伸缩' },
+  { mode: 'v2', nu: 667, sym: 'ν₂', name: '弯曲' },
+  { mode: 'v3', nu: 2349, sym: 'ν₃', name: '反对称伸缩' }
+];
+
+/* ---------------- 状态 ---------------- */
+const state = {
+  mol: 'HCl',
+  custom: { a: 'H', b: 'Cl', charge: 0, info: null },
+  motion: {
+    playing: true,
+    speed: 1,
+    trans: { on: false, speed: 0.65, s: 0, dir: 1 },
+    rot: { on: false, speed: 0.8, angle: 0 },
+    vib: { on: true, amp: 0.55, mode: 'hcl', phi: Math.PI / 2, holdUntil: 0, plane: 'xy' }
+  },
+  cam: { az: -0.74, el: 0.55, zoom: 1, follow: false, dragging: false },
+  spec: {
+    hclView: 'rovib', hclSel: 'rovib-R-0',
+    co2View: 'ir', compare: false
+  },
+  show: { com: true, disp: true, dipole: true, trail: true, symbols: true, axes: false },
+  geo: null,          // 当前局部几何
+  world: null,        // 旋转 + 平动后的世界坐标
+  lastFrame: 0,
+  dirty: true
+};
+
+/* 由元素选择构建自定义二元分子：B 优先取实验值，否则由 μ、r 估算；ν̃₀ 同理 */
+function rebuildCustom() {
+  const A = ELEMENTS[state.custom.a], B = ELEMENTS[state.custom.b];
+  const chg = state.custom.charge;
+  const chgKey = chg ? '|' + chg : '';
+  const ref = DIATOM_REF[A.sym + '|' + B.sym + chgKey] || DIATOM_REF[B.sym + '|' + A.sym + chgKey] || null;
+
+  const muU = A.m * B.m / (A.m + B.m);
+  const muKg = muU * U_KG;
+  const r0 = (A.r + B.r) * (chg ? 0.9 : 1);
+  const Bc = ref ? ref.B : H_PLANCK / (8 * Math.PI * Math.PI * C_CM * muKg * Math.pow(r0 * 1e-10, 2));
+  const nu0 = ref ? ref.nu : Math.sqrt(500 / muKg) / (2 * Math.PI * C_CM);
+  const dEN = Math.abs(A.en - B.en);
+  const qMag = (A.sym === B.sym) ? 0 : clamp(0.1875 * dEN, 0.02, 0.45);
+  const q0 = dEN < 0.01 ? 0 : (A.en > B.en ? -qMag : qMag);
+  const q1 = -q0;
+  const chgStr = chg === 0 ? '' : (chg > 0 ? '⁺' : '⁻');
+  const same = A.sym === B.sym;
+  const formula = (same ? A.sym + '₂' : A.sym + B.sym) + chgStr;
+  const kScene = 0.637 / r0;
+  const rad = rr => clamp(0.115 + 0.13 * (rr / 1.4), 0.13, 0.30);
+
+  MOLS.CUSTOM = {
+    key: 'CUSTOM', formula, plain: formula, name: '自定义二元分子',
+    r0, k: kScene, frame: 0.94,
+    atoms: [
+      { el: A.sym, mass: A.m, rad: rad(A.r), base: A.base, light: A.light, dark: A.dark, label: A.label, halo: A.halo },
+      { el: B.sym, mass: B.m, rad: rad(B.r), base: B.base, light: B.light, dark: B.dark, label: B.label, halo: B.halo }
+    ],
+    q: [q0, q1]
+  };
+
+  const rot = [], rovib = [];
+  for (let J = 0; J < 8; J++) {
+    rot.push({ id: 'custom-rot-' + J, nu: 2 * Bc * (J + 1), branch: 'rot', view: 'rot', Jpp: J, Jp: J + 1, vpp: 0, vp: 0, label: 'J=' + J + '→' + (J + 1) });
+  }
+  for (let J = 1; J <= 6; J++) {
+    rovib.push({ id: 'custom-P-' + J, nu: nu0 - 2 * Bc * J, branch: 'P', view: 'rovib', Jpp: J, Jp: J - 1, vpp: 0, vp: 1, label: 'P(' + J + ')' });
+  }
+  for (let J = 0; J <= 6; J++) {
+    rovib.push({ id: 'custom-R-' + J, nu: nu0 + 2 * Bc * (J + 1), branch: 'R', view: 'rovib', Jpp: J, Jp: J + 1, vpp: 0, vp: 1, label: 'R(' + J + ')' });
+  }
+  rovib.sort((x, y) => x.nu - y.nu);
+
+  const rotHi = 2 * Bc * 8 * 1.14;
+  const span = 2 * Bc * 7 * 1.18;
+  const axis = { rot: [0, rotHi], rovib: [nu0 - span, nu0 + span] };
+  const ticks = { rot: niceTicks(0, rotHi, 4), rovib: niceTicks(nu0 - span, nu0 + span, 4) };
+
+  state.custom.info = {
+    B: Bc, nu0, ir: Math.abs(q0) > 1e-6, rot, rovib, axis, ticks,
+    labels: [A.sym, B.sym], ref: ref ? '实验参考值' : '模型估算',
+    muU, r0, q: qMag, charge: chg, formula
+  };
+  MODES.CUSTOM = [{
+    id: 'custom', sym: 'ν', name: A.sym + '–' + B.sym + ' 伸缩', nu: Math.round(nu0),
+    ir: Math.abs(q0) > 1e-6, raman: true, sub: ref ? '实验参考值' : '模型估算',
+    note: ref
+      ? '该组合有实验参考值：B ≈ ' + Bc.toFixed(2) + ' cm⁻¹，基频 ≈ ' + Math.round(nu0) + ' cm⁻¹。'
+      : '该组合未收录实验值：B 由 μ 与共价半径算出，基频按 k ≈ 500 N/m 估算，只看趋势。'
+  }];
+}
+
+/* 固定谱线记录：所有光谱、能级图、详情面板共用同一批记录 */
+const HCL_ROT = (() => {
+  const out = [];
+  for (let J = 0; J < 8; J++) {
+    out.push({
+      id: 'rot-' + J, nu: 2 * B_HCL * (J + 1), branch: 'rot', view: 'rot',
+      Jpp: J, Jp: J + 1, vpp: 0, vp: 0, label: 'J=' + J + '→' + (J + 1)
+    });
+  }
+  return out;
+})();
+
+const HCL_ROVIB = (() => {
+  const out = [];
+  for (let J = 1; J <= 6; J++) {
+    out.push({
+      id: 'rovib-P-' + J, nu: NU0_HCL - 2 * B_HCL * J, branch: 'P', view: 'rovib',
+      Jpp: J, Jp: J - 1, vpp: 0, vp: 1, label: 'P(' + J + ')'
+    });
+  }
+  for (let J = 0; J <= 6; J++) {
+    out.push({
+      id: 'rovib-R-' + J, nu: NU0_HCL + 2 * B_HCL * (J + 1), branch: 'R', view: 'rovib',
+      Jpp: J, Jp: J + 1, vpp: 0, vp: 1, label: 'R(' + J + ')'
+    });
+  }
+  return out.sort((a, b) => a.nu - b.nu);
+})();
+
+const HCL_INFO = {
+  B: B_HCL, nu0: NU0_HCL, ir: true,
+  rot: HCL_ROT, rovib: HCL_ROVIB,
+  axis: { rot: [0, 178], rovib: [2742, 3050] },
+  ticks: { rot: [0, 40, 80, 120, 160], rovib: [2750, 2800, 2850, 2900, 2950, 3000] },
+  labels: ['H', 'Cl'], ref: '实验参考值', charge: 0, formula: 'HCl'
+};
+function diatomicInfo() {
+  return state.mol === 'HCl' ? HCL_INFO : state.custom.info;
+}
+const recById = id => {
+  if (state.mol === 'CO2') return null;
+  const info = diatomicInfo();
+  return info.rot.find(r => r.id === id) || info.rovib.find(r => r.id === id) || null;
+};
+const modeOf = id => (MODES[state.mol] || []).find(m => m.id === id) || MODES[state.mol][0];
+
+/* ============================================================
+   10 · 几何：分子自身坐标 → 绕质心转动 → 整体平动
+   ============================================================ */
+
+const v3 = (a, b, c) => [a, b, c];
+const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const mul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const len3 = a => Math.hypot(a[0], a[1], a[2]);
+const unit = a => { const l = len3(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+const rotateY = (p, a) => {
+  const c = Math.cos(a), s = Math.sin(a);
+  return [p[0] * c + p[2] * s, p[1], -p[0] * s + p[2] * c];
+};
+
+/* 质量加权质心；返回质心坐标与相对质心的坐标 */
+function recenter(raw, masses) {
+  let mx = 0, my = 0, mz = 0, M = 0;
+  for (let i = 0; i < raw.length; i++) {
+    const m = masses[i];
+    mx += raw[i][0] * m; my += raw[i][1] * m; mz += raw[i][2] * m; M += m;
+  }
+  const c = M > 0 ? [mx / M, my / M, mz / M] : [0, 0, 0];
+  return { pos: raw.map(p => [p[0] - c[0], p[1] - c[1], p[2] - c[2]]), com: c };
+}
+
+/* 双原子（HCl 与自定义）：r(t)=r0+A sinφ，两个原子到质心的距离按质量反比分配 */
+function buildDiatomic(molKey, phi, amp) {
+  const mol = MOLS[molKey];
+  const m0 = mol.atoms[0].mass, m1 = mol.atoms[1].mass;
+  const M = m0 + m1;
+  const r = mol.r0 * mol.k + AMP_HCL * amp * Math.sin(phi);
+  const r0 = mol.r0 * mol.k;
+  return {
+    raw: [[-r * m1 / M, 0, 0], [r * m0 / M, 0, 0]],
+    eq: [[-r0 * m1 / M, 0, 0], [r0 * m0 / M, 0, 0]],
+    mode: 'diatomic'
+  };
+}
+
+/* CO2：三种正常模式都在局部系里构造，随后统一按质量扣除质心 */
+function buildCO2(phi, amp, mode, plane) {
+  const mol = MOLS.CO2;
+  const L0 = mol.L0 * mol.k;
+  const s = Math.sin(phi);
+  const eq = [[0, 0, 0], [L0, 0, 0], [-L0, 0, 0]];
+  let raw;
+
+  if (mode === 'v1') {
+    /* 对称伸缩：C 不动，两个 O 沿轴反向等量位移 */
+    const d = AMP_STRETCH * amp * s;
+    raw = [[0, 0, 0], [L0 + d, 0, 0], [-(L0 + d), 0, 0]];
+
+  } else if (mode === 'v3') {
+    /* 反对称伸缩：两个 O 同向位移，C 反向；u 取使键长变化为 ±d 的值 */
+    const d = AMP_STRETCH * amp * s;
+    const u = d / (1 + 2 * M_O / M_C);          // = d / 3.6667
+    const xC = -2 * (M_O / M_C) * u;
+    raw = [[xC, 0, 0], [L0 + u, 0, 0], [-L0 + u, 0, 0]];
+
+  } else {
+    /* 弯曲：两个 O 同侧横向位移，C 反向；半角 β = BEND_MAX·amp·sinφ */
+    const b = BEND_MAX * amp * s * DEG;
+    const c = Math.cos(b), sn = Math.sin(b);
+    raw = plane === 'xz'
+      ? [[0, 0, 0], [L0 * c, 0, L0 * sn], [-L0 * c, 0, L0 * sn]]
+      : [[0, 0, 0], [L0 * c, L0 * sn, 0], [-L0 * c, L0 * sn, 0]];
+  }
+  return { raw, eq, mode };
+}
+
+function makeGeometry(molKey, vib) {
+  const mol = MOLS[molKey];
+  const masses = mol.atoms.map(a => a.mass);
+  const built = molKey === 'CO2'
+    ? buildCO2(vib.phi, vib.amp, vib.mode, vib.plane)
+    : buildDiatomic(molKey, vib.phi, vib.amp);
+  const cur = recenter(built.raw, masses);
+  const base = recenter(built.eq, masses);
+
+  const pos = cur.pos, posEq = base.pos;
+  const mu = [0, 0, 0], mu0 = [0, 0, 0];
+  for (let i = 0; i < pos.length; i++) {
+    for (let k = 0; k < 3; k++) {
+      mu[k] += mol.q[i] * pos[i][k];
+      mu0[k] += mol.q[i] * posEq[i][k];
+    }
+  }
+
+  const bonds = molKey === 'CO2' ? [[0, 1], [0, 2]] : [[0, 1]];
+  const lengths = bonds.map(([a, b]) => len3(sub(pos[a], pos[b])) / mol.k);
+  let angle = null;
+  if (molKey === 'CO2') {
+    const a = sub(pos[1], pos[0]), b = sub(pos[2], pos[0]);
+    angle = Math.acos(clamp(dot(a, b) / ((len3(a) * len3(b)) || 1), -1, 1)) / DEG;
+  }
+
+  let alpha = null;
+  if (molKey === 'CO2' && vib.mode === 'v1') {
+    const stretch = (lengths[0] + lengths[1]) / 2 - mol.L0;
+    alpha = { par: 1 + 1.55 * stretch / mol.L0, perp: 1 - 0.32 * stretch / mol.L0 };
+  }
+
+  return {
+    molKey, mol, pos, posEq, mu, mu0, bonds, lengths, angle, alpha,
+    mode: built.mode,
+    /* 偶极矩箭头在局部系里的横向偏移方向（避开分子主轴） */
+    perpLocal: molKey === 'CO2' && vib.mode === 'v2' && vib.plane === 'xz' ? [0, 1, 0] : [0, 0, 1]
+  };
+}
+
+/* 绕质心（局部原点）转动，再整体加上平动位移 */
+function transformGeometry(geo, angle, ty) {
+  const pos = geo.pos.map(p => { const q = rotateY(p, angle); return [q[0], q[1] + ty, q[2]]; });
+  const posEq = geo.posEq.map(p => { const q = rotateY(p, angle); return [q[0], q[1] + ty, q[2]]; });
+  return {
+    pos, posEq,
+    mu: rotateY(geo.mu, angle),
+    mu0: rotateY(geo.mu0, angle),
+    perp: rotateY(geo.perpLocal, angle),
+    com: [0, ty, 0],
+    angle
+  };
+}
+
+/* 平衡位形下 d(pos)/dφ 的方向，用于“下一步怎么动”的箭头 */
+function nextStepDirections(molKey, vib) {
+  const e = 1e-3;
+  const a = makeGeometry(molKey, vib);
+  const b = makeGeometry(molKey, Object.assign({}, vib, { phi: vib.phi + e }));
+  const vel = a.pos.map((p, i) => mul(sub(b.pos[i], p), 1 / e));
+  const maxV = Math.max(1e-9, ...vel.map(len3));
+  return vel.map(v => mul(v, 0.095 / maxV));
+}
+
+function computeFrame() {
+  const geo = makeGeometry(state.mol, state.motion.vib);
+  const world = transformGeometry(geo, state.motion.rot.angle, state.motion.trans.s);
+  state.geo = geo;
+  state.world = world;
+  return { geo, world };
+}
+
+/* ============================================================
+   20 · 相机 / 投影 / 3D 绘制
+   ============================================================ */
+const MONO = '"SFMono-Regular","Cascadia Code",Consolas,monospace';
+const SANS = '"Segoe UI","Noto Sans SC","PingFang SC",system-ui,sans-serif';
+const COL = {
+  com: '#ffd166', disp: '#5fd3ff', mu: '#c0a3ff', alpha: '#7df0b0',
+  ghost: 'rgba(163,192,216,.42)', bond: '#5e7488', text: '#c5dcec', dim: '#6f8ba3'
+};
+
+const scene = $('#scene');
+const sctx = scene.getContext('2d');
+let sceneSize = { w: 0, h: 0 };
+
+/* ---------- 矩阵 ---------- */
+function perspective(fovy, aspect, near, far) {
+  const f = 1 / Math.tan(fovy / 2), nf = 1 / (near - far);
+  return new Float32Array([f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) * nf, -1, 0, 0, 2 * far * near * nf, 0]);
+}
+function lookAt(eye, center, up) {
+  let zx = eye[0] - center[0], zy = eye[1] - center[1], zz = eye[2] - center[2];
+  const zl = Math.hypot(zx, zy, zz) || 1; zx /= zl; zy /= zl; zz /= zl;
+  let xx = up[1] * zz - up[2] * zy, xy = up[2] * zx - up[0] * zz, xz = up[0] * zy - up[1] * zx;
+  const xl = Math.hypot(xx, xy, xz) || 1; xx /= xl; xy /= xl; xz /= xl;
+  const yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+  return new Float32Array([
+    xx, yx, zx, 0,
+    xy, yy, zy, 0,
+    xz, yz, zz, 0,
+    -(xx * eye[0] + xy * eye[1] + xz * eye[2]),
+    -(yx * eye[0] + yy * eye[1] + yz * eye[2]),
+    -(zx * eye[0] + zy * eye[1] + zz * eye[2]), 1
+  ]);
+}
+function multiply(a, b) {
+  const o = new Float32Array(16);
+  for (let c = 0; c < 4; c++) {
+    for (let r = 0; r < 4; r++) {
+      o[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+    }
+  }
+  return o;
+}
+
+const FOV = 36 * DEG;
+
+function cameraData(molKey, aspect, target) {
+  const mol = MOLS[molKey];
+  const tanHalf = Math.tan(FOV / 2);
+  const base = mol.frame / (tanHalf * Math.min(1, aspect));
+  const dist = base * state.cam.zoom;
+  const az = state.cam.az, el = clamp(state.cam.el, -1.45, 1.45);
+  const dir = [Math.cos(el) * Math.cos(az), Math.cos(el) * Math.sin(az), Math.sin(el)];
+  const eye = [target[0] + dist * dir[0], target[1] + dist * dir[1], target[2] + dist * dir[2]];
+  const view = lookAt(eye, target, [0, 0, 1]);
+  return {
+    mvp: multiply(perspective(FOV, aspect, 0.02, 80), view),
+    view, eye, dist, f: 1 / tanHalf, target
+  };
+}
+
+function project(m, p, w, h) {
+  const x = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12];
+  const y = m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13];
+  const ww = m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15];
+  return { x: (x / ww * .5 + .5) * w, y: (1 - (y / ww * .5 + .5)) * h, w: ww };
+}
+
+function resizeCanvas(canvas, ctx) {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (!w || !h) return null;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { w, h };
+}
+
+/* ---------- 2D 小工具 ---------- */
+function rr(ctx, x, y, w, h, r) {
+  const rad = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rad, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rad);
+  ctx.arcTo(x + w, y + h, x, y + h, rad);
+  ctx.arcTo(x, y + h, x, y, rad);
+  ctx.arcTo(x, y, x + w, y, rad);
+  ctx.closePath();
+}
+function lineTo(ctx, a, b) {
+  ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+}
+function pill(ctx, x, y, text, fg, opts) {
+  opts = opts || {};
+  const fs = opts.fs || 8.5;
+  ctx.save();
+  ctx.font = (opts.bold ? '600 ' : '') + fs + 'px ' + (opts.sans ? SANS : MONO);
+  const tw = ctx.measureText(text).width;
+  const w = tw + (opts.padX != null ? opts.padX : 9);
+  const h = fs + (opts.padY != null ? opts.padY : 6);
+  const x0 = opts.align === 'left' ? x : opts.align === 'right' ? x - w : x - w / 2;
+  const y0 = y - h / 2;
+  ctx.fillStyle = opts.bg || 'rgba(5,11,19,.76)';
+  rr(ctx, x0, y0, w, h, opts.r != null ? opts.r : 3.5);
+  ctx.fill();
+  if (opts.stroke) { ctx.strokeStyle = opts.stroke; ctx.lineWidth = 1; ctx.stroke(); }
+  ctx.fillStyle = fg;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x0 + w / 2, y + 0.5);
+  ctx.restore();
+  return { x: x0, y: y0, w, h };
+}
+function arrow2(ctx, x0, y0, x1, y1, color, width, head, dash) {
+  const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy);
+  if (L < 0.8) return;
+  const ux = dx / L, uy = dy / L;
+  const hx = x1 - ux * head, hy = y1 - uy * head;
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.lineTo(hx, hy);
+  if (dash) ctx.setLineDash(dash);
+  ctx.strokeStyle = 'rgba(3,8,14,.7)';
+  ctx.lineWidth = width + 2.6;
+  ctx.stroke();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(hx - uy * head * 0.52, hy + ux * head * 0.52);
+  ctx.lineTo(hx + uy * head * 0.52, hy - ux * head * 0.52);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.strokeStyle = 'rgba(3,8,14,.7)';
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ---------- 场景各层 ---------- */
+function drawTrail(ctx, cam, w, h, world) {
+  const pA = project(cam.mvp, [0, -RANGE_T, 0], w, h);
+  const pB = project(cam.mvp, [0, RANGE_T, 0], w, h);
+  const p0 = project(cam.mvp, [0, 0, 0], w, h);
+  if (pA.w <= 0.02 || pB.w <= 0.02 || p0.w <= 0.02) return;
+  const dx = pB.x - pA.x, dy = pB.y - pA.y, L = Math.hypot(dx, dy) || 1;
+  const nx = -dy / L, ny = dx / L;
+
+  ctx.save();
+  ctx.setLineDash([3, 6]);
+  ctx.strokeStyle = 'rgba(95,211,255,.2)';
+  ctx.lineWidth = 1;
+  lineTo(ctx, pA, pB);
+  ctx.setLineDash([]);
+
+  /* 两端边界刻度 */
+  ctx.strokeStyle = 'rgba(95,211,255,.34)';
+  for (const p of [pA, pB]) {
+    ctx.beginPath();
+    ctx.moveTo(p.x - nx * 5, p.y - ny * 5);
+    ctx.lineTo(p.x + nx * 5, p.y + ny * 5);
+    ctx.stroke();
+  }
+
+  /* 起点 */
+  ctx.fillStyle = 'rgba(95,211,255,.45)';
+  ctx.beginPath(); ctx.arc(p0.x, p0.y, 2.2, 0, TAU); ctx.fill();
+
+  /* 相对起点的位移段 */
+  const pc = project(cam.mvp, [0, world.com[1], 0], w, h);
+  if (Math.abs(world.com[1]) > 0.002 && pc.w > 0.02) {
+    ctx.strokeStyle = 'rgba(95,211,255,.65)';
+    ctx.lineWidth = 1.8;
+    lineTo(ctx, p0, pc);
+    ctx.fillStyle = 'rgba(95,211,255,.9)';
+    ctx.beginPath(); ctx.arc(pc.x, pc.y, 2.6, 0, TAU); ctx.fill();
+  }
+
+  /* 当前运动方向 */
+  if (state.motion.trans.on) {
+    const dir = state.motion.trans.dir;
+    const pa = project(cam.mvp, [0, world.com[1], 0], w, h);
+    const pb = project(cam.mvp, [0, world.com[1] + dir * 0.075, 0], w, h);
+    if (pa.w > 0.02 && pb.w > 0.02) {
+      arrow2(ctx, pa.x, pa.y, pb.x, pb.y, 'rgba(95,211,255,.9)', 1.6, 5.5);
+    }
+  }
+
+  ctx.fillStyle = 'rgba(111,143,168,.72)';
+  ctx.font = '8px ' + MONO;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('质心轨迹', pB.x + nx * 14, pB.y + ny * 14);
+  ctx.restore();
+}
+
+/* 画布左下角的二维实验室标尺：直接把平动位置读成 Å */
+function drawLabRuler(ctx, w, h) {
+  if (!state.show.trail) return;
+  const bw = Math.min(238, Math.max(150, w * 0.46));
+  const bh = 46;
+  const bx = 12;
+  const by = h - bh - 28;
+  if (by < 60) return;
+  const k = MOLS[state.mol].k;
+  const ax0 = bx + 12, ax1 = bx + bw - 12, ay = by + 30;
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(5,12,20,.66)';
+  ctx.strokeStyle = 'rgba(120,166,221,.16)';
+  ctx.lineWidth = 1;
+  rr(ctx, bx, by, bw, bh, 7);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.font = '7.5px ' + MONO;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(111,143,168,.85)';
+  ctx.fillText('实验室参考系 · 平动方向 y / Å', bx + 9, by + 10);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(95,211,255,.85)';
+  ctx.fillText(state.motion.trans.dir > 0 ? '→' : '←', bx + bw - 9, by + 10);
+
+  ctx.strokeStyle = 'rgba(95,211,255,.35)';
+  ctx.beginPath(); ctx.moveTo(ax0, ay); ctx.lineTo(ax1, ay); ctx.stroke();
+
+  const X = t => ax0 + (t + RANGE_T) / (2 * RANGE_T) * (ax1 - ax0);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  for (let i = 0; i <= 4; i++) {
+    const t = -RANGE_T + 2 * RANGE_T * i / 4;
+    const x = X(t);
+    const major = (i === 0 || i === 2 || i === 4);
+    ctx.strokeStyle = major ? 'rgba(95,211,255,.58)' : 'rgba(95,211,255,.26)';
+    ctx.beginPath(); ctx.moveTo(x, ay - 2); ctx.lineTo(x, ay + (major ? 5 : 3)); ctx.stroke();
+    if (major) {
+      const v = Math.abs(t) < 1e-9 ? '0' : (t > 0 ? '+' : '−') + Math.abs(t / k).toFixed(2);
+      ctx.fillStyle = 'rgba(130,165,190,.85)';
+      ctx.fillText(v, x, ay + 7);
+    }
+  }
+
+  const mx = X(clamp(state.motion.trans.s, -RANGE_T, RANGE_T));
+  ctx.fillStyle = 'rgba(255,209,102,.95)';
+  ctx.beginPath(); ctx.arc(mx, ay, 2.8, 0, TAU); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,209,102,.55)';
+  ctx.beginPath(); ctx.moveTo(mx, ay - 8); ctx.lineTo(mx, ay - 3); ctx.stroke();
+  ctx.restore();
+}
+
+function drawRotationGuide(ctx, cam, w, h) {
+  const R = state.mol === 'HCl'
+    ? Math.max(...state.geo.pos.map(p => Math.hypot(p[0], p[2])))
+    : Math.max(...state.geo.pos.map(p => Math.hypot(p[0], p[2])));
+  ctx.save();
+  ctx.setLineDash([4, 7]);
+  ctx.strokeStyle = 'rgba(113,215,255,.20)';
+  ctx.lineWidth = 1.1;
+  ctx.beginPath();
+  for (let i = 0; i <= 60; i++) {
+    const t = i / 60 * TAU;
+    const p = project(cam.mvp, [R * Math.cos(t), state.world.com[1], R * Math.sin(t)], w, h);
+    if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+function drawAxes(ctx, cam, w, h) {
+  const axes = [
+    { v: [1, 0, 0], c: '#ff9999', l: 'x' },
+    { v: [0, 1, 0], c: '#8cf0b4', l: 'y' },
+    { v: [0, 0, 1], c: '#8cbaff', l: 'z' }
+  ];
+  const o = project(cam.mvp, [0, 0, 0], w, h);
+  if (o.w <= 0.02) return;
+  ctx.save();
+  ctx.lineCap = 'round';
+  for (const ax of axes) {
+    const p = project(cam.mvp, mul(ax.v, 0.92), w, h);
+    const n = project(cam.mvp, mul(ax.v, -0.6), w, h);
+    if (p.w <= 0.02 || n.w <= 0.02) continue;
+    ctx.globalAlpha = 0.28;
+    ctx.strokeStyle = ax.c;
+    ctx.lineWidth = 0.9;
+    ctx.setLineDash([3, 5]);
+    lineTo(ctx, o, n);
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 0.72;
+    ctx.lineWidth = 1.1;
+    const dx = p.x - o.x, dy = p.y - o.y, L = Math.hypot(dx, dy);
+    if (L > 2) {
+      arrow2(ctx, o.x, o.y, p.x, p.y, ax.c, 1, 5);
+      ctx.fillStyle = ax.c;
+      ctx.font = '600 9px ' + MONO;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(ax.l, p.x + dx / L * 9, p.y + dy / L * 9);
+    }
+  }
+  ctx.restore();
+}
+
+function drawAlphaEllipse(ctx, cam, w, h, geo, world) {
+  if (!geo.alpha) return;
+  const a = 0.74 * geo.alpha.par, b = 0.40 * geo.alpha.perp;
+  ctx.save();
+  ctx.beginPath();
+  let last = null;
+  for (let i = 0; i <= 56; i++) {
+    const t = i / 56 * TAU;
+    const local = [a * Math.cos(t), 0, b * Math.sin(t)];
+    const q = rotateY(local, world.angle);
+    const p = project(cam.mvp, [q[0], q[1] + world.com[1], q[2]], w, h);
+    if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+    last = p;
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(125,240,176,.055)';
+  ctx.fill();
+  ctx.setLineDash([5, 6]);
+  ctx.strokeStyle = 'rgba(125,240,176,.34)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  if (last) {
+    ctx.fillStyle = 'rgba(125,240,176,.85)';
+    ctx.font = 'italic 10px ' + SANS;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('α', last.x + 8, last.y - 6);
+  }
+  ctx.restore();
+}
+
+function drawGhosts(ctx, cam, w, h, geo, world) {
+  ctx.save();
+  ctx.setLineDash([2.5, 3]);
+  ctx.strokeStyle = 'rgba(160,190,214,.30)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < geo.pos.length; i++) {
+    const d = len3(sub(world.pos[i], world.posEq[i]));
+    if (d < 0.004) continue;
+    const p = project(cam.mvp, world.posEq[i], w, h);
+    if (p.w <= 0.02) continue;
+    const r = Math.max(2.5, geo.mol.atoms[i].rad * cam.f * h / (2 * p.w));
+    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, TAU); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function bondColor(mol, i) {
+  return mol.atoms[i].base;
+}
+function drawBendPlane(ctx, cam, w, h, geo, world) {
+  if (!(geo.molKey === 'CO2' && state.motion.vib.mode === 'v2')) return;
+  const a = 0.80, b = 0.52;
+  const isXY = state.motion.vib.plane === 'xy';
+  ctx.save();
+  ctx.beginPath();
+  for (let i = 0; i <= 64; i++) {
+    const t = i / 64 * TAU;
+    const local = isXY ? [a * Math.cos(t), b * Math.sin(t), 0] : [a * Math.cos(t), 0, b * Math.sin(t)];
+    const q = rotateY(local, world.angle);
+    const p = project(cam.mvp, [q[0], q[1] + world.com[1], q[2]], w, h);
+    if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(255,154,98,.032)';
+  ctx.fill();
+  ctx.setLineDash([5, 7]);
+  ctx.strokeStyle = 'rgba(255,154,98,.26)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+}
+
+function drawBonds(ctx, cam, w, h, geo, world) {
+  for (const [ia, ib] of geo.bonds) {
+    const a = project(cam.mvp, world.pos[ia], w, h);
+    const b = project(cam.mvp, world.pos[ib], w, h);
+    if (a.w <= 0.02 || b.w <= 0.02) continue;
+    const g = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
+    g.addColorStop(0, bondColor(geo.mol, ia));
+    g.addColorStop(0.5, '#7f93a6');
+    g.addColorStop(1, bondColor(geo.mol, ib));
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(3,8,14,.8)';
+    ctx.lineWidth = 11;
+    lineTo(ctx, a, b);
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 7;
+    lineTo(ctx, a, b);
+    ctx.strokeStyle = 'rgba(226,244,255,.22)';
+    ctx.lineWidth = 2;
+    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    const dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1;
+    ctx.beginPath();
+    ctx.moveTo(a.x - dy / L * 1.6, a.y + dx / L * 1.6);
+    ctx.lineTo(b.x - dy / L * 1.6, b.y + dx / L * 1.6);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function atomScreenRadius(cam, rad, ww, h) {
+  return Math.max(2.2, rad * cam.f * h / (2 * Math.max(ww, 0.02)));
+}
+
+function drawAtoms(ctx, cam, w, h, geo, world) {
+  const list = world.pos.map((p, i) => {
+    const q = project(cam.mvp, p, w, h);
+    return { i, q, r: atomScreenRadius(cam, geo.mol.atoms[i].rad, q.w, h) };
+  }).sort((A, B) => B.q.w - A.q.w);
+
+  for (const it of list) {
+    if (it.q.w <= 0.02) continue;
+    const at = geo.mol.atoms[it.i];
+    const { x, y } = it.q, r = it.r;
+    ctx.save();
+    const grad = ctx.createRadialGradient(x - r * 0.34, y - r * 0.38, r * 0.08, x, y, r * 1.02);
+    grad.addColorStop(0, at.light);
+    grad.addColorStop(0.42, at.base);
+    grad.addColorStop(1, at.dark);
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(9,18,28,.45)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.restore();
+  }
+  return list;
+}
+
+function drawSymbols(ctx, cam, w, h, geo, world, list) {
+  for (const it of list) {
+    if (it.q.w <= 0.02) continue;
+    const at = geo.mol.atoms[it.i];
+    const fs = clamp(it.r * 0.82, 8.5, 15);
+    ctx.save();
+    ctx.font = '600 ' + fs.toFixed(1) + 'px ' + SANS;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 2.6;
+    ctx.strokeStyle = at.halo || 'rgba(2,7,12,.5)';
+    ctx.strokeText(at.el, it.q.x, it.q.y + 0.5);
+    ctx.fillStyle = at.label;
+    ctx.fillText(at.el, it.q.x, it.q.y + 0.5);
+    ctx.restore();
+  }
+}
+
+function drawDisplacements(ctx, cam, w, h, geo, world, list, nextDirs) {
+  ctx.save();
+  for (let i = 0; i < geo.pos.length; i++) {
+    const at = geo.mol.atoms[i];
+    const to = project(cam.mvp, world.pos[i], w, h);
+    const rTo = atomScreenRadius(cam, at.rad, to.w, h);
+    if (nextDirs) {
+      const dir = rotateY(nextDirs[i], world.angle);
+      const from = world.pos[i];
+      const toP = project(cam.mvp, add(from, dir), w, h);
+      const dx = toP.x - to.x, dy = toP.y - to.y, L = Math.hypot(dx, dy);
+      if (L > 4) {
+        arrow2(ctx, to.x, to.y, toP.x, toP.y, '#ffb37e', 1.5, 5.5, [3, 3]);
+      }
+      continue;
+    }
+    const from = project(cam.mvp, world.posEq[i], w, h);
+    const dx = to.x - from.x, dy = to.y - from.y, L = Math.hypot(dx, dy);
+    if (L < 1.2) continue;
+    if (L > rTo * 0.72 + 5) {
+      const ux = dx / L, uy = dy / L;
+      arrow2(ctx, from.x, from.y, to.x - ux * rTo * 0.8, to.y - uy * rTo * 0.8, COL.disp, 1.7, 6);
+    } else {
+      ctx.fillStyle = 'rgba(95,211,255,.85)';
+      ctx.beginPath(); ctx.arc(to.x, to.y, 2.2, 0, TAU); ctx.fill();
+    }
+  }
+  ctx.restore();
+  return list;
+}
+
+function drawDipole(ctx, cam, w, h, geo, world) {
+  if (!state.show.dipole) return;
+  const muLen = len3(world.mu);
+  const scale = 2.4;
+  const start = add(world.com, mul(world.perp, 0.30));
+  if (muLen * scale > 0.028) {
+    const end = add(start, mul(unit(world.mu), muLen * scale));
+    const p0 = project(cam.mvp, start, w, h);
+    const p1 = project(cam.mvp, end, w, h);
+    const pc = project(cam.mvp, world.com, w, h);
+    if (p0.w <= 0.02 || p1.w <= 0.02) return;
+    ctx.save();
+    ctx.setLineDash([2, 3]);
+    ctx.strokeStyle = 'rgba(192,163,255,.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pc.x, pc.y); ctx.lineTo(p0.x, p0.y); ctx.stroke();
+    ctx.restore();
+    arrow2(ctx, p0.x, p0.y, p1.x, p1.y, COL.mu, 2.2, 8);
+    pill(ctx, p1.x + 12, p1.y - 2, 'μ', COL.mu, { fs: 9, bg: 'rgba(24,14,42,.78)', stroke: 'rgba(192,163,255,.4)' });
+  } else {
+    const p = project(cam.mvp, add(world.com, mul(world.perp, 0.24)), w, h);
+    if (p.w <= 0.02) return;
+    pill(ctx, p.x, p.y, 'μ = 0', 'rgba(192,163,255,.9)', { fs: 8.5, bg: 'rgba(24,14,42,.7)', stroke: 'rgba(192,163,255,.3)' });
+  }
+}
+
+function drawCom(ctx, cam, w, h, world) {
+  if (!state.show.com) return;
+  const p = project(cam.mvp, world.com, w, h);
+  if (p.w <= 0.02) return;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,209,102,.9)';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.arc(p.x, p.y, 7.5, 0, TAU); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,209,102,.55)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(p.x - 12, p.y); ctx.lineTo(p.x - 8, p.y);
+  ctx.moveTo(p.x + 8, p.y); ctx.lineTo(p.x + 12, p.y);
+  ctx.moveTo(p.x, p.y - 12); ctx.lineTo(p.x, p.y - 8);
+  ctx.moveTo(p.x, p.y + 8); ctx.lineTo(p.x, p.y + 12);
+  ctx.stroke();
+  ctx.fillStyle = '#ffe6a8';
+  ctx.beginPath(); ctx.arc(p.x, p.y, 1.8, 0, TAU); ctx.fill();
+  ctx.restore();
+  pill(ctx, p.x + 10, p.y - 15, 'COM', '#ffe0a0', {
+    fs: 8, align: 'left', bg: 'rgba(28,21,7,.72)', stroke: 'rgba(255,209,102,.35)'
+  });
+}
+
+function drawBondLabels(ctx, cam, w, h, geo, world) {
+  geo.bonds.forEach(([ia, ib], idx) => {
+    const a = project(cam.mvp, world.pos[ia], w, h);
+    const b = project(cam.mvp, world.pos[ib], w, h);
+    if (a.w <= 0.02 || b.w <= 0.02) return;
+    const dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1;
+    const nx = -dy / L, ny = dx / L;
+    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    const name = geo.molKey === 'CO2' ? (idx === 0 ? 'r₁' : 'r₂') : 'r';
+    const text = name + ' = ' + geo.lengths[idx].toFixed(3) + ' Å';
+
+    ctx.save();
+    ctx.font = '8px ' + MONO;
+    const tw = ctx.measureText(text).width + 9;
+    ctx.restore();
+
+    const halfDiag = Math.hypot(tw / 2, 6);
+    const rA = atomScreenRadius(cam, geo.mol.atoms[ia].rad, a.w, h);
+    const rB = atomScreenRadius(cam, geo.mol.atoms[ib].rad, b.w, h);
+    const need = Math.max(rA, rB) + halfDiag + 4;
+    const off = Math.sqrt(Math.max(0, need * need - (L / 2) * (L / 2)));
+
+    let best = null;
+    for (const sgn of [1, -1]) {
+      const px = mx + nx * off * sgn, py = my + ny * off * sgn;
+      const score = Math.min(px - tw / 2 - 4, w - px - tw / 2 - 4, py - 14, h - py - 14);
+      if (!best || score > best.score) best = { x: px, y: py, score };
+    }
+    if (!best) return;
+
+    ctx.save();
+    ctx.setLineDash([2, 3.5]);
+    ctx.strokeStyle = 'rgba(150,185,210,.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(mx, my);
+    ctx.lineTo(best.x, best.y);
+    ctx.stroke();
+    ctx.restore();
+
+    pill(ctx, best.x, best.y, text, 'rgba(214,236,250,.96)', {
+      fs: 8, bg: 'rgba(5,12,20,.8)', stroke: 'rgba(120,166,221,.2)'
+    });
+  });
+}
+
+function drawScene() {
+  const size = resizeCanvas(scene, sctx);
+  if (!size) return;
+  sceneSize = size;
+  const { w, h } = size;
+  const { geo, world } = computeFrame();
+  const target = state.cam.follow ? world.com : [0, 0, 0];
+  const cam = cameraData(state.mol, w / h, target);
+
+  sctx.clearRect(0, 0, w, h);
+
+  if (state.show.axes) drawAxes(sctx, cam, w, h);
+  if (state.show.trail) drawTrail(sctx, cam, w, h, world);
+  if (state.motion.rot.on) drawRotationGuide(sctx, cam, w, h);
+  drawAlphaEllipse(sctx, cam, w, h, geo, world);
+  drawBendPlane(sctx, cam, w, h, geo, world);
+  if (state.show.disp) drawGhosts(sctx, cam, w, h, geo, world);
+  drawBonds(sctx, cam, w, h, geo, world);
+  const list = drawAtoms(sctx, cam, w, h, geo, world);
+  if (state.show.symbols) drawSymbols(sctx, cam, w, h, geo, world, list);
+
+  const holding = state.motion.vib.on && performance.now() < state.motion.vib.holdUntil;
+  if (state.show.disp && state.motion.vib.on) {
+    const dirs = holding ? nextStepDirections(state.mol, state.motion.vib) : null;
+    drawDisplacements(sctx, cam, w, h, geo, world, list, dirs);
+    if (holding) {
+      const p = project(cam.mvp, add(world.com, [0.34, 0, 0]), w, h);
+      if (p.w > 0.02) pill(sctx, p.x, p.y, '橙色：下一步位移', '#ffb37e', { fs: 8, bg: 'rgba(40,22,10,.72)' });
+    }
+  }
+  drawDipole(sctx, cam, w, h, geo, world);
+  drawCom(sctx, cam, w, h, world);
+  drawBondLabels(sctx, cam, w, h, geo, world);
+  if (geo.molKey === 'CO2' && state.motion.vib.mode === 'v2') {
+    pill(sctx, 12, 72, '∠O–C–O = ' + geo.angle.toFixed(1) + '°', 'rgba(255,207,154,.95)', {
+      fs: 9, align: 'left', bg: 'rgba(30,18,8,.8)', stroke: 'rgba(255,154,98,.25)'
+    });
+  }
+
+  /* 角标：当前振动模式 */
+  const md = modeOf(state.motion.vib.mode);
+  const tag = geo.molKey === 'CO2' && state.motion.vib.mode === 'v2'
+    ? md.sym + ' 弯曲 · ' + (state.motion.vib.plane === 'xy' ? '平面 A' : '平面 B')
+    : md.sym + ' ' + md.name;
+  pill(sctx, 12, h - 16, tag, 'rgba(196,224,241,.85)', {
+    fs: 8.5, align: 'left', bg: 'rgba(5,12,20,.66)', stroke: 'rgba(120,166,221,.14)'
+  });
+  drawLabRuler(sctx, w, h);
+}
+
+/* ============================================================
+   30 · 光谱 / 能级图 / 模式对照
+   ============================================================ */
+const specCanvas = $('#specCanvas');
+const specCtx = specCanvas.getContext('2d');
+const levelCanvas = $('#levelCanvas');
+const levelCtx = levelCanvas.getContext('2d');
+const modeMapCanvas = $('#modeMap');
+const modeMapCtx = modeMapCanvas.getContext('2d');
+
+let specHits = [];
+let specPillHit = null;
+let modeMapHits = [];
+
+const CO2_AXIS = [0, 2600];
+
+const AX = { l: 44, r: 14, b: 40 };
+const axisX = (nu, lo, hi, w) => AX.l + (nu - lo) / (hi - lo) * (w - AX.l - AX.r);
+
+function specGrid(ctx, w, h, lo, hi, ticks) {
+  const base = h - AX.b;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(118,170,220,.07)';
+  ctx.lineWidth = 1;
+  for (const t of ticks) {
+    const x = axisX(t, lo, hi, w);
+    ctx.beginPath(); ctx.moveTo(x, 16); ctx.lineTo(x, base); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(140,185,225,.28)';
+  ctx.beginPath(); ctx.moveTo(AX.l, base + .5); ctx.lineTo(w - AX.r, base + .5); ctx.stroke();
+  ctx.fillStyle = 'rgba(150,176,199,.62)';
+  ctx.font = '8px ' + MONO;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  for (const t of ticks) {
+    const x = axisX(t, lo, hi, w);
+    ctx.beginPath(); ctx.moveTo(x, base); ctx.lineTo(x, base + 3); ctx.stroke();
+    const step = ticks.length > 1 ? Math.abs(ticks[1] - ticks[0]) : 1;
+    const dec = step >= 1 ? 0 : step >= 0.1 ? 1 : step >= 0.01 ? 2 : 3;
+    ctx.fillText(t.toFixed(dec), x, base + 5);
+  }
+  ctx.restore();
+  return base;
+}
+
+/* ---------------- HCl ---------------- */
+function drawHclSpectrum() {
+  const size = resizeCanvas(specCanvas, specCtx);
+  if (!size) return;
+  const { w, h } = size;
+  const ctx = specCtx;
+  const info = diatomicInfo();
+  const view = state.spec.hclView;
+  const recs = view === 'rot' ? info.rot : info.rovib;
+  const [lo, hi] = info.axis[view];
+  const ticks = info.ticks[view];
+  ctx.clearRect(0, 0, w, h);
+  specHits = [];
+  specPillHit = null;
+
+  const base = specGrid(ctx, w, h, lo, hi, ticks);
+  const stickTop = 48;
+  const sel = recById(state.spec.hclSel);
+
+  if (!info.ir) {
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(255,190,140,.92)';
+    ctx.font = '600 10px ' + SANS;
+    ctx.fillText(view === 'rot' ? 'μ₀ = 0 · 无纯转动电偶极吸收' : '伸缩不改变 μ · 无红外振转带', w / 2, base - 64);
+    ctx.fillStyle = 'rgba(150,178,200,.72)';
+    ctx.font = '8.5px ' + SANS;
+    ctx.fillText('同核双原子的偶极矩恒为零；红外 / 微波吸收要求 μ 随运动变化', w / 2, base - 46);
+    ctx.restore();
+    specCanvas.setAttribute('aria-label', info.formula + '：无电偶极吸收');
+    return;
+  }
+
+  if (view === 'rovib') {
+    const xc = axisX(info.nu0, lo, hi, w);
+    ctx.save();
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = 'rgba(160,178,196,.55)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(xc, 16); ctx.lineTo(xc, base); ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = 'rgba(178,196,213,.82)';
+    ctx.font = '8px ' + MONO;
+    ctx.textAlign = 'center';
+    ctx.fillText('带中心 ' + fmtNu(info.nu0), xc, 8);
+
+    ctx.fillStyle = 'rgba(95,196,235,.7)';
+    ctx.font = '8.5px ' + SANS;
+    ctx.textAlign = 'left';
+    ctx.fillText('P 支  ΔJ = −1', AX.l + 2, 20);
+    ctx.textAlign = 'right';
+    ctx.fillText('R 支  ΔJ = +1', w - AX.r - 2, 20);
+
+    const pillRect = pill(ctx, xc, 22, '比较 P(1) ↔ R(0)', state.spec.compare ? '#ffe3c6' : '#9fd5ee', {
+      fs: 8.2,
+      bg: state.spec.compare ? 'rgba(96,50,24,.8)' : 'rgba(8,20,30,.88)',
+      stroke: state.spec.compare ? 'rgba(255,154,98,.65)' : 'rgba(105,199,244,.4)'
+    });
+    specPillHit = pillRect;
+  } else {
+    ctx.fillStyle = 'rgba(95,196,235,.7)';
+    ctx.font = '8.5px ' + SANS;
+    ctx.textAlign = 'left';
+    ctx.fillText('刚性转子  ν̃ = 2B(J+1)', AX.l + 2, 20);
+  }
+
+  for (const rec of recs) {
+    const x = axisX(rec.nu, lo, hi, w);
+    const isSel = sel && sel.id === rec.id;
+    const cmp = state.spec.compare && view === 'rovib' &&
+      ((rec.branch === 'P' && rec.Jpp === 1) || (rec.branch === 'R' && rec.Jpp === 0));
+    ctx.save();
+    if (isSel || cmp) {
+      ctx.strokeStyle = 'rgba(255,154,98,.18)';
+      ctx.lineWidth = 7;
+      ctx.beginPath(); ctx.moveTo(x, base); ctx.lineTo(x, stickTop); ctx.stroke();
+      ctx.strokeStyle = isSel ? '#ffb07a' : 'rgba(255,176,122,.75)';
+      ctx.lineWidth = isSel ? 2.4 : 1.9;
+    } else {
+      ctx.strokeStyle = 'rgba(95,211,255,.55)';
+      ctx.lineWidth = 1.6;
+    }
+    ctx.beginPath(); ctx.moveTo(x, base); ctx.lineTo(x, stickTop); ctx.stroke();
+    ctx.fillStyle = isSel ? '#ffd0ac' : cmp ? 'rgba(255,176,122,.9)' : 'rgba(95,211,255,.75)';
+    ctx.beginPath(); ctx.arc(x, stickTop, isSel ? 2.6 : cmp ? 2 : 1.5, 0, TAU); ctx.fill();
+    ctx.restore();
+    specHits.push({ kind: 'stick', x, y0: stickTop - 8, y1: base, rec });
+
+    if (isSel && view === 'rovib') {
+      ctx.save();
+      ctx.fillStyle = '#ffd0ac';
+      ctx.font = '600 9px ' + MONO;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(fmtNu(rec.nu), x, stickTop - 5);
+      ctx.restore();
+    }
+  }
+
+  if (view === 'rot') {
+    const x0 = axisX(info.rot[0].nu, lo, hi, w);
+    const x1 = axisX(info.rot[1].nu, lo, hi, w);
+    const y = stickTop - 10;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,209,102,.55)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x0, y + 3); ctx.lineTo(x0, y); ctx.lineTo(x1, y); ctx.lineTo(x1, y + 3);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,209,102,.85)';
+    ctx.font = '8px ' + MONO;
+    ctx.textAlign = 'center';
+    ctx.fillText('2B ≈ ' + fmtNu(2 * info.B), (x0 + x1) / 2, y - 2);
+    ctx.restore();
+  }
+
+  updateSpecA11y(recs, sel);
+}
+
+function updateSpecA11y(recs, sel) {
+  const el = $('#specCanvas');
+  if (!el) return;
+  const name = MOLS[state.mol].plain;
+  el.setAttribute('aria-label', sel
+    ? name + ' 光谱，当前选中 ' + sel.label + '，' + fmtNu(sel.nu) + ' 每厘米'
+    : name + ' 光谱');
+}
+
+/* ---------------- 双原子能级图 ---------------- */
+function drawHclLevels() {
+  const size = resizeCanvas(levelCanvas, levelCtx);
+  if (!size) return;
+  const { w, h } = size;
+  const ctx = levelCtx;
+  ctx.clearRect(0, 0, w, h);
+  const info = diatomicInfo();
+  if (state.spec.hclView === 'rot') drawRotLadder(ctx, w, h, info);
+  else drawRovibLadder(ctx, w, h, info);
+}
+
+function levelLine(ctx, x0, x1, y, active, dim) {
+  ctx.save();
+  ctx.strokeStyle = active ? 'rgba(255,176,122,.95)' : dim ? 'rgba(130,163,190,.34)' : 'rgba(150,190,218,.6)';
+  ctx.lineWidth = active ? 2.2 : 1;
+  ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+  ctx.restore();
+}
+
+function drawRotLadder(ctx, w, h, info) {
+  const sel = recById(state.spec.hclSel);
+  const top = 22, bottom = h - 26;
+  const gap = (bottom - top) / 7;
+  const x0 = 46, x1 = w - 56;
+  const yOf = J => bottom - J * gap;
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(120,148,173,.75)';
+  ctx.font = '8px ' + MONO;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('J', 18, top - 8);
+  ctx.restore();
+
+  for (let J = 0; J < 8; J++) {
+    const y = yOf(J);
+    const active = sel && (sel.Jpp === J || sel.Jp === J);
+    levelLine(ctx, x0, x1, y, active);
+    ctx.fillStyle = active ? '#ffd0ac' : 'rgba(146,175,198,.72)';
+    ctx.font = (active ? '600 ' : '') + '8.5px ' + MONO;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('J=' + J, x0 - 6, y);
+  }
+
+  if (sel) {
+    const y1 = yOf(sel.Jpp), y2 = yOf(sel.Jp);
+    const xa = w - 40;
+    const lo = Math.min(y1, y2), hi = Math.max(y1, y2);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,154,98,.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(xa, y1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x1, y2); ctx.lineTo(xa, y2); ctx.stroke();
+    ctx.restore();
+    arrow2(ctx, xa, hi, xa, lo, '#ffb07a', 1.8, 7);
+    ctx.fillStyle = '#ffcf9a';
+    ctx.font = '600 8.5px ' + MONO;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.save();
+    ctx.translate(xa - 9, (y1 + y2) / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(fmtNu(sel.nu) + ' cm⁻¹', 0, 0);
+    ctx.restore();
+  }
+
+  ctx.fillStyle = 'rgba(120,148,173,.6)';
+  ctx.font = '8px ' + MONO;
+  ctx.textAlign = 'left';
+  ctx.fillText('E = B J(J+1) · 间距按 J 等距示意', 20, h - 8);
+}
+
+function drawRovibLadder(ctx, w, h, info) {
+  const sel = recById(state.spec.hclSel);
+  const step = 11.6;
+  const base0 = h - 30, base1 = h - 30 - 82;
+  const avail = Math.max(180, w - 80);
+  const LW = clamp(avail * 0.32, 64, 130);
+  const gapW = clamp(avail - 2 * LW, 80, 150);
+  const total = 2 * LW + gapW;
+  const startX = Math.max(22, (w - total) / 2);
+  const xa0 = startX, xa1 = startX + LW;
+  const xb0 = xa1 + gapW, xb1 = xb0 + LW;
+  const y0 = J => base0 - J * step;
+  const y1 = J => base1 - J * step;
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(140,175,205,.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo((xa1 + xb0) / 2, base1 + 6);
+  ctx.lineTo((xa1 + xb0) / 2, base0 - 6);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(146,175,198,.8)';
+  ctx.font = '8.5px ' + MONO;
+  ctx.textAlign = 'left';
+  ctx.fillText('v″ = 0', xa0, base0 - 6 * step - 8);
+  ctx.fillText('v′ = 1', xb0, base1 - 6 * step - 8);
+  ctx.restore();
+
+  for (let J = 0; J < 7; J++) {
+    const a0 = sel && sel.vpp === 0 && sel.Jpp === J;
+    const a1 = sel && sel.vp === 1 && sel.Jp === J;
+    levelLine(ctx, xa0, xa1, y0(J), a0, false);
+    levelLine(ctx, xb0, xb1, y1(J), a1, false);
+    ctx.fillStyle = a0 ? '#ffd0ac' : 'rgba(146,175,198,.62)';
+    ctx.font = (a0 ? '600 ' : '') + '8px ' + MONO;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('J=' + J, xa0 - 5, y0(J));
+    ctx.textAlign = 'left';
+    ctx.fillStyle = a1 ? '#ffd0ac' : 'rgba(146,175,198,.62)';
+    ctx.font = (a1 ? '600 ' : '') + '8px ' + MONO;
+    ctx.fillText('J=' + J, xb1 + 5, y1(J));
+  }
+
+  const gx = (xa1 + xb0) / 2;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,209,102,.5)';
+  ctx.lineWidth = 1.1;
+  ctx.beginPath();
+  ctx.moveTo(gx - 5, base1 + 12);
+  ctx.lineTo(gx + 5, base1 + 20);
+  ctx.lineTo(gx - 5, base1 + 28);
+  ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = 'rgba(255,209,102,.72)';
+  ctx.font = '7.5px ' + MONO;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText('ν̃₀ ≈ ' + fmtNu(info.nu0) + ' cm⁻¹', gx, h - 14);
+  ctx.fillText('（纵向压缩）', gx, h - 5);
+
+  if (sel) {
+    const p0 = { x: xa1, y: y0(sel.Jpp) };
+    const p1 = { x: xb0, y: y1(sel.Jp) };
+    ctx.save();
+    ctx.setLineDash([2, 3]);
+    ctx.strokeStyle = 'rgba(255,154,98,.3)';
+    ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
+    ctx.restore();
+    arrow2(ctx, p0.x, p0.y, p1.x, p1.y, '#ffb07a', 1.7, 7);
+    ctx.fillStyle = '#ffcf9a';
+    ctx.font = '600 8px ' + MONO;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(fmtNu(sel.nu), (p0.x + p1.x) / 2, (p0.y + p1.y) / 2 - 5);
+    for (const p of [p0, p1]) {
+      ctx.fillStyle = '#ffcf9a';
+      ctx.beginPath(); ctx.arc(p.x, p.y, 2.4, 0, TAU); ctx.fill();
+    }
+  }
+}
+
+/* ---------------- CO2 ---------------- */
+function drawCo2Spectrum() {
+  const size = resizeCanvas(specCanvas, specCtx);
+  if (!size) return;
+  const { w, h } = size;
+  const ctx = specCtx;
+  ctx.clearRect(0, 0, w, h);
+  specHits = [];
+  specPillHit = null;
+  const view = state.spec.co2View;
+  const [lo, hi] = view === 'rot' ? [0, 200] : CO2_AXIS;
+  const ticks = view === 'rot' ? [0, 50, 100, 150, 200] : [0, 500, 1000, 1500, 2000, 2500];
+  const base = specGrid(ctx, w, h, lo, hi, ticks);
+
+  if (view === 'rot') {
+    ctx.save();
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = 'rgba(140,170,195,.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(AX.l, base - 3); ctx.lineTo(w - AX.r, base - 3); ctx.stroke();
+    ctx.restore();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,190,140,.9)';
+    ctx.font = '600 10px ' + SANS;
+    ctx.fillText('理想线形 CO₂ 没有纯转动电偶极吸收', w / 2, base - 74);
+    ctx.fillStyle = 'rgba(150,178,200,.7)';
+    ctx.font = '8.5px ' + SANS;
+    ctx.fillText('永久偶极矩 μ₀ = 0', w / 2, base - 58);
+    ctx.fillStyle = 'rgba(120,148,173,.6)';
+    ctx.font = '8px ' + MONO;
+    ctx.fillText('ΔJ = ±1 的转动跃迁强度为零，谱线不出现', w / 2, base - 42);
+    specCanvas.setAttribute('aria-label', 'CO₂ 纯转动电偶极吸收：无谱线');
+    return;
+  }
+
+  const active = C => view === 'ir' ? MODE_IR[C.mode] : MODE_RAMAN[C.mode];
+  for (const band of CO2_BANDS) {
+    const cx = axisX(band.nu, lo, hi, w);
+    const halfPx = Math.max(14, Math.min(30, cx - AX.l - 4, w - AX.r - cx - 4));
+    const isSelMode = state.motion.vib.mode === band.mode;
+    const on = active(band);
+    const peak = on ? 100 : 26;
+
+    ctx.save();
+    ctx.beginPath();
+    for (let i = 0; i <= 40; i++) {
+      const t = -1 + i / 20;
+      const x = cx + t * halfPx;
+      const y = base - peak * Math.exp(-2.4 * t * t);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.lineTo(cx + halfPx, base);
+    ctx.lineTo(cx - halfPx, base);
+    ctx.closePath();
+    if (on) {
+      const g = ctx.createLinearGradient(0, base - peak, 0, base);
+      g.addColorStop(0, view === 'ir' ? 'rgba(255,154,98,.34)' : 'rgba(125,240,176,.32)');
+      g.addColorStop(1, 'rgba(20,40,55,.02)');
+      ctx.fillStyle = g;
+      ctx.fill();
+      ctx.strokeStyle = view === 'ir' ? 'rgba(255,154,98,.55)' : 'rgba(125,240,176,.5)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    } else {
+      ctx.setLineDash([3, 4]);
+      ctx.strokeStyle = 'rgba(140,160,178,.35)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = on
+      ? (view === 'ir' ? 'rgba(255,176,122,.9)' : 'rgba(125,240,176,.85)')
+      : 'rgba(140,160,178,.3)';
+    ctx.lineWidth = isSelMode ? 2.2 : 1.2;
+    ctx.beginPath(); ctx.moveTo(cx, base); ctx.lineTo(cx, base - peak); ctx.stroke();
+    ctx.restore();
+
+    /* 选中括线 */
+    if (isSelMode) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,209,102,.85)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(cx - halfPx + 4, 20);
+      ctx.lineTo(cx + halfPx - 4, 20);
+      ctx.moveTo(cx - halfPx + 4, 20);
+      ctx.lineTo(cx - halfPx + 4, 25);
+      ctx.moveTo(cx + halfPx - 4, 20);
+      ctx.lineTo(cx + halfPx - 4, 25);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,209,102,.9)';
+      ctx.font = '8px ' + MONO;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(band.nu + ' cm⁻¹', cx, 18);
+      ctx.restore();
+    }
+
+    if (view === 'raman' && band.mode === 'v1') {
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = 'rgba(125,240,176,.8)';
+      ctx.font = '7.5px ' + SANS;
+      ctx.fillText('模式参考值', cx, base - peak - 7);
+      ctx.restore();
+    }
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = isSelMode ? '#ffe0b8' : on ? 'rgba(200,226,242,.9)' : 'rgba(130,152,172,.55)';
+    ctx.font = '600 10px ' + SANS;
+    ctx.fillText(band.sym, cx, base + 16);
+    ctx.font = '8px ' + MONO;
+    ctx.fillStyle = isSelMode ? '#ffd0ac' : on ? 'rgba(160,196,220,.8)' : 'rgba(120,142,162,.5)';
+    ctx.fillText(String(band.nu), cx, base + 26);
+    ctx.restore();
+
+    specHits.push({ kind: 'band', x: cx, half: halfPx + 4, mode: band.mode, rec: null });
+  }
+
+  specCanvas.setAttribute('aria-label', 'CO₂ ' + (view === 'ir' ? '红外' : '拉曼') + '活性带位置示意图');
+}
+
+/* ---------------- CO2 模式对照小图 ---------------- */
+function drawModeMap() {
+  const size = resizeCanvas(modeMapCanvas, modeMapCtx);
+  if (!size) return;
+  const { w, h } = size;
+  const ctx = modeMapCtx;
+  ctx.clearRect(0, 0, w, h);
+  modeMapHits = [];
+  const rowH = h / 3;
+  const modes = MODES.CO2;
+
+  for (let i = 0; i < modes.length; i++) {
+    const m = modes[i];
+    const y0 = i * rowH;
+    const cy = y0 + rowH / 2;
+    const on = state.motion.vib.mode === m.id;
+    if (on) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(41,101,143,.22)';
+      rr(ctx, 3, y0 + 2, w - 6, rowH - 4, 6);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(105,213,255,.22)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(105,213,255,.75)';
+      ctx.fillRect(3, y0 + 6, 2, rowH - 12);
+      ctx.restore();
+    }
+
+    ctx.save();
+    ctx.fillStyle = on ? '#eaf8ff' : 'rgba(167,193,214,.78)';
+    ctx.font = 'italic 11px ' + SANS;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(m.sym, 12, cy - 5);
+    ctx.font = '8px ' + MONO;
+    ctx.fillStyle = on ? 'rgba(255,209,102,.9)' : 'rgba(120,146,170,.65)';
+    ctx.fillText(String(m.nu), 12, cy + 7);
+    ctx.restore();
+
+    const cx = w * 0.47;
+    const dx = Math.min(34, w * 0.11);
+    const rC = 5.6, rO = 4.4;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(150,180,205,.5)';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(cx - dx, cy); ctx.lineTo(cx - rC, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + rC, cy); ctx.lineTo(cx + dx, cy); ctx.stroke();
+    for (const [x, r, c] of [[cx - dx, rO, '#ff6f61'], [cx + dx, rO, '#ff6f61'], [cx, rC, '#9fb6cc']]) {
+      ctx.fillStyle = c;
+      ctx.beginPath(); ctx.arc(x, cy, r, 0, TAU); ctx.fill();
+    }
+
+    const col = on ? '#ffb37e' : 'rgba(140,170,195,.55)';
+    const ax = 11;
+    if (m.id === 'v1') {
+      arrow2(ctx, cx - dx - rO - 2, cy, cx - dx - rO - 2 - ax, cy, col, 1.3, 4);
+      arrow2(ctx, cx + dx + rO + 2, cy, cx + dx + rO + 2 + ax, cy, col, 1.3, 4);
+    } else if (m.id === 'v2') {
+      arrow2(ctx, cx - dx, cy - rO - 2, cx - dx, cy - rO - 2 - ax, col, 1.3, 4);
+      arrow2(ctx, cx + dx, cy - rO - 2, cx + dx, cy - rO - 2 - ax, col, 1.3, 4);
+      arrow2(ctx, cx, cy + rC + 2, cx, cy + rC + 2 + ax, col, 1.3, 4);
+    } else {
+      arrow2(ctx, cx - dx + rO + 2, cy, cx - dx + rO + 2 + ax, cy, col, 1.3, 4);
+      arrow2(ctx, cx + dx + rO + 2, cy, cx + dx + rO + 2 + ax, cy, col, 1.3, 4);
+      arrow2(ctx, cx - rC - 2, cy, cx - rC - 2 - ax, cy, col, 1.3, 4);
+    }
+    ctx.restore();
+
+    ctx.save();
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.font = '8px ' + SANS;
+    const ir = m.ir, ra = m.raman;
+    ctx.fillStyle = ir ? 'rgba(255,176,122,.85)' : 'rgba(110,132,150,.5)';
+    ctx.fillText(ir ? 'IR ✓' : 'IR —', w - 10, cy - 6);
+    ctx.fillStyle = ra ? 'rgba(125,240,176,.85)' : 'rgba(110,132,150,.5)';
+    ctx.fillText(ra ? '拉曼 ✓' : '拉曼 —', w - 10, cy + 6);
+    ctx.restore();
+
+    modeMapHits.push({ y0, y1: y0 + rowH, mode: m.id });
+  }
+}
+
+/* ---------------- 入口 ---------------- */
+function drawSpectrum() {
+  if (state.mol !== 'CO2') {
+    drawHclSpectrum();
+    drawHclLevels();
+  } else {
+    drawCo2Spectrum();
+  }
+}
+
+/* ============================================================
+   40 · 界面：控件、详情、实时量、事件、动画循环
+   ============================================================ */
+const PAUSE_PATH = 'M2.5 1.5h2.2v9H2.5zM7.3 1.5h2.2v9H7.3z';
+const PLAY_PATH = 'M3 1.5L10 6L3 10.5Z';
+let noticeTimer = 0;
+let lastStats = '';
+let lastStatus = '';
+let lastHudT = '', lastHudS = '';
+let lastLive = 0;
+
+function showNotice(text) {
+  const el = $('#notice');
+  if (!el) return;
+  el.textContent = text;
+  el.hidden = false;
+  clearTimeout(noticeTimer);
+  noticeTimer = setTimeout(() => { el.hidden = true; }, 3000);
+}
+
+/* ---------------- 状态切换 ---------------- */
+function setMolecule(key) {
+  if (!MOLS[key] || key === state.mol) return;
+  if (key === 'CUSTOM') rebuildCustom();
+  state.mol = key;
+  const vib = state.motion.vib;
+  if (key === 'CO2') {
+    vib.mode = 'v2';
+    vib.plane = 'xy';
+    vib.phi = 0;
+    vib.holdUntil = performance.now() + 700;
+    state.spec.co2View = 'ir';
+  } else {
+    vib.mode = key === 'CUSTOM' ? 'custom' : 'hcl';
+    vib.phi = Math.PI / 2;
+    vib.holdUntil = 0;
+    state.spec.hclView = 'rovib';
+    state.spec.hclSel = key === 'CUSTOM' ? 'custom-R-0' : 'rovib-R-0';
+    state.spec.compare = false;
+  }
+  state.motion.playing = true;
+  state.dirty = true;
+  renderAll(true);
+  drawScene();
+}
+
+function setMode(id) {
+  if (state.mol !== 'CO2') return;
+  const m = modeOf(id);
+  if (!m) return;
+  const changed = state.motion.vib.mode !== id;
+  state.motion.vib.mode = id;
+  if (changed) {
+    state.motion.vib.phi = 0;
+    state.motion.vib.holdUntil = performance.now() + 720;
+  }
+  if (state.spec.co2View === 'rot') {
+    state.spec.co2View = m.ir ? 'ir' : 'raman';
+    showNotice('已按 ' + m.sym + ' 的活性切到' + (m.ir ? '红外' : '拉曼') + '视图');
+  } else if (state.spec.co2View === 'ir' && !m.ir) {
+    state.spec.co2View = 'raman';
+    showNotice(m.sym + ' 无红外活性 · 已切到拉曼视图');
+  } else if (state.spec.co2View === 'raman' && !m.raman) {
+    state.spec.co2View = 'ir';
+    showNotice(m.sym + ' 无拉曼活性 · 已切到红外视图');
+  }
+  renderAll();
+}
+
+function setBendPlane(p) {
+  if (state.motion.vib.plane === p) return;
+  state.motion.vib.plane = p;
+  if (state.motion.vib.mode === 'v2') {
+    state.motion.vib.phi = 0;
+    state.motion.vib.holdUntil = performance.now() + 650;
+  }
+  renderAll();
+}
+
+function setHclView(v) {
+  state.spec.hclView = v;
+  state.spec.compare = false;
+  const info = diatomicInfo();
+  const recs = v === 'rot' ? info.rot : info.rovib;
+  if (!recs.some(r => r.id === state.spec.hclSel)) {
+    const r0 = v === 'rovib' ? info.rovib.find(r => r.branch === 'R' && r.Jpp === 0) : null;
+    state.spec.hclSel = r0 ? r0.id : recs[0].id;
+  }
+  renderAll();
+}
+
+function setCo2View(v) {
+  state.spec.co2View = v;
+  renderAll();
+}
+
+function setHclSel(id, keepCompare) {
+  const rec = recById(id);
+  if (!rec) return;
+  state.spec.hclSel = id;
+  if (!keepCompare) state.spec.compare = false;
+  drawSpectrum();
+  renderChrome();
+  renderDetail();
+  updatePhoton();
+  updateStatus(performance.now());
+}
+
+function toggleCompare() {
+  state.spec.compare = !state.spec.compare;
+  if (state.spec.compare && state.spec.hclView !== 'rovib') {
+    state.spec.hclView = 'rovib';
+    const r0 = diatomicInfo().rovib.find(r => r.branch === 'R' && r.Jpp === 0);
+    state.spec.hclSel = r0 ? r0.id : diatomicInfo().rovib[0].id;
+  }
+  renderAll();
+}
+
+function togglePlay() {
+  const M = state.motion;
+  M.playing = !M.playing;
+  renderControls();
+  updateStatus(performance.now());
+}
+
+function resetMotion() {
+  const M = state.motion;
+  M.trans.s = 0;
+  M.trans.dir = 1;
+  M.rot.angle = 0;
+  M.vib.phi = state.mol === 'CO2' ? 0 : Math.PI / 2;
+  M.vib.holdUntil = 0;
+  M.playing = true;
+  state.lastFrame = 0;
+  state.dirty = true;
+  renderAll(true);
+  drawScene();
+}
+
+function resetCamera() {
+  state.cam.az = -0.74;
+  state.cam.el = 0.55;
+  state.cam.zoom = 1;
+  state.dirty = true;
+}
+
+/* ---------------- 渲染：静态外壳 ---------------- */
+function renderMoleculeTabs() {
+  $$('[data-mol]').forEach(b => {
+    const on = b.dataset.mol === state.mol;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
+
+function renderControls() {
+  const M = state.motion;
+  $('#transOn').checked = M.trans.on;
+  $('#rotOn').checked = M.rot.on;
+  $('#vibOn').checked = M.vib.on;
+  $('#motionTrans').classList.toggle('on', M.trans.on);
+  $('#motionRot').classList.toggle('on', M.rot.on);
+  $('#motionVib').classList.toggle('on', M.vib.on);
+  $('#transSpeed').value = String(M.trans.speed);
+  $('#rotSpeed').value = String(M.rot.speed);
+  $('#ampRange').value = String(M.vib.amp);
+  $('#speedRange').value = String(M.speed);
+  $('#transSpeedVal').textContent = M.trans.speed.toFixed(2);
+  $('#rotSpeedVal').textContent = M.rot.speed.toFixed(2);
+  $('#ampVal').textContent = M.vib.amp.toFixed(2);
+  $('#speedVal').textContent = M.speed.toFixed(2) + '×';
+  $$('[data-glyph]').forEach(p => p.setAttribute('d', M.playing ? PAUSE_PATH : PLAY_PATH));
+  $$('[data-play-label]').forEach(s => { s.textContent = M.playing ? '暂停' : '播放'; });
+  $$('[data-act="play"]').forEach(b => b.setAttribute('aria-pressed', M.playing ? 'true' : 'false'));
+  $$('#viewTabs button').forEach(b => {
+    const on = (b.dataset.view === 'follow') === state.cam.follow;
+    b.classList.toggle('active', on);
+  });
+  $$('#displayChips button').forEach(b => {
+    b.classList.toggle('on', !!state.show[b.dataset.chip]);
+  });
+  $$('#bendPlanes button').forEach(b => b.classList.toggle('active', b.dataset.plane === M.vib.plane));
+}
+
+function renderModeList() {
+  const box = $('#vibModes');
+  box.innerHTML = '';
+  for (const m of MODES[state.mol]) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'mode-btn' + (m.id === state.motion.vib.mode ? ' active' : '');
+    b.dataset.mode = m.id;
+    b.innerHTML =
+      '<span class="mb-sym">' + m.sym + '</span>' +
+      '<div class="mb-body"><b>' + m.name + '</b><span>' + m.nu + ' cm⁻¹ · ' + m.sub + '</span></div>' +
+      '<div class="mb-tags"><i class="ir' + (m.ir ? ' on' : '') + '">IR</i><i class="ra' + (m.raman ? ' on' : '') + '">Raman</i></div>';
+    box.appendChild(b);
+  }
+  const isBend = state.mol === 'CO2' && state.motion.vib.mode === 'v2';
+  $('#bendRow').hidden = !isBend;
+  $('#modeHint').textContent = state.mol === 'CO2' ? 'D∞h' : state.mol === 'CUSTOM' ? '估算' : '单模';
+  $('#modeNote').innerHTML = modeOf(state.motion.vib.mode).note;
+}
+
+function renderSpecTabs() {
+  const box = $('#specTabs');
+  const isCO2 = state.mol === 'CO2';
+  const tabs = isCO2
+    ? [{ id: 'ir', label: '红外' }, { id: 'raman', label: '拉曼' }, { id: 'rot', label: '纯转动' }]
+    : [{ id: 'rot', label: '纯转动吸收' }, { id: 'rovib', label: '红外振转吸收' }];
+  const cur = isCO2 ? state.spec.co2View : state.spec.hclView;
+  box.innerHTML = '';
+  for (const t of tabs) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.tab = t.id;
+    if (t.id === cur) b.classList.add('active');
+    b.textContent = t.label;
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', t.id === cur ? 'true' : 'false');
+    box.appendChild(b);
+  }
+}
+
+function renderChrome() {
+  const isCO2 = state.mol === 'CO2';
+  const m = modeOf(state.motion.vib.mode);
+  const info = isCO2 ? null : diatomicInfo();
+  $('#molBadge').textContent = MOLS[state.mol].plain;
+
+  let title, badge, caption;
+  if (!isCO2) {
+    const rot = state.spec.hclView === 'rot';
+    const sel = recById(state.spec.hclSel);
+    title = MOLS[state.mol].plain + (rot ? ' 纯转动吸收' : ' 红外振转吸收');
+    badge = sel ? sel.label : '—';
+    caption = rot
+      ? '等高棒线，线高仅作示意。横轴为波数 / cm⁻¹：ν̃ = 2B(J+1)，B ≈ ' + fmtNu(info.B) + ' cm⁻¹。'
+      : '等高棒线，线高仅作示意。横轴为波数 / cm⁻¹；灰色虚线为带中心 ν̃₀ = ' + fmtNu(info.nu0) + ' cm⁻¹。';
+    if (!info.ir) caption = '该分子偶极矩恒为 0，没有电偶极吸收；坐标保留作对照。';
+    else if (info.ref === '模型估算') caption += ' B、ν̃₀ 为估算值，只看趋势。';
+  } else {
+    const v = state.spec.co2View;
+    title = v === 'ir' ? 'CO₂ 红外活性带' : v === 'raman' ? 'CO₂ 拉曼活性带' : 'CO₂ 纯转动吸收';
+    badge = m.sym;
+    caption = v === 'ir'
+      ? '横轴为波数 / cm⁻¹；虚线带表示该模式没有红外活性。带宽与形状仅示意，第一版不分辨转动细结构。'
+      : v === 'raman'
+        ? '横轴为波数 / cm⁻¹；1333 cm⁻¹ 是对称伸缩的模式参考值，第一版只示意活性，不画费米共振双峰。'
+        : '理想线形 CO₂ 没有永久偶极矩，常规纯转动电偶极吸收谱中没有对应谱线。';
+  }
+  $('#specTitle').textContent = title;
+  $('#specBadge').textContent = badge;
+  $('#specCaption').innerHTML = caption;
+
+  const wrap = $('#compareWrap');
+  if (!isCO2 && state.spec.hclView === 'rovib' && info.ir) {
+    wrap.hidden = false;
+    if (!wrap.querySelector('button')) {
+      wrap.innerHTML = '<button class="hint-btn" type="button" data-act="compare">虚线附近：比较 P(1) 与 R(0)</button>';
+    }
+    const b = wrap.querySelector('button');
+    b.textContent = state.spec.compare ? '收起对比 · 回到单条谱线' : '虚线附近：比较 P(1) 与 R(0)';
+    b.classList.toggle('on', state.spec.compare);
+  } else {
+    wrap.hidden = true;
+    wrap.innerHTML = '';
+  }
+
+  const rot = !isCO2 && state.spec.hclView === 'rot';
+  $('#energyCard').hidden = isCO2;
+  $('#energyHead').textContent = rot ? '纯转动能级' : '振转能级与跃迁';
+  $('#energySub').textContent = rot ? 'E = B J(J+1) · J 等距示意' : 'P / R 支 · 带中心压缩显示';
+  $('#co2Card').hidden = !isCO2;
+  $('#legendAlpha').hidden = !(isCO2 && m.id === 'v1');
+  $('#vibTag').textContent = '慢放示意';
+
+  const nu = m.nu;
+  const period = 1e14 / (2.99792458e10 * nu);
+  $('#vibNote').innerHTML = '实际 ν ≈ ' + nu + ' cm⁻¹，周期约 ' + period.toFixed(1) + '×10⁻¹⁴ s；画面已放慢。';
+}
+
+function renderDetail() {
+  const el = $('#detail');
+  if (state.mol !== 'CO2') {
+    const info = diatomicInfo();
+    const rec = recById(state.spec.hclSel);
+    if (!rec) { el.innerHTML = ''; return; }
+    const A = info.labels[0], B = info.labels[1];
+    if (state.spec.hclView === 'rot') {
+      el.innerHTML =
+        '<div class="d-title"><b>J = ' + rec.Jpp + ' → ' + rec.Jp + '</b><span>' + fmtNu(rec.nu) + ' cm⁻¹</span></div>' +
+        '<div class="d-sub">' + MOLS[state.mol].plain + ' 纯转动吸收 · 刚性转子 ΔJ = +1</div>' +
+        '<dl class="drows">' +
+        '<dt>起始</dt><dd>J″ = ' + rec.Jpp + '（' + A + '–' + B + '）</dd>' +
+        '<dt>终止</dt><dd>J′ = ' + rec.Jp + '</dd>' +
+        '<dt>波数</dt><dd>ν̃ = 2B(J″+1) = 2×' + info.B.toFixed(2) + '×' + (rec.Jpp + 1) + ' = <span class="hi">' + fmtNu(rec.nu) + '</span> cm⁻¹</dd>' +
+        '</dl>' +
+        '<div class="d-note">' + (info.ir
+          ? '相邻两条线的间隔恒为 2B ≈ ' + fmtNu(2 * info.B) + ' cm⁻¹。'
+          : '该分子 μ₀ = 0，纯转动电偶极跃迁没有强度，谱线不出现。') + '</div>';
+      return;
+    }
+    if (state.spec.compare) {
+      const p1 = info.rovib.find(r => r.branch === 'P' && r.Jpp === 1);
+      const r0 = info.rovib.find(r => r.branch === 'R' && r.Jpp === 0);
+      el.innerHTML =
+        '<div class="d-title"><b>P(1) / R(0)</b><span>' + fmtNu(info.nu0) + ' ± ' + fmtNu(2 * info.B) + '</span></div>' +
+        '<div class="d-sub">同一条振转带的两侧：ΔJ 相反，与带中心的距离都等于 2B。</div>' +
+        '<dl class="drows">' +
+        '<dt>P(1)</dt><dd>(0,1)→(1,0) · ΔJ=−1 · <span class="hi">' + fmtNu(p1.nu) + '</span></dd>' +
+        '<dt>R(0)</dt><dd>(0,0)→(1,1) · ΔJ=+1 · <span class="hi">' + fmtNu(r0.nu) + '</span></dd>' +
+        '<dt>间距</dt><dd>' + fmtNu(r0.nu - p1.nu) + ' = 4B cm⁻¹</dd>' +
+        '</dl>' +
+        '<div class="d-note">两条线分居带中心两侧，中间没有谱线：<b>ΔJ = 0 的 Q 支</b>在双原子分子的振转跃迁中被禁阻。</div>' +
+        '<div class="d-actions">' +
+        '<button type="button" data-sel="' + p1.id + '" class="' + (state.spec.hclSel === p1.id ? 'on' : '') + '">单独看 P(1)</button>' +
+        '<button type="button" data-sel="' + r0.id + '" class="' + (state.spec.hclSel === r0.id ? 'on' : '') + '">单独看 R(0)</button>' +
+        '</div>';
+      return;
+    }
+    const isP = rec.branch === 'P';
+    el.innerHTML =
+      '<div class="d-title"><b>' + rec.label + ' · (' + rec.vpp + ',' + rec.Jpp + ')→(' + rec.vp + ',' + rec.Jp + ')</b><span>' + fmtNu(rec.nu) + ' cm⁻¹</span></div>' +
+      '<div class="d-sub">v″=0 → v′=1 的振转吸收 · ' + rec.branch + ' 支</div>' +
+      '<dl class="drows">' +
+      '<dt>ΔJ</dt><dd>' + (isP ? '−1' : '+1') + '（' + rec.branch + ' 支）</dd>' +
+      '<dt>起始</dt><dd>(v″=0, J″=' + rec.Jpp + ')</dd>' +
+      '<dt>终止</dt><dd>(v′=1, J′=' + rec.Jp + ')</dd>' +
+      '<dt>波数</dt><dd>' + (isP
+        ? 'ν̃₀ − 2B·J″ = ' + fmtNu(info.nu0) + ' − ' + fmtNu(2 * info.B) + '×' + rec.Jpp + ' = '
+        : 'ν̃₀ + 2B(J″+1) = ' + fmtNu(info.nu0) + ' + ' + fmtNu(2 * info.B) + '×' + (rec.Jpp + 1) + ' = ') +
+      '<span class="hi">' + fmtNu(rec.nu) + '</span> cm⁻¹</dd>' +
+      '</dl>' +
+      '<div class="d-note">' + (info.ir
+        ? 'P、R 两支关于带中心对称，步长都是 2B。带中心本身没有谱线（Q 支禁阻）。'
+        : '该分子伸缩不改变 μ，红外振转带没有强度；这里只保留线位与量子数。') + '</div>' +
+      '<div class="d-actions"><button type="button" data-act="compare">比较 P(1) 与 R(0)</button></div>';
+    return;
+  }
+
+  /* CO2 */
+  if (state.spec.co2View === 'rot') {
+    el.innerHTML =
+      '<div class="d-title"><b>纯转动电偶极吸收</b><span>无谱线</span></div>' +
+      '<div class="d-sub">理想线形 CO₂ · D∞h</div>' +
+      '<dl class="drows">' +
+      '<dt>永久偶极</dt><dd>μ₀ = <span class="hi">0</span>（两个 C=O 键偶极严格抵消）</dd>' +
+      '<dt>选择定则</dt><dd>电偶极转动跃迁要求 μ₀ ≠ 0</dd>' +
+      '<dt>结论</dt><dd>常规纯转动电偶极吸收谱中没有 CO₂ 的谱线</dd>' +
+      '</dl>' +
+      '<div class="d-note">CO₂ 的纯转动跃迁可以在<b>转动拉曼</b>中观察到，但那不是电偶极吸收，也不在本页范围内。</div>';
+    return;
+  }
+  const m = modeOf(state.motion.vib.mode);
+  const isBend = m.id === 'v2';
+  const planeLabel = state.motion.vib.plane === 'xy' ? '平面 A（xy）' : '平面 B（xz）';
+  let rows;
+  if (m.id === 'v1') {
+    rows = '<dt>红外</dt><dd><span class="hi">无</span> · μ 恒为 0，偶极矩不随振动变化</dd>' +
+      '<dt>拉曼</dt><dd><span class="hi">有</span> · 极化率 α 随键长改变</dd>' +
+      '<dt>简并</dt><dd>无 · 单一模式</dd>' +
+      '<dt>偶极</dt><dd>平衡构型与振动中都保持 μ = 0</dd>';
+  } else if (isBend) {
+    rows = '<dt>红外</dt><dd><span class="hi">有</span> · μ 在弯曲平面内横向振荡</dd>' +
+      '<dt>拉曼</dt><dd>无 · 该模式不改变主要极化率</dd>' +
+      '<dt>简并</dt><dd>2 个互相垂直的弯曲平面，共用 667 cm⁻¹</dd>' +
+      '<dt>当前</dt><dd>' + planeLabel + ' · 半角 β 最大 14°，键角 180° → 152°</dd>';
+  } else {
+    rows = '<dt>红外</dt><dd><span class="hi">有</span> · μ 沿分子轴，每半周期反向</dd>' +
+      '<dt>拉曼</dt><dd>无 · 该模式不改变主要极化率</dd>' +
+      '<dt>简并</dt><dd>无 · 单一模式</dd>' +
+      '<dt>偶极</dt><dd>平衡时 μ = 0；振动中 μ 随位移线性出现</dd>';
+  }
+  el.innerHTML =
+    '<div class="d-title"><b>' + m.sym + ' ' + m.name + '</b><span>' + m.nu + ' cm⁻¹</span></div>' +
+    '<div class="d-sub">' + m.sub + ' · D∞h 线形分子</div>' +
+    '<dl class="drows">' + rows + '</dl>' +
+    '<div class="d-note">' + m.note + '</div>' +
+    '<div class="d-actions">' +
+    '<button type="button" data-view="ir" class="' + (state.spec.co2View === 'ir' ? 'on' : '') + '">红外视图</button>' +
+    '<button type="button" data-view="raman" class="' + (state.spec.co2View === 'raman' ? 'on' : '') + '">拉曼视图</button>' +
+    '</div>';
+}
+
+function renderActTable() {
+  const head = '<div class="act-row head"><span>正常模式</span><b>ν̃/cm⁻¹</b><span>红外</span><span>拉曼</span></div>';
+  const rows = MODES.CO2.map(m => {
+    const on = m.id === state.motion.vib.mode;
+    return '<div class="act-row' + (on ? ' active' : '') + '" data-mode="' + m.id + '">' +
+      '<span class="an">' + m.sym + ' ' + m.name + '</span>' +
+      '<b>' + m.nu + '</b>' +
+      '<span class="yn ' + (m.ir ? 'ir y' : 'n') + '">' + (m.ir ? '有' : '无') + '</span>' +
+      '<span class="yn ' + (m.raman ? 'y' : 'n') + '">' + (m.raman ? '有' : '无') + '</span>' +
+      '</div>';
+  }).join('');
+  $('#actTable').innerHTML = head + rows;
+  $('#co2Tags').innerHTML = '<span>D∞h</span><span>线形</span><span>ν₂ 二重简并</span><span>ν₁ 费米共振</span>';
+  $('#co2Note').innerHTML = '两个弯曲方向（平面 A / B）共用同一个 667 cm⁻¹ 带位置，是频率相同的<b>二重简并</b>分量。ν₁ 的 1333 cm⁻¹ 在真实拉曼谱中受<b>费米共振</b>影响会分裂成一对峰，这里只示意活性。';
+}
+
+/* ---------------- 实时量 ---------------- */
+function statsHTML() {
+  const geo = state.geo, world = state.world;
+  if (!geo || !world) return '';
+  const k = geo.mol.k;
+  const deg = ((world.angle / DEG) % 360 + 360) % 360;
+  const comY = world.com[1] / k;
+  const mu = len3(world.mu) / k;
+  const cells = [];
+  const cell = (label, value, unit) =>
+    '<div class="stat"><span>' + label + '</span><b>' + value + (unit ? ' <i>' + unit + '</i>' : '') + '</b></div>';
+
+  if (geo.molKey !== 'CO2') {
+    const e0 = geo.mol.atoms[0].el, e1 = geo.mol.atoms[1].el;
+    const d0 = len3(sub(world.pos[0], world.posEq[0])) / k;
+    const d1 = len3(sub(world.pos[1], world.posEq[1])) / k;
+    cells.push(cell('r(' + e0 + '–' + e1 + ')', geo.lengths[0].toFixed(3), 'Å'));
+    cells.push(cell(e0 + ' 位移', d0.toFixed(3), 'Å'));
+    cells.push(cell(e1 + ' 位移', d1.toFixed(3), 'Å'));
+    cells.push(cell('质心 y_c', sgn(comY) + Math.abs(comY).toFixed(3), 'Å'));
+    cells.push(cell('偶极矩 |μ|', mu.toFixed(3), 'e·Å'));
+    cells.push(cell('键轴转角', deg.toFixed(1), '°'));
+  } else {
+    cells.push(cell('r₁(C–O)', geo.lengths[0].toFixed(3), 'Å'));
+    cells.push(cell('r₂(C–O)', geo.lengths[1].toFixed(3), 'Å'));
+    cells.push(cell('∠O–C–O', (geo.angle == null ? 180 : geo.angle).toFixed(1), '°'));
+    cells.push(cell('质心 y_c', sgn(comY) + Math.abs(comY).toFixed(3), 'Å'));
+    cells.push(cell('偶极矩 |μ|', mu.toFixed(3), 'e·Å'));
+    cells.push(cell('键轴转角', deg.toFixed(1), '°'));
+  }
+  return cells.join('');
+}
+
+function updateLive(now, force) {
+  if (!force && now - lastLive < 90) return;
+  lastLive = now;
+  const html = statsHTML();
+  if (html !== lastStats) {
+    lastStats = html;
+    $('#stats').innerHTML = html;
+  }
+}
+
+function updateStatus(now) {
+  const M = state.motion;
+  const on = [];
+  if (M.trans.on) on.push('平动');
+  if (M.rot.on) on.push('转动');
+  if (M.vib.on) on.push('振动');
+  let txt = MOLS[state.mol].plain + ' · ' + (on.length ? on.join(' + ') : '静止');
+  let cls = '';
+  if (!M.playing) { txt += ' · 已暂停'; cls = 'paused'; }
+  else if (M.vib.on && now < M.vib.holdUntil) { txt += ' · 相位归零'; cls = 'hold'; }
+  if (state.cam.follow) txt += ' · 跟随质心';
+
+  const m = modeOf(M.vib.mode);
+  const hudT = MOLS[state.mol].plain;
+  const hudS = (M.vib.on ? m.sym + ' ' + m.name + ' · 慢放' : '未振动') + (state.cam.follow ? ' · 跟随' : '');
+  if (hudT !== lastHudT || hudS !== lastHudS) {
+    lastHudT = hudT; lastHudS = hudS;
+    $('#hudTitle').textContent = hudT;
+    $('#hudSub').textContent = hudS;
+  }
+
+  if (txt === lastStatus) return;
+  lastStatus = txt;
+  $('#statusText').textContent = txt;
+  $('#status').className = 'status' + (cls ? ' ' + cls : '');
+}
+
+/* ---------------- 总渲染 ---------------- */
+function renderAll(full) {
+  renderMoleculeTabs();
+  renderControls();
+  if (full !== false) {
+    renderModeList();
+    renderSpecTabs();
+    renderActTable();
+  }
+  renderCustomBox();
+  renderChrome();
+  renderDetail();
+  updateStatus(performance.now());
+  computeFrame();
+  if (state.mol !== 'CO2') {
+    drawHclSpectrum();
+    drawHclLevels();
+  } else {
+    drawCo2Spectrum();
+    drawModeMap();
+  }
+  updatePhoton();
+  updateLive(performance.now(), true);
+  state.dirty = true;
+}
+
+/* ---------------- 光子能量 / 波长 / 可见光判断 ---------------- */
+const HC_J = 1.98644586e-23;   // hc，单位 J·cm
+const HC_EV = 1.23984198e-4;   // hc，单位 eV·cm
+const SUP = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+
+function sci(x, d) {
+  const parts = x.toExponential(d == null ? 2 : d).split('e');
+  const ex = String(Number(parts[1])).split('').map(c => SUP[c] || c).join('');
+  return parts[0] + '×10' + ex;
+}
+function fmtLambda(nm) {
+  if (nm >= 1e7) return (nm / 1e7).toFixed(2) + ' cm';
+  if (nm >= 1e6) return (nm / 1e6).toFixed(2) + ' mm';
+  if (nm >= 1e4) return (nm / 1e3).toFixed(1) + ' µm';
+  if (nm >= 1e3) return (nm / 1e3).toFixed(2) + ' µm';
+  return nm.toFixed(0) + ' nm';
+}
+function photonRegion(nm) {
+  if (nm >= 1e5) return { name: '远红外 / 微波', cls: 'far' };
+  if (nm >= 2500) return { name: '中红外', cls: 'ir' };
+  if (nm >= 780) return { name: '近红外', cls: 'nir' };
+  if (nm >= 380) return { name: '可见光', cls: 'vis' };
+  return { name: '紫外', cls: 'far' };
+}
+function photonTarget() {
+  if (state.mol !== 'CO2') {
+    const info = diatomicInfo();
+    if (!info.ir) return null;
+    const r = recById(state.spec.hclSel);
+    return r ? { nu: r.nu, label: r.label } : null;
+  }
+  if (state.spec.co2View === 'rot') return null;
+  const m = modeOf(state.motion.vib.mode);
+  return m ? { nu: m.nu, label: m.sym + ' ' + m.name } : null;
+}
+
+function drawPhotonStrip(info) {
+  const c = $('#photonCanvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const size = resizeCanvas(c, ctx);
+  if (!size) return;
+  const { w, h } = size;
+  ctx.clearRect(0, 0, w, h);
+  const pad = 14, y0 = 24, y1 = 39;
+  const lo = 2, hi = 6;
+  const X = nm => pad + (clamp(Math.log10(nm), lo, hi) - lo) / (hi - lo) * (w - 2 * pad);
+
+  ctx.fillStyle = 'rgba(80,110,135,.2)';
+  rr(ctx, pad, y0, w - 2 * pad, y1 - y0, 3);
+  ctx.fill();
+
+  const xv0 = X(380), xv1 = X(780);
+  const g = ctx.createLinearGradient(xv0, 0, Math.max(xv0 + 2, xv1), 0);
+  g.addColorStop(0, '#7a5cff');
+  g.addColorStop(.25, '#3b82f6');
+  g.addColorStop(.5, '#22c55e');
+  g.addColorStop(.75, '#eab308');
+  g.addColorStop(1, '#ef4444');
+  ctx.fillStyle = g;
+  ctx.fillRect(xv0, y0, Math.max(2, xv1 - xv0), y1 - y0);
+
+  ctx.fillStyle = 'rgba(160,220,190,.85)';
+  ctx.font = '7px ' + SANS;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('可见', (xv0 + xv1) / 2, y0 - 2);
+
+  const ticks = [[100, '100 nm'], [1e3, '1 µm'], [1e4, '10 µm'], [1e5, '100 µm'], [1e6, '1 mm']];
+  ctx.font = '7px ' + MONO;
+  ctx.textBaseline = 'top';
+  for (const [nm, lab] of ticks) {
+    const x = X(nm);
+    ctx.strokeStyle = 'rgba(130,155,175,.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y1 + 3); ctx.stroke();
+    ctx.fillStyle = 'rgba(130,155,175,.72)';
+    ctx.textAlign = nm === 100 ? 'left' : nm === 1e6 ? 'right' : 'center';
+    ctx.fillText(lab, x, y1 + 4);
+  }
+
+  if (info && isFinite(info.lambdaNm)) {
+    const x = X(info.lambdaNm);
+    ctx.strokeStyle = 'rgba(255,209,102,.9)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x, y0 - 5); ctx.lineTo(x, y1 + 4); ctx.stroke();
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath(); ctx.arc(x, (y0 + y1) / 2, 2.6, 0, TAU); ctx.fill();
+    ctx.font = '600 8px ' + MONO;
+    ctx.fillStyle = '#ffe0a0';
+    ctx.textAlign = x > w - 48 ? 'right' : 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(fmtLambda(info.lambdaNm), x, y0 - 12);
+  } else {
+    ctx.fillStyle = 'rgba(140,160,178,.62)';
+    ctx.font = '8px ' + SANS;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('当前选择没有对应跃迁', w / 2, (y0 + y1) / 2);
+  }
+}
+
+function updatePhoton() {
+  const reg = $('#photonRegion');
+  if (!reg) return;
+  const info = photonTarget();
+  if (!info) {
+    $('#photonSub').textContent = '纯转动 · 无电偶极跃迁';
+    $('#phNu').textContent = '—';
+    $('#phLambda').textContent = '—';
+    $('#phE').textContent = '—';
+    $('#phNote').textContent = state.mol === 'CO2'
+      ? '理想线形 CO₂ 没有纯转动电偶极吸收，没有可计算的光子。'
+      : '该分子偶极矩恒为 0，没有电偶极跃迁，也就没有吸收光子。';
+    reg.textContent = '无跃迁';
+    reg.className = 'pregion';
+    drawPhotonStrip(null);
+    return;
+  }
+  const nu = info.nu;
+  const lambdaNm = 1e7 / nu;
+  const eJ = HC_J * nu;
+  const eV = HC_EV * nu;
+  const region = photonRegion(lambdaNm);
+  const visible = lambdaNm >= 380 && lambdaNm <= 780;
+
+  $('#photonSub').textContent = info.label + ' · ' + nu.toFixed(1) + ' cm⁻¹ · ' + eV.toFixed(3) + ' eV';
+  $('#phNu').textContent = nu.toFixed(1) + ' cm⁻¹';
+  $('#phLambda').textContent = fmtLambda(lambdaNm);
+  $('#phE').textContent = sci(eJ, 2) + ' J';
+  $('#phE').title = eV.toFixed(3) + ' eV';
+  reg.textContent = region.name;
+  reg.className = 'pregion ' + region.cls;
+
+  let note = visible
+    ? '落在可见光区（380–780 nm），肉眼可见。'
+    : '不在可见光区（380–780 nm）：波长' + (lambdaNm > 780 ? '比红光更长' : '比紫光更短') +
+      '，肉眼不可见，需用' + (lambdaNm > 780 ? '红外' : '紫外') + '光谱探测。';
+  if (state.mol === 'CO2') note += ' CO₂ 的三个振动带都在中红外，这正是它吸收地面辐射、成为温室气体的原因之一。';
+  $('#phNote').innerHTML = note;
+  drawPhotonStrip({ lambdaNm });
+}
+
+function buildElementSelects() {
+  const opts = EL_ORDER.map(k => '<option value="' + k + '">' + k + '</option>').join('');
+  const a = $('#custA'), b = $('#custB');
+  if (a) a.innerHTML = opts;
+  if (b) b.innerHTML = opts;
+}
+function renderCustomBox() {
+  const box = $('#customBox');
+  if (!box) return;
+  box.hidden = state.mol !== 'CUSTOM';
+  if (box.hidden) return;
+  const info = state.custom.info;
+  const A = ELEMENTS[state.custom.a], B = ELEMENTS[state.custom.b];
+  $('#custA').value = state.custom.a;
+  $('#custB').value = state.custom.b;
+  $$('#custCharge button').forEach(b => b.classList.toggle('active', Number(b.dataset.chg) === state.custom.charge));
+  $('#custRef').textContent = info.ref === '实验参考值' ? '实验参考' : '模型估算';
+  $('#custNote').innerHTML =
+    'r₀ ≈ ' + info.r0.toFixed(2) + ' Å（共价半径和' + (info.charge ? ' ×0.9' : '') + '）<br>' +
+    'μ = ' + info.muU.toFixed(3) + ' u；B ≈ ' + (info.B < 1 ? info.B.toFixed(4) : info.B.toFixed(2)) + ' cm⁻¹<br>' +
+    'ν̃₀ ≈ ' + Math.round(info.nu0) + ' cm⁻¹（' + info.ref + '）<br>' +
+    '位移比 ' + A.sym + ' : ' + B.sym + ' = ' + (A.sym === B.sym ? '1.00' : (B.m / A.m).toFixed(2)) + ' : 1';
+}
+function applyCustomChange() {
+  rebuildCustom();
+  if (state.mol === 'CUSTOM') {
+    state.motion.vib.mode = 'custom';
+    state.motion.vib.phi = Math.PI / 2;
+    state.motion.vib.holdUntil = 0;
+    state.spec.hclView = 'rovib';
+    state.spec.hclSel = 'custom-R-0';
+    state.spec.compare = false;
+    renderAll(true);
+    drawScene();
+  }
+}
+function bindCustom() {
+  const a = $('#custA'), b = $('#custB'), ch = $('#custCharge');
+  if (!a || !b || !ch) return;
+  a.addEventListener('change', e => { state.custom.a = e.target.value; applyCustomChange(); });
+  b.addEventListener('change', e => { state.custom.b = e.target.value; applyCustomChange(); });
+  ch.addEventListener('click', e => {
+    const btn = e.target.closest('[data-chg]');
+    if (!btn) return;
+    state.custom.charge = Number(btn.dataset.chg);
+    applyCustomChange();
+  });
+}
+
+/* ---------------- 事件绑定 ---------------- */
+function bindMotions() {
+  $('#transOn').addEventListener('change', e => {
+    const M = state.motion.trans;
+    M.on = e.target.checked;
+    if (M.on) state.motion.playing = true;
+    state.dirty = true;
+    renderControls();
+    updateStatus(performance.now());
+  });
+  $('#rotOn').addEventListener('change', e => {
+    state.motion.rot.on = e.target.checked;
+    if (state.motion.rot.on) state.motion.playing = true;
+    state.dirty = true;
+    renderControls();
+    updateStatus(performance.now());
+  });
+  $('#vibOn').addEventListener('change', e => {
+    state.motion.vib.on = e.target.checked;
+    if (state.motion.vib.on) state.motion.playing = true;
+    state.dirty = true;
+    renderControls();
+    updateStatus(performance.now());
+  });
+  $('#transDir').addEventListener('click', () => {
+    state.motion.trans.dir *= -1;
+    state.dirty = true;
+  });
+  $('#transSpeed').addEventListener('input', e => {
+    state.motion.trans.speed = Number(e.target.value);
+    $('#transSpeedVal').textContent = state.motion.trans.speed.toFixed(2);
+  });
+  $('#rotSpeed').addEventListener('input', e => {
+    state.motion.rot.speed = Number(e.target.value);
+    $('#rotSpeedVal').textContent = state.motion.rot.speed.toFixed(2);
+  });
+  $('#ampRange').addEventListener('input', e => {
+    state.motion.vib.amp = Number(e.target.value);
+    $('#ampVal').textContent = state.motion.vib.amp.toFixed(2);
+    state.dirty = true;
+  });
+  $('#speedRange').addEventListener('input', e => {
+    state.motion.speed = Number(e.target.value);
+    $('#speedVal').textContent = state.motion.speed.toFixed(2) + '×';
+  });
+}
+
+function bindClicks() {
+  document.addEventListener('click', ev => {
+    const molBtn = ev.target.closest('[data-mol]');
+    if (molBtn) { setMolecule(molBtn.dataset.mol); return; }
+    const act = ev.target.closest('[data-act]');
+    if (act) {
+      if (act.dataset.act === 'play') togglePlay();
+      else if (act.dataset.act === 'reset') resetMotion();
+      else if (act.dataset.act === 'compare') toggleCompare();
+      return;
+    }
+  });
+
+  $('#vibModes').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-mode]');
+    if (b) setMode(b.dataset.mode);
+  });
+  $('#bendPlanes').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-plane]');
+    if (b) setBendPlane(b.dataset.plane);
+  });
+  $('#viewTabs').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-view]');
+    if (!b) return;
+    const follow = b.dataset.view === 'follow';
+    if (follow === state.cam.follow) return;
+    state.cam.follow = follow;
+    state.dirty = true;
+    renderControls();
+    updateStatus(performance.now());
+  });
+  $('#displayChips').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-chip]');
+    if (!b) return;
+    state.show[b.dataset.chip] = !state.show[b.dataset.chip];
+    b.classList.toggle('on', state.show[b.dataset.chip]);
+    state.dirty = true;
+  });
+  $('#resetCamBtn').addEventListener('click', () => { resetCamera(); state.dirty = true; });
+  $('#specTabs').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-tab]');
+    if (!b) return;
+    if (state.mol !== 'CO2') setHclView(b.dataset.tab);
+    else setCo2View(b.dataset.tab);
+  });
+  $('#detail').addEventListener('click', ev => {
+    const sel = ev.target.closest('[data-sel]');
+    if (sel) { setHclSel(sel.dataset.sel); return; }
+    const v = ev.target.closest('[data-view]');
+    if (v) {
+      state.spec.co2View = v.dataset.view;
+      renderAll();
+    }
+  });
+  $('#actTable').addEventListener('click', ev => {
+    const row = ev.target.closest('[data-mode]');
+    if (row) setMode(row.dataset.mode);
+  });
+}
+
+function bindCanvases() {
+  const sp = $('#specCanvas');
+  let downX = 0, downY = 0;
+  const hitAt = (x, y, forCursor) => {
+    if (specPillHit && x >= specPillHit.x - 5 && x <= specPillHit.x + specPillHit.w + 5 &&
+      y >= specPillHit.y - 5 && y <= specPillHit.y + specPillHit.h + 5) return { kind: 'pill' };
+    let stick = null, band = null, bd = Infinity;
+    for (const h of specHits) {
+      const d = Math.abs(x - h.x);
+      if (h.kind === 'stick') {
+        if (d <= 10 && y >= h.y0 - 6 && y <= h.y1 + 8) {
+          if (!stick || d < stick.d) stick = { kind: 'stick', rec: h.rec, d };
+        }
+      } else if (d <= h.half && d < bd) {
+        bd = d;
+        band = { kind: 'band', mode: h.mode };
+      }
+    }
+    return stick || band;
+  };
+  sp.addEventListener('pointerdown', ev => {
+    downX = ev.clientX; downY = ev.clientY;
+  });
+  sp.addEventListener('pointerup', ev => {
+    if (Math.hypot(ev.clientX - downX, ev.clientY - downY) > 9) return;
+    const r = sp.getBoundingClientRect();
+    const hit = hitAt(ev.clientX - r.left, ev.clientY - r.top, false);
+    if (!hit) return;
+    if (hit.kind === 'pill') toggleCompare();
+    else if (hit.kind === 'stick') setHclSel(hit.rec.id);
+    else if (hit.kind === 'band') setMode(hit.mode);
+  });
+  sp.addEventListener('pointermove', ev => {
+    const r = sp.getBoundingClientRect();
+    const hit = hitAt(ev.clientX - r.left, ev.clientY - r.top, true);
+    sp.style.cursor = hit ? 'pointer' : 'default';
+  });
+  sp.addEventListener('pointerleave', () => { sp.style.cursor = 'default'; });
+
+  const mm = $('#modeMap');
+  let mmDown = null;
+  mm.addEventListener('pointerdown', ev => {
+    const r = mm.getBoundingClientRect();
+    mmDown = { x: ev.clientX, y: ev.clientY };
+  });
+  mm.addEventListener('pointerup', ev => {
+    if (!mmDown) return;
+    if (Math.hypot(ev.clientX - mmDown.x, ev.clientY - mmDown.y) > 9) return;
+    const r = mm.getBoundingClientRect();
+    const y = ev.clientY - r.top;
+    const hit = modeMapHits.find(h => y >= h.y0 && y < h.y1);
+    if (hit) setMode(hit.mode);
+  });
+  mm.addEventListener('pointermove', ev => {
+    const r = mm.getBoundingClientRect();
+    const y = ev.clientY - r.top;
+    mm.style.cursor = modeMapHits.some(h => y >= h.y0 && y < h.y1) ? 'pointer' : 'default';
+  });
+}
+
+function bind3D() {
+  const pane = $('#scene');
+  const pointers = new Map();
+  let last = null, pinch = 0;
+  const mark = () => { state.dirty = true; };
+
+  pane.addEventListener('pointerdown', ev => {
+    ev.preventDefault();
+    pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (pointers.size === 1) {
+      state.cam.dragging = true;
+      pane.classList.add('dragging');
+      last = { x: ev.clientX, y: ev.clientY };
+      pane.setPointerCapture && pane.setPointerCapture(ev.pointerId);
+    } else if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinch = Math.hypot(a.x - b.x, a.y - b.y);
+    }
+  });
+  pane.addEventListener('pointermove', ev => {
+    if (!pointers.has(ev.pointerId)) return;
+    pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (pointers.size === 1 && state.cam.dragging && last) {
+      state.cam.az -= (ev.clientX - last.x) * 0.0065;
+      state.cam.el = clamp(state.cam.el + (ev.clientY - last.y) * 0.0065, -1.42, 1.42);
+      last = { x: ev.clientX, y: ev.clientY };
+      mark();
+    } else if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (pinch > 0) {
+        state.cam.zoom = clamp(state.cam.zoom * pinch / d, 0.55, 2.1);
+        mark();
+      }
+      pinch = d;
+    }
+  });
+  const up = ev => {
+    pointers.delete(ev.pointerId);
+    if (!pointers.size) {
+      state.cam.dragging = false;
+      pane.classList.remove('dragging');
+      last = null; pinch = 0;
+    } else if (pointers.size === 1) {
+      const p = [...pointers.values()][0];
+      last = { x: p.x, y: p.y };
+      pinch = 0;
+    }
+  };
+  pane.addEventListener('pointerup', up);
+  pane.addEventListener('pointercancel', up);
+  pane.addEventListener('wheel', ev => {
+    ev.preventDefault();
+    state.cam.zoom = clamp(state.cam.zoom * Math.exp(ev.deltaY * 0.0011), 0.55, 2.1);
+    mark();
+  }, { passive: false });
+  pane.addEventListener('dblclick', () => { resetCamera(); mark(); });
+}
+
+/* ---------------- 动画循环 ---------------- */
+function loop(ts) {
+  requestAnimationFrame(loop);
+  const now = ts || 0;
+  const M = state.motion;
+  if (!state.lastFrame) state.lastFrame = now;
+  const dt = Math.min(0.05, (now - state.lastFrame) / 1000);
+  state.lastFrame = now;
+  if (document.hidden) return;
+
+  let moved = false;
+  if (M.playing && now >= M.vib.holdUntil) {
+    const sdt = dt * M.speed;
+    if (M.trans.on) {
+      M.trans.s += sdt * M.trans.speed * 0.1 * M.trans.dir;
+      if (M.trans.s >= RANGE_T) { M.trans.s = RANGE_T; M.trans.dir = -1; }
+      else if (M.trans.s <= -RANGE_T) { M.trans.s = -RANGE_T; M.trans.dir = 1; }
+      moved = true;
+    }
+    if (M.rot.on) {
+      M.rot.angle = (M.rot.angle + sdt * M.rot.speed * 0.9) % TAU;
+      moved = true;
+    }
+    if (M.vib.on) {
+      M.vib.phi = (M.vib.phi + sdt * 1.9) % TAU;
+      moved = true;
+    }
+  }
+
+  if (moved || state.dirty) {
+    drawScene();
+    state.dirty = false;
+    updateLive(now, false);
+    updateStatus(now);
+  } else {
+    updateStatus(now);
+  }
+}
+
+/* ---------------- 启动 ---------------- */
+function bindFormulaModal() {
+  const modal = $('#formulaModal');
+  const openBtn = $('#openFormula');
+  const closeBtn = $('#formulaClose');
+  if (!modal || !openBtn || !closeBtn) return;
+  let lastFocus = null;
+  const open = () => {
+    lastFocus = document.activeElement;
+    modal.hidden = false;
+    document.body.classList.add('modal-open');
+    closeBtn.focus();
+  };
+  const close = () => {
+    modal.hidden = true;
+    document.body.classList.remove('modal-open');
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  };
+  openBtn.addEventListener('click', open);
+  closeBtn.addEventListener('click', close);
+  modal.addEventListener('click', ev => { if (ev.target === modal) close(); });
+  document.addEventListener('keydown', ev => {
+    if (ev.key === 'Escape' && !modal.hidden) close();
+  });
+}
+
+function init() {
+  bindMotions();
+  bindClicks();
+  bindCanvases();
+  bind3D();
+  bindFormulaModal();
+  bindCustom();
+  buildElementSelects();
+  rebuildCustom();
+  renderAll(true);
+  drawScene();
+  state.lastFrame = 0;
+  requestAnimationFrame(loop);
+
+  let rt = 0;
+  const onResize = () => {
+    clearTimeout(rt);
+    rt = setTimeout(() => {
+      state.dirty = true;
+      if (state.mol !== 'CO2') { drawHclSpectrum(); drawHclLevels(); }
+      else { drawCo2Spectrum(); drawModeMap(); }
+      updatePhoton();
+      drawScene();
+    }, 120);
+  };
+  window.addEventListener('resize', onResize);
+  window.addEventListener('orientationchange', onResize);
+
+  document.addEventListener('keydown', ev => {
+    const tag = (document.activeElement && document.activeElement.tagName) || '';
+    if (ev.code === 'Space' && !/INPUT|BUTTON|TEXTAREA|SELECT/.test(tag)) {
+      ev.preventDefault();
+      togglePlay();
+    }
+  });
+}
+
+init();
+})();
+
+</script>
+</body>
+</html>

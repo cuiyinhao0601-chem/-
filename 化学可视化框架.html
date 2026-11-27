@@ -1,0 +1,2843 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05080f">
+<title>化学可视化框架 · HCl 伸缩 / SN2 三阶段</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#04070d;--panel-a:rgba(12,23,38,.92);--panel-b:rgba(5,11,19,.94);
+  --line:rgba(120,168,220,.15);--line-hot:rgba(112,214,255,.5);
+  --text:#e8f2fc;--muted:#7d93ab;--dim:#566d84;
+  --accent:#6fd6ff;--pos:#ff9a62;--neg:#58d7ff;--ok:#74e3b2;--warn:#ffc56b;
+  --pink:#ff7fa4;--violet:#b39bff;--green:#6fe3a8;--gold:#ffcf7a;
+  --mono:"SFMono-Regular","Cascadia Code",Consolas,"Liberation Mono",monospace;
+  --serif:"STIX Two Math","Cambria Math","Times New Roman",Georgia,serif;
+  --r:16px;--shadow:0 22px 60px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text)}
+body{
+  font-family:"SF Pro Display","Segoe UI","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  font-size:13px;line-height:1.5;overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+body::before{content:"";position:fixed;inset:-18%;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(circle at 10% 6%,rgba(52,132,205,.20),transparent 34%),
+    radial-gradient(circle at 91% 9%,rgba(132,94,255,.11),transparent 30%),
+    radial-gradient(circle at 50% 98%,rgba(31,190,219,.08),transparent 40%),
+    linear-gradient(135deg,#060a12,#04070d 55%,#070c15)}
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.55;
+  background-image:linear-gradient(rgba(124,170,220,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,170,220,.03) 1px,transparent 1px);
+  background-size:48px 48px;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 42%,#000,transparent 74%);
+  mask-image:radial-gradient(ellipse at 50% 42%,#000,transparent 74%)}
+button,input{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{cursor:pointer}
+::selection{background:rgba(98,207,255,.28);color:#fff}
+::-webkit-scrollbar{width:7px;height:7px}
+::-webkit-scrollbar-thumb{background:rgba(108,150,190,.22);border-radius:99px}
+::-webkit-scrollbar-track{background:transparent}
+.app{position:relative;z-index:1;height:100vh;height:100dvh;min-height:600px;display:flex;flex-direction:column;padding:14px 18px 16px;gap:12px}
+
+/* ---------- topbar ---------- */
+.topbar{flex:none;display:flex;align-items:center;gap:16px;min-height:56px}
+.brand{display:flex;align-items:center;gap:11px;min-width:0;flex:none}
+.mark{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;flex:none;
+  border:1px solid rgba(121,197,255,.24);
+  background:radial-gradient(circle at 50% 45%,rgba(255,181,112,.13),transparent 64%),linear-gradient(145deg,rgba(21,42,64,.94),rgba(7,13,23,.9));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 10px 28px rgba(0,0,0,.3)}
+.mark svg{width:35px;height:35px;overflow:visible}
+.eyebrow{font-size:9px;line-height:1.2;letter-spacing:.19em;text-transform:uppercase;color:#6b88a6;font-weight:650;white-space:nowrap}
+.eyebrow em{font-style:normal;color:var(--accent)}
+.brand h1{margin:2px 0 0;font-size:19px;line-height:1.2;font-weight:630;letter-spacing:.012em;color:#f1f8ff;white-space:nowrap}
+.brand h1 span{color:#8ca7c5;font-weight:400;font-size:13px;margin-left:7px;letter-spacing:.02em}
+.scene-tabs{display:flex;align-items:center;gap:4px;margin-left:auto;padding:3px;border:1px solid rgba(118,166,221,.13);border-radius:12px;background:rgba(5,11,18,.46);overflow:auto;scrollbar-width:none;max-width:100%}
+.scene-tabs::-webkit-scrollbar{display:none}
+.scene-tab{border:0;border-radius:9px;background:transparent;color:#7f97ae;padding:8px 12px;font-size:11.5px;white-space:nowrap;transition:.15s;display:flex;align-items:center;gap:6px}
+.scene-tab b{font-weight:600;letter-spacing:.01em}
+.scene-tab i{font-style:normal;font-family:var(--mono);font-size:8px;color:#567089;border:1px solid rgba(118,166,221,.14);border-radius:4px;padding:0 4px}
+.scene-tab:hover{color:#d8f3ff;background:rgba(81,161,213,.09)}
+.scene-tab.active{background:linear-gradient(150deg,rgba(33,91,126,.48),rgba(14,38,58,.55));color:#e6faff;box-shadow:inset 0 0 0 1px rgba(105,213,255,.22)}
+.scene-tab.active i{color:#9dddf7;border-color:rgba(105,213,255,.3)}
+.top-actions{display:flex;align-items:center;gap:7px;flex:none}
+.badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;background:rgba(16,29,45,.6);color:#8da5be;padding:5px 9px;font-size:10px;white-space:nowrap}
+.badge i{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.ghost-btn{border:1px solid rgba(105,213,255,.24);border-radius:8px;background:rgba(19,53,78,.35);color:#bfeeff;font-size:10.5px;padding:6px 10px;white-space:nowrap}
+.ghost-btn:hover{border-color:rgba(105,213,255,.55);background:rgba(27,83,118,.45);color:#fff}
+
+/* ---------- layout ---------- */
+.layout{flex:1;min-height:0;display:grid;gap:12px;grid-template-columns:320px minmax(0,1fr) 344px;align-items:stretch}
+.panel{min-height:0;border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(158deg,var(--panel-a),var(--panel-b));box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.03);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.controls,.inspector{padding:14px;overflow:auto;overscroll-behavior:contain}
+.panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:9px;margin-bottom:4px}
+.kicker{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#64809c;font-weight:700}
+.panel-head h2{margin:2px 0 0;font-size:16.5px;line-height:1.25;font-weight:620;color:#eef7ff}
+.panel-head h2 sub{font-size:10px}
+.desc{margin:3px 0 12px;color:#7289a3;font-size:10.5px;line-height:1.6}
+.desc b{color:#a8c5da;font-weight:500}
+.section{padding-top:12px;margin-top:12px;border-top:1px solid rgba(120,166,220,.11)}
+.section:first-of-type{padding-top:0;margin-top:0;border-top:0}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.section-head>span:first-child{font-size:10.5px;font-weight:650;letter-spacing:.09em;color:#8fa7c1;text-transform:uppercase}
+.hint{font-family:var(--mono);font-size:8.5px;letter-spacing:.03em;color:#536a82;white-space:nowrap}
+.hint.hot{color:#ffbe8c}
+.note{margin:8px 0 0;padding:7px 8px;border-left:1px solid rgba(112,202,251,.32);background:rgba(66,148,201,.05);border-radius:0 5px 5px 0;font-size:9.5px;line-height:1.6;color:#69829c}
+.note b{color:#a9c7dc;font-weight:500}
+.note.warn{border-left-color:rgba(255,197,107,.45);background:rgba(150,108,42,.06);color:#8d8168}
+
+/* ---------- controls ---------- */
+.seg{display:flex;gap:3px;padding:3px;border:1px solid rgba(118,166,221,.12);border-radius:9px;background:rgba(5,11,18,.46)}
+.seg.wrap{flex-wrap:wrap}
+.seg-btn{flex:1;border:0;border-radius:6px;background:transparent;color:#6f879f;padding:6px 8px;font-size:10px;white-space:nowrap;transition:.14s;min-height:30px}
+.seg-btn:hover{color:#c9e9ff;background:rgba(81,161,213,.08)}
+.seg-btn.active{background:rgba(41,101,143,.34);color:#dcf6ff;box-shadow:inset 0 0 0 1px rgba(107,196,244,.16)}
+.seg-btn:disabled{opacity:.3;cursor:not-allowed}
+.ctl-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.opt-btn{border:1px solid rgba(119,164,216,.14);border-radius:9px;background:rgba(8,16,27,.62);padding:7px 8px;text-align:left;color:#98b0c6;transition:.14s;min-height:38px}
+.opt-btn:hover{border-color:rgba(112,198,248,.35);background:rgba(17,32,51,.7)}
+.opt-btn b{display:block;font-size:11px;line-height:1.25;font-weight:600;color:#c3d8ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.opt-btn span{display:block;margin-top:1px;font-family:var(--mono);font-size:7.5px;color:#5d7891;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.opt-btn.active{border-color:rgba(105,213,255,.52);background:linear-gradient(150deg,rgba(27,72,105,.5),rgba(11,27,44,.7));box-shadow:inset 0 1px 0 rgba(180,239,255,.08)}
+.opt-btn.active b{color:#f0fbff}.opt-btn.active span{color:#9bdbff}
+.opt-btn:disabled{opacity:.32;cursor:not-allowed}
+.chk-list{display:flex;flex-direction:column;gap:5px}
+.chk{display:flex;align-items:center;gap:8px;padding:5px 7px;border:1px solid transparent;border-radius:8px;background:rgba(9,18,30,.32);transition:.13s;cursor:pointer;min-height:32px}
+.chk:hover{background:rgba(15,29,46,.55)}
+.chk.on{border-color:rgba(112,181,231,.16);background:rgba(14,28,44,.6)}
+.chk input{position:absolute;opacity:0;pointer-events:none}
+.chk .box{width:14px;height:14px;border-radius:4px;border:1px solid rgba(124,166,210,.35);flex:none;display:grid;place-items:center;background:rgba(5,11,18,.6)}
+.chk .box::after{content:"";width:6px;height:6px;border-radius:2px;background:var(--dot,var(--accent));opacity:0;transform:scale(.4);transition:.12s}
+.chk.on .box{border-color:var(--dot,var(--accent));box-shadow:0 0 8px color-mix(in srgb,var(--dot,var(--accent)) 35%,transparent)}
+.chk.on .box::after{opacity:1;transform:scale(1)}
+.chk .txt{min-width:0;flex:1}
+.chk b{display:block;font-size:10.5px;font-weight:500;color:#b9cde0;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chk span{display:block;font-family:var(--mono);font-size:7.5px;color:#5a738b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chk .phase{display:flex;gap:2px;flex:none}
+.chk .phase i{width:5px;height:12px;border-radius:2px;display:block}
+.switch{position:relative;width:28px;height:16px;flex:none;border-radius:99px;background:rgba(92,124,152,.25);transition:.15s}
+.switch i{position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:#8198ae;transition:.15s}
+.chk.on .switch{background:rgba(62,157,200,.45)}
+.chk.on .switch i{left:14px;background:#dff8ff;box-shadow:0 0 8px rgba(111,214,255,.6)}
+.slider-row{display:flex;align-items:center;gap:8px;margin:5px 0;min-height:28px}
+.slider-row>span{font-size:9.5px;color:#7891a8;min-width:52px;white-space:nowrap}
+.slider-row>b{font-family:var(--mono);font-size:9px;font-weight:500;color:#b9dff2;min-width:40px;text-align:right;white-space:nowrap}
+.slider-row>input{flex:1;min-width:40px}
+.slider-row .unit{color:#6d879e;font-size:8px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:18px;margin:0;background:transparent;cursor:pointer;touch-action:pan-y}
+input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:99px;background:linear-gradient(90deg,var(--accent) 0,var(--accent) var(--p,50%),rgba(104,136,162,.3) var(--p,50%),rgba(104,136,162,.3) 100%)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;margin-top:-4.5px;border-radius:50%;background:#e9f9ff;border:2px solid #64c9ee;box-shadow:0 0 0 3px rgba(78,195,239,.1)}
+input[type=range]::-moz-range-track{height:3px;border-radius:99px;background:rgba(104,136,162,.3)}
+input[type=range]::-moz-range-progress{height:3px;border-radius:99px;background:var(--accent)}
+input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:#e9f9ff;border:2px solid #64c9ee}
+.range-block{margin:6px 0 2px}
+.range-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:9.5px;color:#7891a8}
+.range-top b{font-family:var(--mono);font-size:10px;color:#c4e8f7;font-weight:500}
+.range-block .ticks{display:flex;justify-content:space-between;font-family:var(--mono);font-size:7.5px;color:#536b83;margin-top:-1px}
+.btn-row{display:flex;gap:5px;flex-wrap:wrap}
+.btn{border:1px solid rgba(112,162,210,.16);border-radius:8px;background:rgba(9,18,29,.55);color:#9db6cc;padding:6px 9px;font-size:10px;display:inline-flex;align-items:center;gap:5px;min-height:30px;transition:.13s}
+.btn:hover{border-color:rgba(111,204,250,.4);color:#e4f8ff;background:rgba(21,41,61,.7)}
+.btn.primary{border-color:rgba(105,213,255,.35);background:rgba(28,88,125,.3);color:#c9f3ff}
+.btn.primary:hover{background:rgba(32,104,145,.42)}
+.btn.tiny{padding:4px 7px;font-size:9px;min-height:26px}
+.btn[aria-pressed=true]{border-color:rgba(105,213,255,.45);background:rgba(28,88,125,.34);color:#d9f7ff}
+.btn svg{width:12px;height:12px;flex:none}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.pill-row{display:flex;gap:4px;flex-wrap:wrap}
+.pill{border:1px solid rgba(112,162,210,.15);border-radius:999px;background:rgba(10,21,34,.45);color:#7f99b1;font-family:var(--mono);font-size:8px;padding:3px 7px}
+.pill.hot{color:#ffd3a4;border-color:rgba(255,180,110,.3);background:rgba(120,78,26,.14)}
+.kv{display:grid;grid-template-columns:1fr auto;gap:3px 8px;margin-top:7px;font-size:9px;color:#6d859c}
+.kv b{font-family:var(--mono);font-weight:500;color:#bedcec}
+.kv .full{grid-column:1/-1}
+
+/* ---------- stage ---------- */
+.stage{position:relative;min-width:0;min-height:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;
+  background:radial-gradient(circle at 50% 38%,rgba(43,104,150,.17),transparent 42%),radial-gradient(circle at 50% 50%,rgba(16,42,68,.26),transparent 72%),linear-gradient(160deg,rgba(8,16,27,.95),rgba(4,9,16,.98));
+  box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.03)}
+.stage::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.7;
+  background-image:linear-gradient(rgba(109,174,226,.032) 1px,transparent 1px),linear-gradient(90deg,rgba(109,174,226,.032) 1px,transparent 1px);
+  background-size:52px 52px;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 48%,#000 8%,transparent 82%);
+  mask-image:radial-gradient(ellipse at 50% 48%,#000 8%,transparent 82%)}
+.stage::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,transparent 48%,rgba(2,5,10,.34))}
+.stage-head{position:relative;z-index:5;flex:none;min-height:44px;display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid rgba(118,166,221,.1);background:linear-gradient(180deg,rgba(12,22,36,.7),rgba(8,15,25,.16))}
+.stage-head .ref{display:flex;align-items:center;gap:5px;padding:3px;border:1px solid rgba(118,166,221,.12);border-radius:8px;background:rgba(5,11,18,.45)}
+.stage-head .ref button{border:0;border-radius:5px;background:transparent;color:#6f879f;padding:4px 8px;font-size:9.5px;white-space:nowrap}
+.stage-head .ref button.active{background:rgba(41,101,143,.3);color:#d9f4ff}
+.stage-head .ref button:hover{color:#cdeeff}
+.stage-head .spacer{flex:1}
+.status{display:flex;align-items:center;gap:6px;color:#607991;font-size:9px;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:44%}
+.status .dot{width:5px;height:5px;border-radius:50%;background:var(--ok);box-shadow:0 0 7px rgba(119,230,178,.5);flex:none}
+.status.paused .dot{background:#64788c;box-shadow:none}
+.status .txt{overflow:hidden;text-overflow:ellipsis}
+.icon-btn{width:27px;height:27px;border:1px solid rgba(118,166,221,.14);border-radius:7px;background:rgba(8,17,28,.5);color:#7891a8;display:grid;place-items:center;flex:none}
+.icon-btn:hover{border-color:var(--line-hot);color:#dff8ff}
+.icon-btn svg{width:13px;height:13px}
+.quickbar{position:relative;z-index:5;flex:none;display:flex;align-items:center;gap:6px;padding:7px 10px;border-bottom:1px solid rgba(118,166,221,.08);background:rgba(6,13,22,.4);overflow-x:auto;scrollbar-width:none;min-height:44px}
+.quickbar::-webkit-scrollbar{display:none}
+.quickbar .seg{padding:2px;border-radius:8px;flex:none}
+.quickbar .seg-btn{padding:4px 8px;font-size:9.5px;min-height:26px}
+.quickbar .qbtn{border:1px solid rgba(118,166,221,.14);border-radius:7px;background:rgba(10,21,34,.55);color:#8ca6bd;padding:5px 8px;font-size:9.5px;white-space:nowrap;flex:none;min-height:27px}
+.quickbar .qbtn.on{border-color:rgba(105,213,255,.4);background:rgba(27,82,112,.3);color:#d9f7ff}
+.quickbar .grow{flex:1}
+.stage-viewport{position:relative;flex:1;min-height:0;overflow:hidden}
+#scene{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#scene.dragging{cursor:grabbing}
+#scene.handle{cursor:ew-resize}
+.hud{position:absolute;left:13px;top:11px;z-index:4;pointer-events:none;padding:6px 9px;border:1px solid rgba(118,178,225,.13);border-radius:8px;background:linear-gradient(145deg,rgba(8,17,28,.76),rgba(7,13,22,.34));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-width:calc(100% - 200px)}
+.hud .hk{font-family:var(--mono);font-size:7.5px;letter-spacing:.17em;color:#516a82;text-transform:uppercase}
+.hud .hs{display:flex;align-items:baseline;gap:7px;margin-top:1px;white-space:nowrap;overflow:hidden}
+.hud .hs b{font-family:var(--mono);font-size:13px;font-weight:500;color:#dff6ff;overflow:hidden;text-overflow:ellipsis}
+.hud .hs span{font-size:9px;color:#7993ad;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legend{position:absolute;right:12px;top:11px;z-index:4;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px 9px;max-width:56%;padding:5px 8px;border:1px solid rgba(118,178,225,.1);border-radius:7px;background:rgba(6,12,20,.5);font-size:8px;color:#8da8c1;pointer-events:none}
+.legend span{display:flex;align-items:center;gap:3px;white-space:nowrap}
+.legend i{width:6px;height:6px;border-radius:2px;display:inline-block;flex:none}
+.stage-hint{position:absolute;left:50%;bottom:7px;transform:translateX(-50%);z-index:3;color:#4f687f;font-size:8px;white-space:nowrap;pointer-events:none;text-align:center}
+.stage-hint b{color:#89a7c0;font-weight:500}
+.stage-tag{position:absolute;right:12px;bottom:8px;z-index:3;display:flex;gap:4px;pointer-events:none}
+.stage-tag span{font-family:var(--mono);font-size:7.5px;color:#6b839a;border:1px solid rgba(118,174,221,.13);border-radius:4px;padding:1px 5px;background:rgba(6,12,20,.55)}
+
+/* ---------- transport ---------- */
+.transport{position:relative;z-index:6;flex:none;border-top:1px solid rgba(118,166,221,.11);background:linear-gradient(180deg,rgba(7,14,23,.7),rgba(5,11,19,.9));padding:7px 11px 8px}
+.transport-main{display:flex;align-items:center;gap:6px}
+.tbtn{width:30px;height:30px;border:1px solid rgba(118,166,221,.15);border-radius:8px;background:rgba(10,21,34,.6);color:#96b1c7;display:grid;place-items:center;flex:none}
+.tbtn:hover{border-color:var(--line-hot);color:#e8faff}
+.tbtn.on{border-color:rgba(105,213,255,.45);background:rgba(28,88,125,.34);color:#d9f7ff}
+.tbtn svg{width:14px;height:14px}
+.tbtn.wide{width:auto;padding:0 10px;gap:5px;font-size:10px}
+.transport .seek{flex:1;min-width:80px;margin:0 3px}
+.transport .timecode{font-family:var(--mono);font-size:9px;color:#7d98b0;min-width:52px;text-align:right;white-space:nowrap}
+.transport .speed{display:flex;align-items:center;gap:5px;flex:none;border-left:1px solid rgba(118,166,221,.12);padding-left:7px;margin-left:2px}
+.transport .speed span{font-family:var(--mono);font-size:8px;color:#607891}
+.transport .speed input{width:64px}
+.transport .speed b{font-family:var(--mono);font-size:8.5px;color:#a9d8ef;min-width:27px}
+.progress-wrap{margin-top:6px}
+.progress-top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:var(--mono);font-size:8px;color:#607891}
+.progress-top b{color:#bde8fa;font-weight:500}
+.stage-marks{display:flex;gap:2px;margin-top:3px}
+.stage-mark{flex:1;border:1px solid rgba(118,166,221,.1);border-radius:5px;background:rgba(8,16,27,.4);padding:4px 5px;font-size:8.5px;color:#70889f;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:24px}
+.stage-mark:hover{border-color:rgba(105,213,255,.35);color:#cdefff}
+.stage-mark.active{border-color:rgba(105,213,255,.4);background:rgba(27,82,112,.25);color:#d7f6ff}
+.transport-min{display:flex;align-items:center;gap:6px}
+.transport-min .track{flex:1;height:4px;border-radius:99px;background:rgba(92,124,152,.24);overflow:hidden;position:relative}
+.transport-min .track i{position:absolute;left:0;top:0;height:100%;border-radius:99px;background:linear-gradient(90deg,#4bb8e6,#8ef0ff);width:0}
+.transport-min .track em{position:absolute;top:-2px;width:1px;height:8px;background:rgba(213,240,255,.4)}
+
+/* ---------- inspector ---------- */
+.inspector .panel-head{margin-bottom:8px}
+.charts{display:flex;flex-direction:column;gap:9px}
+.chart-card{border:1px solid rgba(112,174,222,.13);border-radius:11px;background:rgba(8,17,28,.44);padding:9px 10px 8px;overflow:hidden}
+.card-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:9.5px;color:#8ba4bc}
+.card-head b{font-weight:600;color:#b7d3e6;font-size:10px}
+.card-head span:last-child{font-family:var(--mono);font-size:7.5px;color:#5f7890;white-space:nowrap;text-align:right}
+.chart-canvas{display:block;width:100%;margin-top:3px;cursor:crosshair;touch-action:manipulation}
+.caption{margin:5px 0 0;font-size:8.5px;line-height:1.55;color:#647d94}
+.caption b{color:#9fbdd3;font-weight:500}
+.readouts{margin-top:9px;border:1px solid rgba(112,174,222,.12);border-radius:10px;background:rgba(9,18,29,.34);padding:8px 9px}
+.readouts .rh{display:flex;justify-content:space-between;gap:8px;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#5c7891;margin-bottom:5px}
+.readout-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(118,174,221,.1);border:1px solid rgba(118,174,221,.1)}
+.readout{background:rgba(8,16,27,.9);padding:5px 7px;min-width:0}
+.readout span{display:block;font-size:8px;color:#5e7892;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.readout b{display:block;margin-top:1px;font-family:var(--mono);font-size:9.5px;font-weight:500;color:#c9e2f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.readout.hot b{color:#ffc48e}
+.readout.ok b{color:#8ff0c3}
+.readout.pink b{color:#ffabc1}
+.inspector .footnote{margin-top:9px;padding-top:8px;border-top:1px solid rgba(118,174,221,.1);font-size:8px;line-height:1.6;color:#536b82}
+
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(2,7,12,.74);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.modal-card{width:min(700px,100%);max-height:84vh;overflow:auto;border:1px solid rgba(118,174,221,.24);border-radius:15px;background:linear-gradient(180deg,rgba(15,29,43,.98),rgba(7,15,24,.99));box-shadow:0 30px 80px rgba(0,0,0,.55);padding:18px 19px 16px}
+.modal-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px}
+.modal-head h3{margin:3px 0 0;font-size:17px;color:#eef8ff;font-weight:560}
+.modal-close{appearance:none;width:28px;height:28px;border:1px solid rgba(118,174,221,.18);border-radius:50%;background:rgba(16,30,46,.8);color:#9db7cd;font-size:17px;line-height:1;display:grid;place-items:center;padding:0}
+.modal-close:hover{border-color:var(--line-hot);color:#fff}
+.modal h4{margin:14px 0 5px;font-size:11px;letter-spacing:.07em;color:#9db9d0;text-transform:uppercase}
+.modal p,.modal li{font-size:10.5px;line-height:1.7;color:#7992a9}
+.modal p{margin:5px 0}
+.modal code{font-family:var(--mono);font-size:9.5px;color:#a9e3f9;background:rgba(56,134,180,.12);border-radius:4px;padding:1px 4px}
+.modal pre{margin:8px 0;padding:10px 11px;border:1px solid rgba(118,174,221,.14);border-radius:9px;background:rgba(4,10,17,.8);overflow:auto;max-height:300px}
+.modal pre code{background:none;padding:0;color:#a9c6da;font-size:9px;line-height:1.65;white-space:pre}
+.modal .cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal .mini-card{border:1px solid rgba(118,174,221,.12);border-radius:8px;padding:8px 9px;background:rgba(11,23,37,.45)}
+.modal .mini-card b{font-size:10px;color:#b7d6e8;display:block;margin-bottom:2px}
+.modal .mini-card span{font-size:9px;line-height:1.55;color:#6f879d;display:block}
+.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,10px);z-index:70;opacity:0;pointer-events:none;border:1px solid rgba(105,213,255,.3);border-radius:9px;background:rgba(8,22,34,.95);color:#c9f3ff;font-size:10px;padding:7px 12px;box-shadow:0 12px 30px rgba(0,0,0,.4);transition:.2s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- responsive ---------- */
+@media(max-width:1180px){
+  .layout{grid-template-columns:286px minmax(0,1fr) 310px}
+  .brand h1{font-size:17px}.brand h1 span{display:none}
+  .top-actions .badge{display:none}
+}
+@media(max-width:1000px){
+  body{overflow:auto}
+  .app{height:auto;min-height:100dvh;padding:10px;gap:9px}
+  .topbar{flex-wrap:wrap;min-height:0;gap:8px}
+  .brand{flex:1;min-width:0}
+  .brand h1{white-space:normal;font-size:16px}
+  .scene-tabs{margin-left:0;order:3;width:100%;justify-content:flex-start;border-radius:10px}
+  .scene-tab{padding:7px 10px;font-size:10.5px}
+  .top-actions{order:2;margin-left:auto}
+  .layout{display:flex;flex-direction:column;flex:none;gap:9px}
+  .stage{order:1;height:auto;min-height:0}
+  .stage-viewport{height:54vh;height:54dvh;min-height:340px;flex:none}
+  .inspector{order:2;overflow:visible;display:grid;grid-template-columns:1fr 1fr;gap:9px;align-items:start}
+  .inspector>.panel-head{grid-column:1/-1}
+  .inspector .charts{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:9px;align-items:start}
+  .inspector .readouts{grid-column:1/-1;margin-top:0}
+  .inspector .footnote{grid-column:1/-1;margin-top:0}
+  .controls{order:3;overflow:visible}
+  .chart-card{min-width:0}
+  .hud{max-width:calc(100% - 120px)}
+  .legend{max-width:48%}
+}
+@media(max-width:700px){
+  .app{padding:8px;gap:8px}
+  .mark{width:38px;height:38px}.mark svg{width:31px;height:31px}
+  .eyebrow{font-size:8px}.brand h1{font-size:15px}
+  .top-actions .ghost-btn{font-size:9px;padding:5px 7px}
+  .scene-tab i{display:none}
+  .scene-tab{padding:6px 8px;font-size:10px}
+  .stage-head{min-height:40px;padding:0 8px;gap:6px}
+  .stage-head .ref button{padding:4px 6px;font-size:8.5px}
+  .status{font-size:8px;max-width:42%}
+  .stage-viewport{height:48vh;height:48dvh;min-height:300px}
+  .quickbar{padding:6px 8px;gap:4px;min-height:40px}
+  .quickbar .seg-btn{font-size:9px;padding:4px 7px}
+  .hud{left:8px;top:8px;padding:5px 7px}
+  .hud .hs b{font-size:11px}
+  .legend{right:8px;top:8px;font-size:7px;gap:2px 6px;padding:4px 6px;max-width:50%}
+  .transport{padding:6px 8px 7px}
+  .transport-main{gap:4px;flex-wrap:wrap}
+  .tbtn{width:28px;height:28px}
+  .transport .timecode{font-size:8px;min-width:44px}
+  .transport .speed{border-left:0;padding-left:0;margin-left:0}
+  .transport .speed input{width:50px}
+  .stage-marks{flex-wrap:wrap}
+  .stage-mark{font-size:7.5px;padding:3px 4px}
+  .inspector{display:block}
+  .inspector .charts{display:flex}
+  .panel-head h2{font-size:15px}
+  .modal{padding:8px}.modal-card{padding:13px;max-height:90vh}
+  .modal .cols{grid-template-columns:1fr}
+  .chart-canvas{margin-top:2px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.001s!important;transition-duration:.001s!important}
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none">
+          <ellipse cx="24" cy="24" rx="9" ry="16" transform="rotate(28 24 24)" stroke="#6fd6ff" stroke-opacity=".7" stroke-width="1.2"/>
+          <ellipse cx="24" cy="24" rx="16" ry="7.5" transform="rotate(-18 24 24)" stroke="#ff9a62" stroke-opacity=".55" stroke-width="1.1"/>
+          <circle cx="24" cy="24" r="4.6" fill="url(#cvCore)"/>
+          <circle cx="37.5" cy="18.5" r="3.1" fill="url(#cvA)"/>
+          <circle cx="11" cy="30" r="2.7" fill="url(#cvB)"/>
+          <path d="M28 34.5c3.2 1.4 6.2.9 8.2-1.2" stroke="#ffcf7a" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M35 30.8l1.4 2.3-2.6.7" fill="none" stroke="#ffcf7a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs>
+            <radialGradient id="cvCore" cx=".35" cy=".3" r=".85"><stop stop-color="#fff7e8"/><stop offset=".5" stop-color="#8fe6ff"/><stop offset="1" stop-color="#2c7fa3"/></radialGradient>
+            <radialGradient id="cvA" cx=".35" cy=".3" r=".85"><stop stop-color="#ffe7d2"/><stop offset=".55" stop-color="#ff9a62"/><stop offset="1" stop-color="#9c4a28"/></radialGradient>
+            <radialGradient id="cvB" cx=".35" cy=".3" r=".85"><stop stop-color="#dcfff6"/><stop offset=".55" stop-color="#6fe3a8"/><stop offset="1" stop-color="#2c7a52"/></radialGradient>
+          </defs>
+        </svg>
+      </div>
+      <div>
+        <div class="eyebrow">CHEMISTRY VISUALIZATION KIT <em>·</em> SCENE API</div>
+        <h1>化学可视化框架<span>CHEMISTRY VISUAL KIT</span></h1>
+      </div>
+    </div>
+    <nav class="scene-tabs" id="sceneTabs" aria-label="场景切换"></nav>
+    <div class="top-actions">
+      <span class="badge"><i></i>公共框架 · 两个最小示例</span>
+      <button class="ghost-btn" type="button" id="docsBtn">框架说明</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="panel controls" aria-label="参数面板">
+      <div class="panel-head">
+        <div><div class="kicker" id="sceneKicker">SCENE</div><h2 id="sceneTitle">场景</h2></div>
+        <span class="badge" id="sceneBadge">—</span>
+      </div>
+      <p class="desc" id="sceneDesc"></p>
+      <div id="controlsBody"></div>
+    </aside>
+
+    <section class="stage" aria-label="三维视窗">
+      <div class="stage-head">
+        <div class="ref" id="refTabs" role="group" aria-label="观察参考系">
+          <button type="button" data-ref="fixed" class="active">固定视角</button>
+          <button type="button" data-ref="follow">跟随质心</button>
+        </div>
+        <div class="spacer"></div>
+        <div class="status" id="status"><span class="dot"></span><span class="txt" id="statusText">就绪</span></div>
+        <button class="icon-btn" type="button" id="camResetBtn" title="重置视角" aria-label="重置视角">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3.2 6.2A5 5 0 1 1 3 9.4"/><path d="M3.2 2.8v3.5h3.5"/></svg>
+        </button>
+      </div>
+      <div class="quickbar" id="quickbar"></div>
+      <div class="stage-viewport" id="viewport">
+        <canvas id="scene" tabindex="0" aria-label="三维分子模型：拖拽旋转，滚轮或双指缩放"></canvas>
+        <div class="hud"><div class="hk" id="hudKicker">CURRENT MODEL</div><div class="hs"><b id="hudTitle">—</b><span id="hudSub"></span></div></div>
+        <div class="legend" id="legend"></div>
+        <div class="stage-hint"><b>拖拽</b> 旋转 · <b>滚轮 / 双指</b> 缩放 · <b>双击</b> 复位</div>
+        <div class="stage-tag" id="stageTag"></div>
+      </div>
+      <div class="transport" id="transport"></div>
+    </section>
+
+    <aside class="panel inspector" aria-label="联动图表">
+      <div class="panel-head">
+        <div><div class="kicker">LINKED PLOTS</div><h2>联动视图</h2></div>
+        <span class="badge" id="chartBadge">坐标固定</span>
+      </div>
+      <div class="charts" id="charts"></div>
+      <div class="readouts" id="readouts" hidden></div>
+      <div class="footnote" id="footnote">图表横纵坐标由模型给定；旋转相机或调整播放速度不会改变坐标。所有能量与谱线为定性教学示意。</div>
+    </aside>
+  </main>
+</div>
+
+<div class="modal" id="docsModal" hidden role="dialog" aria-modal="true" aria-labelledby="docsTitle">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div><div class="kicker">ABOUT / DOCS</div><h3 id="docsTitle">关于 化学可视化框架 · HCl 伸缩 / SN2 三阶段</h3></div>
+      <button class="modal-close" type="button" id="docsClose" aria-label="关闭">×</button>
+    </div>
+    <div id="docsBody"><h4>框架职责</h4>
+<p>页面外壳负责场景切换、左侧参数面板、中间 3D 视窗、右侧联动图；窄屏按“关键控件 → 画布 → 播放/进度 → 联动图 → 全部控件”重排。相机、投影、旋转/滚轮/双指缩放、球棍/部分键/轨道叶瓣/箭头/标签、连续时间与有界进度、曲线/棒状谱/条形图/能级图都在公共层。场景只描述<code>状态</code>、<code>frame(state)</code>和<code>charts(state)</code>。</p>
+<div class="cols">
+  <div class="mini-card"><b>相机 / 3D</b><span>由原页的 <code>cameraData()</code>、<code>project()</code>、<code>resizeCanvas()</code>、<code>bind3D()</code> 与动画循环提炼；相机状态与时间/进度/选中项分开保存。图元含原子球、键、部分键、轨道叶瓣、<b>电子云 |ψ|² 点云</b>、平面、箭头、标签。</span></div>
+  <div class="mini-card"><b>播放</b><span>连续时间<span>循环</span>；有界进度 0–1，可播放、暂停、倒放、拖动、上一/下一阶段。暂停后相机、图层与谱线点选仍可用。</span></div>
+  <div class="mini-card"><b>图表</b><span>固定坐标范围；游标、选中高亮、点击/触摸命中区；旋转相机或改播放速度不会改变坐标。</span></div>
+  <div class="mini-card"><b>注册</b><span><code>ChemVis.registerScene(scene)</code> 会自动出现在场景切换器；公共相机、控件、播放、图表立即复用。</span></div>
+</div>
+<h4>新增场景示例（可直接贴进任意场景脚本）</h4>
+<pre><code>ChemVis.registerScene({
+  id: &#x27;pulse&#x27;, tab: &#x27;接入示例&#x27;, tag: &#x27;03&#x27;,
+  playMode: &#x27;time&#x27;, autoplay: true, playSpan: 4,
+  camera: { az: -1.1, el: .25, zoom: 1 },
+
+  initialState() {
+    return { time: 0, amp: .5,
+      play: { mode: &#x27;time&#x27;, playing: true, speed: 1, span: 4 } };
+  },
+
+  // 左侧参数面板：描述器自动渲染，自动同步
+  controls() {
+    return [
+      { type: &#x27;section&#x27;, label: &#x27;参数&#x27;, hint: &#x27;DEMO&#x27; },
+      { type: &#x27;slider&#x27;, key: &#x27;amp&#x27;, label: &#x27;振幅&#x27;,
+        min: .1, max: 1, step: .01, fmt: v =&gt; v.toFixed(2) },
+      { type: &#x27;note&#x27;, text: &#x27;只写场景数据，公共层负责相机、控件与图表。&#x27; }
+    ];
+  },
+
+  // 中间 3D：返回图元数据，框架负责投影与绘制
+  frame(st) {
+    const y = .6 * st.amp * Math.sin(st.time / (st.play.span || 4) * Math.PI * 2);
+    return {
+      fit: 2.2,
+      hud: { title: &#x27;AB&#x27;, sub: &#x27;示例&#x27; },
+      atoms: [
+        { pos: [-.8, 0, 0], r: .28, color: &#x27;#e6f2ff&#x27;, label: &#x27;A&#x27; },
+        { pos: [.8, y, 0], r: .40, color: &#x27;#6fd6ff&#x27;, label: &#x27;B&#x27; }
+      ],
+      bonds: [{ a: [-.8, 0, 0], b: [.8, y, 0], color: &#x27;#9fb6c9&#x27; }],
+      labels: [{ pos: [0, 0, 0], text: &#x27;A–B&#x27;, offset: [0, -26], chip: true }]
+    };
+  },
+
+  // 右侧联动图：曲线、棒状谱、条形图、能级图
+  charts(st) {
+    return [{
+      id: &#x27;wave&#x27;, kind: &#x27;profile&#x27;, title: &#x27;位移&#x27;, height: 140,
+      x: { min: 0, max: 4, label: &#x27;t / s&#x27; },
+      y: { min: -1, max: 1 },
+      curve: Array.from({ length: 81 }, (_, i) =&gt; [i / 20,
+        .6 * st.amp * Math.sin(i / 20 / 4 * Math.PI * 2)]),
+      cursor: { x: st.time % 4, color: &#x27;#ffd76e&#x27; }
+    }];
+  }
+});</code></pre>
+<h4>接入说明</h4>
+<ul>
+<li>把场景定义放在独立 <code>&lt;script&gt;</code> 中，或放进本文件的场景模块区；只要调用 <code>ChemVis.registerScene</code>，无需改页面骨架。</li>
+<li><code>initialState()</code> 返回的字段就是唯一联动态：<code>cam</code>、<code>time</code>、<code>progress</code>、<code>sel</code>、<code>play</code> 各自独立。点图、拖进度或换图层时由明确动作修改状态，再由框架重绘 3D 与图表。</li>
+<li>复杂交互在 <code>chartClick(state, chartId, hit, api)</code>、<code>handleDrag(state, id, d, api)</code>、<code>action(state, name, payload, api)</code> 中处理；<code>api.go('sceneId', patch)</code> 可带状态跳转。</li>
+<li>本页只依赖浏览器原生 Canvas 2D 与 DOM；无 CDN、字体或图片外链，断网可直接打开。</li>
+</ul>
+<h4>本页两个最小示例</h4>
+<p><b>HCl 伸缩</b>验证连续播放/暂停/复位、球棍、质心固定与键长曲线游标。 <b>SN2 三阶段</b>验证有界进度、能量峰点击、两根部分键与原子身份稳定。完整应用把同一份 <code>core.js</code> + <code>charts.js</code> 与场景模块打包进另一个单文件。</p>
+<h4>模型近似</h4>
+<p>能量、部分键、轨道形状与电子流均为定性教学示意；真实分子受电子相关、溶剂、温度与振动平均影响。</p></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* =====================================================================
+   化学可视化框架 Core — scene registry, camera, 3D renderer, controls,
+   transport and layout.  Charts live in charts.js.  Scenes only describe
+   state, frame data and chart data; this file owns all shared machinery.
+   ===================================================================== */
+(function () {
+  'use strict';
+  const V = window.ChemVis = window.ChemVis || {};
+  const TAU = Math.PI * 2;
+
+  /* ---------------- utils ---------------- */
+  const U = V.utils = {};
+  U.clamp = (x, a, b) => x < a ? a : x > b ? b : x;
+  U.lerp = (a, b, t) => a + (b - a) * t;
+  U.smooth = t => { t = U.clamp(t, 0, 1); return t * t * (3 - 2 * t); };
+  U.smoothstep = (a, b, x) => U.smooth((x - a) / (b - a || 1e-9));
+  U.ease = t => { t = U.clamp(t, 0, 1); return t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; };
+  U.lerpArr = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  U.add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+  U.sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  U.mul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+  U.len = a => Math.hypot(a[0], a[1], a[2]);
+  U.norm = a => { const l = U.len(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+  U.cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  U.dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  U.fmt = (x, d = 2) => {
+    if (x == null || !isFinite(x)) return '—';
+    const s = Math.abs(x) < Math.pow(10, -d) / 2 ? 0 : x;
+    return Number(s).toFixed(d);
+  };
+  U.pct = x => (x * 100).toFixed(0) + '%';
+  U.pad2 = n => String(n).padStart(2, '0');
+  U.clone = o => JSON.parse(JSON.stringify(o));
+  U.uid = (() => { let i = 0; return p => (p || 'id') + (++i); })();
+
+  const C = V.colors = {
+    carbon: '#8fb3c9', hydrogen: '#e6f2ff', bromine: '#ff8f6b',
+    oxygen: '#ff7096', chlorine: '#6fe3a8', deuterium: '#a8dcff',
+    methyl: '#ffbf6b', ethyl: '#b39bff', central: '#69d4e8',
+    pos: '#ff9a62', neg: '#58d7ff', flowNuc: '#5fe0ff', flowLg: '#ffb35c',
+    dipole: '#ffd166', plane: 'rgba(150,205,255,.10)', planeEdge: 'rgba(168,220,255,.34)',
+    hl: '#ffd76e', ok: '#7ce9b8', muted: '#7d93ab'
+  };
+  V.TAU = TAU;
+
+  function rgba(hex, a) {
+    if (!hex) return 'rgba(255,255,255,' + a + ')';
+    if (hex.startsWith('rgba') || hex.startsWith('rgb')) {
+      const m = hex.match(/[\d.]+/g);
+      return 'rgba(' + m[0] + ',' + m[1] + ',' + m[2] + ',' + a + ')';
+    }
+    let h = hex.replace('#', '');
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    const n = parseInt(h, 16);
+    return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+  function shade(hex, amt) {
+    if (!hex || !hex.startsWith('#')) return hex;
+    let h = hex.slice(1);
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    const n = parseInt(h, 16);
+    let r = n >> 16 & 255, g = n >> 8 & 255, b = n & 255;
+    if (amt >= 0) { r += (255 - r) * amt; g += (255 - g) * amt; b += (255 - b) * amt; }
+    else { r *= 1 + amt; g *= 1 + amt; b *= 1 + amt; }
+    return 'rgb(' + Math.round(r) + ',' + Math.round(g) + ',' + Math.round(b) + ')';
+  }
+  V.rgba = rgba; V.shade = shade;
+
+  function getPath(obj, path) {
+    if (path == null) return undefined;
+    return String(path).split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
+  }
+  function setPath(obj, path, value) {
+    const keys = String(path).split('.');
+    let o = obj;
+    for (let i = 0; i < keys.length - 1; i++) {
+      if (o[keys[i]] == null || typeof o[keys[i]] !== 'object') o[keys[i]] = {};
+      o = o[keys[i]];
+    }
+    o[keys[keys.length - 1]] = value;
+  }
+  V.getPath = getPath; V.setPath = setPath;
+
+  /* ---------------- scene registry ---------------- */
+  V.scenes = [];
+  V.byId = {};
+  V.registerScene = function (scene) {
+    if (!scene || !scene.id) throw new Error('registerScene: scene.id 必填');
+    if (V.byId[scene.id]) throw new Error('registerScene: 重复 id ' + scene.id);
+    if (typeof scene.frame !== 'function') throw new Error('registerScene: ' + scene.id + ' 需要 frame(state)');
+    V.byId[scene.id] = scene;
+    V.scenes.push(scene);
+    if (D.tabs) buildSceneTabs();
+    return scene;
+  };
+
+  /* ---------------- globals / dom ---------------- */
+  let booted = false;
+  let cur = null;                 // {scene,state,frame,specs,chartIds,handleHits}
+  let lastFrameT = 0, lastLight = 0, raf = 0;
+  let syncers = [], quickSyncers = [];
+  let transportSync = null;
+  let drag = null;                // camera or handle drag
+  const D = {};
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.prototype.slice.call(document.querySelectorAll(s));
+  function el(tag, cls, html) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html != null) e.innerHTML = html;
+    return e;
+  }
+  function svg(path, vb) {
+    return '<svg viewBox="' + (vb || '0 0 16 16') + '" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>';
+  }
+  const ICON = {
+    play: '<path d="M5 3.2l7 4.8-7 4.8z" fill="currentColor" stroke="none"/>',
+    pause: '<path d="M4.5 3h2.4v10H4.5zM9.1 3h2.4v10H9.1z" fill="currentColor" stroke="none"/>',
+    reset: '<path d="M3.3 6.2A5 5 0 1 1 3.2 9.6"/><path d="M3.3 2.7v3.6h3.6"/>',
+    prev: '<path d="M4 3v10M12 3.4L6.4 8l5.6 4.6z"/>',
+    next: '<path d="M12 3v10M4 3.4L9.6 8 4 12.6z"/>',
+    rev: '<path d="M12.5 8H3.8"/><path d="M7.2 4.4L3.6 8l3.6 3.6"/>',
+    cam: '<path d="M3.3 6.2A5 5 0 1 1 3.2 9.6"/><path d="M3.3 2.7v3.6h3.6"/>'
+  };
+
+  /* ---------------- camera & projection ---------------- */
+  function perspective(fovy, aspect, near, far) {
+    const f = 1 / Math.tan(fovy / 2), nf = 1 / (near - far);
+    return new Float32Array([f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) * nf, -1, 0, 0, 2 * far * near * nf, 0]);
+  }
+  function lookAt(eye, center, up) {
+    let zx = eye[0] - center[0], zy = eye[1] - center[1], zz = eye[2] - center[2];
+    let zl = Math.hypot(zx, zy, zz) || 1; zx /= zl; zy /= zl; zz /= zl;
+    let xx = up[1] * zz - up[2] * zy, xy = up[2] * zx - up[0] * zz, xz = up[0] * zy - up[1] * zx;
+    let xl = Math.hypot(xx, xy, xz) || 1; xx /= xl; xy /= xl; xz /= xl;
+    const yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+    return new Float32Array([xx, yx, zx, 0, xy, yy, zy, 0, xz, yz, zz, 0,
+      -(xx * eye[0] + xy * eye[1] + xz * eye[2]),
+      -(yx * eye[0] + yy * eye[1] + yz * eye[2]),
+      -(zx * eye[0] + zy * eye[1] + zz * eye[2]), 1]);
+  }
+  function multiply(a, b) {
+    const o = new Float32Array(16);
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
+      o[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+    }
+    return o;
+  }
+  const FOV = 38 * Math.PI / 180;
+  function cameraData(cam, aspect, fit) {
+    const az = cam.az, elv = U.clamp(cam.el, -1.45, 1.45);
+    const f = Math.tan(FOV / 2);
+    const dist = (fit / (f * Math.min(1, Math.max(.25, aspect)))) * cam.zoom;
+    const pos = [dist * Math.cos(elv) * Math.cos(az), dist * Math.cos(elv) * Math.sin(az), dist * Math.sin(elv)];
+    const view = lookAt(pos, [0, 0, 0], [0, 0, 1]);
+    return { mvp: multiply(perspective(FOV, aspect, 0.08, 90), view), view, pos, dist };
+  }
+  function makeProjector(mvp, w, h) {
+    return function (p) {
+      const x = mvp[0] * p[0] + mvp[4] * p[1] + mvp[8] * p[2] + mvp[12];
+      const y = mvp[1] * p[0] + mvp[5] * p[1] + mvp[9] * p[2] + mvp[13];
+      const ww = mvp[3] * p[0] + mvp[7] * p[1] + mvp[11] * p[2] + mvp[15];
+      return { x: (x / ww * .5 + .5) * w, y: (1 - (y / ww * .5 + .5)) * h, w: ww };
+    };
+  }
+  function resizeCanvas(canvas, ctx) {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return null;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+      canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { w, h, dpr };
+  }
+
+  /* ---------------- 3D primitives ---------------- */
+  function drawAtom(ctx, a, P, view) {
+    const p = P(a.pos);
+    if (!p || p.w <= .05) return;
+    const r = Math.max(2.2, Math.min(90, (a.r || .32) * view.focal / p.w));
+    const col = a.color || C.carbon;
+    const alpha = a.alpha == null ? 1 : a.alpha;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    if (a.glow) {
+      ctx.shadowColor = rgba(col, .65); ctx.shadowBlur = r * .8;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r * .92, 0, TAU); ctx.fillStyle = rgba(col, .12); ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    const g = ctx.createRadialGradient(p.x - r * .34, p.y - r * .38, r * .05, p.x, p.y, r * 1.04);
+    g.addColorStop(0, shade(col, .55));
+    g.addColorStop(.38, col);
+    g.addColorStop(1, shade(col, -.52));
+    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, TAU); ctx.fillStyle = g; ctx.fill();
+    ctx.lineWidth = Math.max(.7, r * .05);
+    ctx.strokeStyle = rgba(col, .55); ctx.stroke();
+    // top specular
+    ctx.beginPath(); ctx.arc(p.x - r * .26, p.y - r * .3, r * .3, 0, TAU);
+    ctx.fillStyle = 'rgba(255,255,255,.2)'; ctx.fill();
+    if (a.ring) {
+      ctx.beginPath(); ctx.arc(p.x, p.y, r + 3.4, 0, TAU);
+      ctx.strokeStyle = rgba(a.ring, .85); ctx.lineWidth = 1.4; ctx.stroke();
+    }
+    const lab = a.label == null ? null : a.label;
+    if (lab && r > 6.5) {
+      ctx.font = '600 ' + Math.max(7, Math.min(15, r * .8)) + 'px ' + (a.font || '"SFMono-Regular",Consolas,monospace');
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = a.textColor || (isLight(col) ? '#0a121b' : '#f4fbff');
+      ctx.fillText(lab, p.x, p.y + r * .03);
+    }
+    ctx.restore();
+  }
+  function isLight(hex) {
+    if (!hex || !hex.startsWith('#')) return false;
+    let h = hex.slice(1); if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    const n = parseInt(h, 16);
+    return (.2126 * (n >> 16 & 255) + .7152 * (n >> 8 & 255) + .0722 * (n & 255)) > 150;
+  }
+  function bondGeom(b, P) {
+    const A = P(b.a), B = P(b.b);
+    if (!A || !B || A.w <= .05 || B.w <= .05) return null;
+    const dx = B.x - A.x, dy = B.y - A.y, l = Math.hypot(dx, dy) || 1;
+    return { A, B, dx, dy, l, nx: -dy / l, ny: dx / l };
+  }
+  function drawBond(ctx, b, P, view, partial) {
+    const g = bondGeom(b, P); if (!g) return;
+    const aw = (g.A.w + g.B.w) / 2;
+    let w = (b.width || .07) * view.focal / aw;
+    if (partial) w *= .85;
+    w = Math.max(1.1, Math.min(18, w));
+    const alpha = (b.alpha == null ? 1 : b.alpha) * (partial ? .9 : 1);
+    if (alpha <= .01) return;
+    ctx.save(); ctx.globalAlpha = alpha; ctx.lineCap = 'round';
+    if (partial) ctx.setLineDash([Math.max(3, w * 1.5), Math.max(3, w * 1.2)]);
+    else if (b.dash) ctx.setLineDash(b.dash === true ? [4, 4] : b.dash);
+    else ctx.setLineDash([]);
+    // casing
+    ctx.strokeStyle = 'rgba(3,8,14,.78)'; ctx.lineWidth = w + 2.2;
+    ctx.beginPath(); ctx.moveTo(g.A.x, g.A.y); ctx.lineTo(g.B.x, g.B.y); ctx.stroke();
+    const col = b.color || C.carbon;
+    const grad = ctx.createLinearGradient(g.A.x, g.A.y, g.B.x, g.B.y);
+    grad.addColorStop(0, shade(col, .18)); grad.addColorStop(1, shade(col, -.18));
+    ctx.strokeStyle = grad; ctx.lineWidth = w;
+    ctx.beginPath(); ctx.moveTo(g.A.x, g.A.y); ctx.lineTo(g.B.x, g.B.y); ctx.stroke();
+    if (!partial && !b.dash) {
+      ctx.globalAlpha = alpha * .22; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(.7, w * .22);
+      ctx.beginPath();
+      ctx.moveTo(g.A.x + g.nx * w * .23, g.A.y + g.ny * w * .23);
+      ctx.lineTo(g.B.x + g.nx * w * .23, g.B.y + g.ny * w * .23); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  /* 电子云密度点云：按 |ψ|² 采样的散点，相位双色，加色混合。
+     cl = { pos:Float32Array(xyz), signs:Int8Array(±1), count,
+            posColor, negColor, alpha, size } */
+  function drawCloud(ctx, cl, mvp, w, h) {
+    if (!cl || !cl.count || !cl.pos) return;
+    const p = cl.pos, sg = cl.signs, n = cl.count;
+    const pc = cl.posColor || C.pos, nc = cl.negColor || C.neg;
+    const a = cl.alpha == null ? .5 : cl.alpha;
+    const sz = cl.size || 1.6;
+    const m0 = mvp[0], m4 = mvp[4], m8 = mvp[8], m12 = mvp[12];
+    const m1 = mvp[1], m5 = mvp[5], m9 = mvp[9], m13 = mvp[13];
+    const m3 = mvp[3], m7 = mvp[7], m11 = mvp[11], m15 = mvp[15];
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const side of [1, -1]) {
+      ctx.fillStyle = rgba(side > 0 ? pc : nc, a);
+      for (let i = 0; i < n; i++) {
+        if (sg[i] !== side) continue;
+        const x = p[i * 3], y = p[i * 3 + 1], z = p[i * 3 + 2];
+        const cw = m3 * x + m7 * y + m11 * z + m15;
+        if (cw <= .05) continue;
+        const sx = ((m0 * x + m4 * y + m8 * z + m12) / cw * .5 + .5) * w;
+        const sy = (1 - ((m1 * x + m5 * y + m9 * z + m13) / cw * .5 + .5)) * h;
+        if (sx < -2 || sx > w + 2 || sy < -2 || sy > h + 2) continue;
+        ctx.fillRect(sx, sy, sz, sz);
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawLobe(ctx, l, P, view) {
+    const o = P(l.origin), tip = P(U.add(l.origin, U.mul(U.norm(l.axis), l.length)));
+    if (!o || !tip || o.w <= .05) return;
+    const sinT = Math.sin(Math.PI * U.clamp(l.phase || 0, 0, 1));
+    const sign = l.sign == null ? 1 : l.sign;
+    const col = l.color || (sign >= 0 ? C.pos : C.neg);
+    const alpha = l.alpha == null ? .62 : l.alpha;
+    const shape = t => Math.pow(Math.sin(Math.PI * t), l.power || .72) * (1 - (l.taper || .12) * t);
+    const dx = tip.x - o.x, dy = tip.y - o.y, dl = Math.hypot(dx, dy);
+    const ux = dl > .7 ? dx / dl : 1, uy = dl > .7 ? dy / dl : 0;
+    const px = -uy, py = ux;
+    const N = 18, pts = [];
+    let maxR = 0;
+    for (let i = 0; i <= N; i++) {
+      const t = i / N;
+      const pos = U.add(l.origin, U.mul(U.norm(l.axis), l.length * t));
+      const q = P(pos);
+      if (!q || q.w <= .05) continue;
+      const rr = Math.max(.6, (l.radius || .55) * shape(t) * view.focal / q.w);
+      if (rr > maxR) maxR = rr;
+      pts.push({ x: q.x, y: q.y, r: rr });
+    }
+    if (pts.length < 3 || maxR < 1) return;
+    ctx.save(); ctx.globalAlpha = alpha;
+    const path = new Path2D();
+    for (let i = 0; i < pts.length; i++) {
+      const q = pts[i], x = q.x + px * q.r, y = q.y + py * q.r;
+      if (i === 0) path.moveTo(x, y); else path.lineTo(x, y);
+    }
+    for (let i = pts.length - 1; i >= 0; i--) {
+      const q = pts[i]; path.lineTo(q.x - px * q.r, q.y - py * q.r);
+    }
+    path.closePath();
+    const mid = pts[Math.floor(pts.length * .45)];
+    const g = ctx.createRadialGradient(mid.x - px * (maxR * .2), mid.y - py * (maxR * .2), maxR * .1, mid.x, mid.y, maxR * 1.4);
+    g.addColorStop(0, rgba(shade(col, .45), .95));
+    g.addColorStop(.55, rgba(col, .78));
+    g.addColorStop(1, rgba(col, .18));
+    ctx.fillStyle = g; ctx.fill(path);
+    ctx.lineWidth = 1.1; ctx.strokeStyle = rgba(shade(col, .35), .75); ctx.stroke(path);
+    // inner iso-contour
+    if (l.contour !== false && maxR > 8) {
+      const path2 = new Path2D();
+      for (let i = 0; i < pts.length; i++) {
+        const q = pts[i], rr = q.r * .55, x = q.x + px * rr, y = q.y + py * rr;
+        if (i === 0) path2.moveTo(x, y); else path2.lineTo(x, y);
+      }
+      for (let i = pts.length - 1; i >= 0; i--) {
+        const q = pts[i], rr = q.r * .55; path2.lineTo(q.x - px * rr, q.y - py * rr);
+      }
+      path2.closePath(); ctx.globalAlpha = alpha * .42; ctx.strokeStyle = '#f4fbff'; ctx.lineWidth = .8; ctx.stroke(path2);
+    }
+    if (l.label && maxR > 9) {
+      ctx.globalAlpha = Math.min(1, alpha + .3);
+      ctx.font = '600 10px "SFMono-Regular",Consolas,monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#f7fcff'; ctx.strokeStyle = 'rgba(3,8,14,.8)'; ctx.lineWidth = 3;
+      ctx.strokeText(l.label, tip.x + px * 0, tip.y + py * 0);
+      ctx.fillText(l.label, tip.x, tip.y);
+    }
+    ctx.restore();
+  }
+  function drawPlane(ctx, pl, P) {
+    const n = U.norm(pl.normal || [0, 0, 1]);
+    let u = Math.abs(n[0]) < .8 ? U.norm(U.cross(n, [1, 0, 0])) : U.norm(U.cross(n, [0, 1, 0]));
+    const v = U.cross(n, u);
+    const R = pl.radius || 1.5, N = 44;
+    const pts = [];
+    for (let i = 0; i <= N; i++) {
+      const a = i / N * TAU;
+      const q = P(U.add(pl.center, U.add(U.mul(u, Math.cos(a) * R), U.mul(v, Math.sin(a) * R))));
+      if (q && q.w > .05) pts.push(q);
+    }
+    if (pts.length < 8) return;
+    ctx.save(); ctx.globalAlpha = pl.alpha == null ? 1 : pl.alpha;
+    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.closePath();
+    ctx.fillStyle = pl.color || C.plane; ctx.fill();
+    ctx.strokeStyle = pl.edge || C.planeEdge; ctx.lineWidth = 1; ctx.setLineDash(pl.dash || [4, 5]); ctx.stroke();
+    ctx.restore();
+  }
+  function drawArrow(ctx, a, P) {
+    const A = P(a.from), B = P(a.to);
+    if (!A || !B || A.w <= .05 || B.w <= .05) return;
+    const mid = a.ctrl ? P(a.ctrl) : null;
+    const c = mid || { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+    const col = a.color || C.flowNuc, alpha = a.alpha == null ? 1 : a.alpha;
+    if (alpha <= .01) return;
+    ctx.save(); ctx.globalAlpha = alpha; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    if (a.glow !== false) { ctx.shadowColor = rgba(col, .55); ctx.shadowBlur = 9; }
+    ctx.strokeStyle = col; ctx.lineWidth = a.width || 2;
+    if (a.dash) ctx.setLineDash(a.dash);
+    ctx.beginPath(); ctx.moveTo(A.x, A.y);
+    ctx.quadraticCurveTo(c.x, c.y, B.x, B.y); ctx.stroke();
+    ctx.shadowBlur = 0;
+    // arrowhead along final tangent
+    let tx = B.x - c.x, ty = B.y - c.y; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+    const h = a.head || 8.5, hw = h * .52;
+    const bx = B.x - tx * h * .82, by = B.y - ty * h * .82;
+    const px = -ty, py = tx;
+    ctx.beginPath(); ctx.moveTo(B.x, B.y);
+    ctx.lineTo(bx + px * hw, by + py * hw);
+    ctx.lineTo(bx - px * hw, by - py * hw);
+    ctx.closePath(); ctx.fillStyle = col; ctx.fill();
+    if (a.label) {
+      ctx.globalAlpha = alpha * .95;
+      ctx.font = '600 9px "SFMono-Regular",Consolas,monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const mx = (A.x + 2 * c.x + B.x) / 4, my = (A.y + 2 * c.y + B.y) / 4;
+      const ox = a.labelOffset ? a.labelOffset[0] : 0, oy = a.labelOffset ? a.labelOffset[1] : -11;
+      ctx.strokeStyle = 'rgba(3,8,14,.88)'; ctx.lineWidth = 3.2;
+      ctx.strokeText(a.label, mx + ox, my + oy);
+      ctx.fillStyle = a.labelColor || col; ctx.fillText(a.label, mx + ox, my + oy);
+    }
+    ctx.restore();
+  }
+  function drawLabel(ctx, l, P) {
+    const q = P(l.pos);
+    if (!q || q.w <= .05) return;
+    const x = q.x + (l.offset ? l.offset[0] : 0), y = q.y + (l.offset ? l.offset[1] : 0);
+    const alpha = l.alpha == null ? 1 : l.alpha;
+    if (alpha <= .01) return;
+    ctx.save(); ctx.globalAlpha = alpha;
+    const fs = l.size || 10;
+    ctx.font = (l.weight || 600) + ' ' + fs + 'px ' + (l.mono === false ? '"Segoe UI","Noto Sans SC",sans-serif' : '"SFMono-Regular",Consolas,monospace');
+    ctx.textAlign = l.align || 'center'; ctx.textBaseline = 'middle';
+    if (l.leader) {
+      ctx.strokeStyle = rgba(l.color || '#9fc0d8', .35); ctx.lineWidth = .8; ctx.setLineDash([2, 3]);
+      ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(x, y); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(q.x, q.y, 1.6, 0, TAU); ctx.fillStyle = rgba(l.color || '#9fc0d8', .7); ctx.fill();
+    }
+    if (l.chip) {
+      const padX = 5, padY = 2.6;
+      const tw = ctx.measureText(l.text).width;
+      const bx = l.align === 'left' ? x - padX : l.align === 'right' ? x - tw - padX : x - tw / 2 - padX;
+      ctx.fillStyle = l.chipBg || 'rgba(5,12,20,.78)';
+      roundRect(ctx, bx, y - fs * .62 - padY, tw + padX * 2, fs * 1.24 + padY * 2, 4); ctx.fill();
+      ctx.strokeStyle = rgba(l.color || '#9fc0d8', .22); ctx.lineWidth = .8;
+      roundRect(ctx, bx, y - fs * .62 - padY, tw + padX * 2, fs * 1.24 + padY * 2, 4); ctx.stroke();
+    }
+    if (l.halo !== false) { ctx.strokeStyle = l.haloColor || 'rgba(3,8,14,.9)'; ctx.lineWidth = 3.2; ctx.strokeText(l.text, x, y); }
+    ctx.fillStyle = l.color || '#cfe6f5'; ctx.fillText(l.text, x, y);
+    ctx.restore();
+  }
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+  function drawPolyline(ctx, p, P) {
+    if (!p.pts || p.pts.length < 2) return;
+    ctx.save(); ctx.globalAlpha = p.alpha == null ? 1 : p.alpha;
+    ctx.strokeStyle = p.color || '#8fb7d6'; ctx.lineWidth = p.width || 1.2;
+    if (p.dash) ctx.setLineDash(p.dash);
+    ctx.beginPath();
+    let started = false;
+    for (const q0 of p.pts) {
+      const q = P(q0); if (!q || q.w <= .05) { started = false; continue; }
+      if (!started) { ctx.moveTo(q.x, q.y); started = true; } else ctx.lineTo(q.x, q.y);
+    }
+    ctx.stroke(); ctx.restore();
+  }
+  function drawCom(ctx, c, P) {
+    const q = P(c.pos); if (!q || q.w <= .05) return;
+    const col = c.color || C.hl;
+    ctx.save();
+    ctx.strokeStyle = rgba(col, .9); ctx.lineWidth = 1.1;
+    ctx.beginPath(); ctx.arc(q.x, q.y, 5, 0, TAU); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(q.x - 9, q.y); ctx.lineTo(q.x + 9, q.y); ctx.moveTo(q.x, q.y - 9); ctx.lineTo(q.x, q.y + 9); ctx.stroke();
+    ctx.fillStyle = rgba(col, .9); ctx.beginPath(); ctx.arc(q.x, q.y, 1.6, 0, TAU); ctx.fill();
+    if (c.label !== false) {
+      ctx.font = '600 8px "SFMono-Regular",Consolas,monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.strokeStyle = 'rgba(3,8,14,.85)'; ctx.lineWidth = 3;
+      ctx.strokeText(c.label || 'COM', q.x + 11, q.y - 8); ctx.fillStyle = col; ctx.fillText(c.label || 'COM', q.x + 11, q.y - 8);
+    }
+    ctx.restore();
+  }
+  function drawHandle(ctx, h, P) {
+    const q = P(h.pos); if (!q || q.w <= .05) return;
+    const col = h.color || C.accent || '#6fd6ff';
+    ctx.save();
+    ctx.strokeStyle = rgba(col, .9); ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.arc(q.x, q.y, 10, 0, TAU); ctx.stroke();
+    ctx.fillStyle = rgba(col, .16); ctx.fill();
+    ctx.beginPath(); ctx.arc(q.x, q.y, 3.2, 0, TAU); ctx.fillStyle = col; ctx.fill();
+    if (h.label) {
+      ctx.font = '600 8px "SFMono-Regular",Consolas,monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.strokeStyle = 'rgba(3,8,14,.9)'; ctx.lineWidth = 3;
+      ctx.strokeText(h.label, q.x, q.y + 13); ctx.fillStyle = '#dff7ff'; ctx.fillText(h.label, q.x, q.y + 13);
+    }
+    ctx.restore();
+  }
+
+  /* ---------------- 3D scene render ---------------- */
+  function draw3D() {
+    if (!cur || !D.canvas) return;
+    const st = cur.state, sc = cur.scene;
+    let frame;
+    try { frame = sc.frame(st) || {}; }
+    catch (e) { console.error('frame error', e); frame = { hud: { title: '绘制出错', sub: String(e.message || e) } }; }
+    cur.frame = frame;
+    const size = resizeCanvas(D.canvas, D.sctx);
+    if (!size) return;
+    const { w, h } = size, ctx = D.sctx;
+    ctx.clearRect(0, 0, w, h);
+    const aspect = w / h;
+    const cam = cameraData(st.cam, aspect, frame.fit || 4.2);
+    const P = makeProjector(cam.mvp, w, h);
+    const focal = (h / 2) / Math.tan(FOV / 2);
+    const view = { w, h, cam, P, focal, project: P, aspect, dpr: size.dpr };
+    cur.view = view;
+
+    const planes = frame.planes || [], guides = frame.guides || [], polylines = frame.polylines || [];
+    for (const pl of planes) drawPlane(ctx, pl, P);
+    for (const g of guides) drawBond(ctx, { a: g.a, b: g.b, color: g.color, width: g.width || .012, alpha: g.alpha == null ? .5 : g.alpha, dash: g.dash || [5, 6] }, P, view);
+    for (const p of polylines) drawPolyline(ctx, p, P);
+
+    for (const cl of (frame.clouds || [])) drawCloud(ctx, cl, cam.mvp, w, h);
+
+    const lobes = (frame.lobes || []).map(l => ({ l, z: P(l.origin).w })).sort((a, b) => b.z - a.z);
+    for (const o of lobes) drawLobe(ctx, o.l, P, view);
+
+    const bonds = (frame.bonds || []).map(b => ({ b, z: (P(b.a).w + P(b.b).w) / 2 })).sort((a, b) => b.z - a.z);
+    for (const o of bonds) drawBond(ctx, o.b, P, view);
+    const partials = (frame.partials || []).map(b => ({ b, z: (P(b.a).w + P(b.b).w) / 2 })).sort((a, b) => b.z - a.z);
+    for (const o of partials) drawBond(ctx, o.b, P, view, true);
+
+    const atoms = (frame.atoms || []).map(a => ({ a, z: P(a.pos).w })).sort((a, b) => b.z - a.z);
+    for (const o of atoms) drawAtom(ctx, o.a, P, view);
+
+    for (const a of (frame.arrows || [])) drawArrow(ctx, a, P);
+    for (const c of (frame.coms || [])) drawCom(ctx, c, P);
+
+    const labels = (frame.labels || []).map(l => ({ l, z: P(l.pos).w })).sort((a, b) => b.z - a.z);
+    for (const o of labels) drawLabel(ctx, o.l, P);
+
+    cur.handleHits = [];
+    for (const hd of (frame.handles || [])) {
+      drawHandle(ctx, hd, P);
+      const q = P(hd.pos);
+      if (q && q.w > .05) cur.handleHits.push({ id: hd.id, x: q.x, y: q.y, r: 16 });
+    }
+    if (frame.overlay) {
+      ctx.save();
+      try { frame.overlay(ctx, view); } catch (e) { console.error('overlay error', e); }
+      ctx.restore();
+    }
+  }
+
+  /* ---------------- control construction ---------------- */
+  function valOf(d, st) { return d.get ? d.get(st) : getPath(st, d.key); }
+  function setVal(d, v, st, api) {
+    if (d.set) d.set(st, v, api); else setPath(st, d.key, v);
+  }
+  function rangeFill(input) {
+    const min = +input.min || 0, max = +input.max || 100, v = +input.value;
+    input.style.setProperty('--p', ((v - min) / ((max - min) || 1) * 100) + '%');
+  }
+  function bindWhen(elm, d, st) { elm.hidden = !(d.when ? d.when(st) : true); }
+
+  function makeSeg(d, compact, st, api) {
+    const box = el('div', 'seg' + (d.wrap ? ' wrap' : ''));
+    d.options.forEach(o => {
+      const b = el('button', 'seg-btn', o.label);
+      b.type = 'button';
+      if (o.title) b.title = o.title;
+      b.addEventListener('click', () => { setVal(d, o.v, st, api); api.commit(); if (d.after) d.after(st, api); });
+      box.appendChild(b);
+    });
+    return box;
+  }
+  function makeButtons(d, compact, st, api) {
+    const box = el('div', 'ctl-grid');
+    if (d.cols === 1) box.style.gridTemplateColumns = '1fr';
+    if (d.cols === 3) box.style.gridTemplateColumns = 'repeat(3,1fr)';
+    d.options.forEach(o => {
+      const b = el('button', 'opt-btn', '<b>' + o.label + '</b>' + (o.sub ? '<span>' + o.sub + '</span>' : ''));
+      b.type = 'button';
+      b.dataset.v = String(o.v);
+      b.addEventListener('click', () => { setVal(d, o.v, st, api); api.commit(); if (d.after) d.after(st, api); });
+      box.appendChild(b);
+    });
+    return box;
+  }
+  function makeChecks(d, compact, st, api) {
+    const box = el('div', 'chk-list');
+    d.options.forEach(o => {
+      const lab = el('label', 'chk');
+      lab.style.setProperty('--dot', o.color || '#6fd6ff');
+      lab.innerHTML = '<input type="checkbox"><span class="box"></span><span class="txt"><b>' + o.label + '</b>' + (o.sub ? '<span>' + o.sub + '</span>' : '') + '</span>';
+      lab.querySelector('input').addEventListener('change', e => {
+        if (d.key) setPath(st, d.key + '.' + o.k, e.target.checked);
+        else if (d.set) d.set(st, o.k, e.target.checked, api);
+        api.commit(); if (d.after) d.after(st, api);
+      });
+      box.appendChild(lab);
+    });
+    return box;
+  }
+  function makeOrbs(d, compact, st, api) {
+    const wrap = el('div');
+    const tools = el('div', 'btn-row');
+    tools.style.marginBottom = '5px';
+    const all = el('button', 'btn tiny', '全选'); all.type = 'button';
+    const none = el('button', 'btn tiny', '清空'); none.type = 'button';
+    all.addEventListener('click', () => { d.options.forEach(o => setPath(st, d.key + '.' + o.k, true)); api.commit(); });
+    none.addEventListener('click', () => { d.options.forEach(o => setPath(st, d.key + '.' + o.k, false)); api.commit(); });
+    tools.appendChild(all); tools.appendChild(none);
+    wrap.appendChild(tools);
+    wrap.appendChild(makeChecks(d, compact, st, api));
+    return wrap;
+  }
+  function makeSliderBlock(item, st, api, onInput) {
+    const row = el('div', 'range-block');
+    const top = el('div', 'range-top');
+    const lab = el('span', null, item.label);
+    const val = el('b', null, '—');
+    top.appendChild(lab); top.appendChild(val);
+    const inp = el('input');
+    inp.type = 'range'; inp.min = item.min; inp.max = item.max; inp.step = item.step || .01;
+    inp.setAttribute('aria-label', item.label);
+    inp.addEventListener('input', () => {
+      const v = +inp.value;
+      if (item.set) item.set(st, v, api); else setPath(st, item.key, v);
+      syncSlider(item, inp, val, st);
+      rangeFill(inp);
+      if (onInput) onInput();
+      api.commit();
+    });
+    if (item.ticks) {
+      const ticks = el('div', 'ticks');
+      item.ticks.forEach(t => ticks.appendChild(el('span', null, t)));
+      row.appendChild(top); row.appendChild(inp); row.appendChild(ticks);
+    } else {
+      row.appendChild(top); row.appendChild(inp);
+    }
+    return { row, inp, val, item };
+  }
+  function syncSlider(item, inp, val, st) {
+    const v = +valOf(item, st);
+    if (document.activeElement !== inp) inp.value = v;
+    val.textContent = item.fmt ? item.fmt(v, st) : String(v) + (item.unit || '');
+    rangeFill(inp);
+  }
+  function makeActions(d, compact, st, api) {
+    const row = el('div', 'btn-row');
+    d.items.forEach(o => {
+      const b = el('button', 'btn' + (o.primary ? ' primary' : '') + (o.tiny ? ' tiny' : ''), o.label);
+      b.type = 'button';
+      if (o.title) b.title = o.title;
+      b.dataset.act = o.act;
+      b.addEventListener('click', () => {
+        if (o.act) api.action(o.act, o.payload);
+        if (o.fn) o.fn(st, api);
+        api.commit();
+      });
+      row.appendChild(b);
+    });
+    return row;
+  }
+
+  function buildCtl(d, host, compact, st, api) {
+    if (d.type === 'section') {
+      const sec = el('div', 'section');
+      const head = el('div', 'section-head');
+      head.innerHTML = '<span>' + d.label + '</span><span class="hint">' + (d.hint || '') + '</span>';
+      sec.appendChild(head);
+      const body = el('div');
+      sec.appendChild(body);
+      host.appendChild(sec);
+      return { el: sec, body, d };
+    }
+    if (d.type === 'note') {
+      const n = el('p', 'note' + (d.warn ? ' warn' : ''), d.text);
+      host.appendChild(n); return { el: n, d };
+    }
+    if (d.type === 'html') {
+      const n = el('div', null, d.html);
+      host.appendChild(n); return { el: n, d };
+    }
+    if (d.type === 'kv') {
+      const n = el('div', 'kv');
+      n.innerHTML = d.rows.map(r => '<span>' + r[0] + '</span><b>' + r[1] + '</b>').join('');
+      host.appendChild(n); return { el: n, d };
+    }
+    let node, sync = null;
+    if (d.type === 'seg') {
+      node = makeSeg(d, compact, st, api);
+      sync = () => {
+        const v = valOf(d, st);
+        Array.from(node.children).forEach((b, i) => {
+          const on = d.options[i].v === v;
+          b.classList.toggle('active', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+          const dis = d.disabled ? d.disabled(st, d.options[i]) : false;
+          b.disabled = !!dis;
+        });
+      };
+    } else if (d.type === 'buttons') {
+      node = makeButtons(d, compact, st, api);
+      sync = () => {
+        const v = valOf(d, st);
+        Array.from(node.children).forEach((b, i) => {
+          const on = String(d.options[i].v) === String(v);
+          b.classList.toggle('active', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+          b.disabled = !!(d.disabled && d.disabled(st, d.options[i]));
+        });
+      };
+    } else if (d.type === 'checks') {
+      node = makeChecks(d, compact, st, api);
+      sync = () => {
+        const obj = d.get ? d.get(st) : getPath(st, d.key);
+        Array.from(node.children).forEach((lab, i) => {
+          const on = !!(obj && obj[d.options[i].k]);
+          lab.classList.toggle('on', on);
+          lab.querySelector('input').checked = on;
+        });
+      };
+    } else if (d.type === 'orbs') {
+      node = makeOrbs(d, compact, st, api);
+      sync = () => {
+        const obj = getPath(st, d.key) || {};
+        Array.from(node.querySelectorAll('.chk')).forEach((lab, i) => {
+          const on = !!obj[d.options[i].k];
+          lab.classList.toggle('on', on);
+          lab.querySelector('input').checked = on;
+        });
+      };
+    } else if (d.type === 'slider') {
+      const made = makeSliderBlock(d, st, api);
+      node = made.row;
+      sync = () => syncSlider(d, made.inp, made.val, st);
+      node._made = made;
+    } else if (d.type === 'sliders') {
+      node = el('div');
+      const list = d.items.map(it => makeSliderBlock(it, st, api));
+      list.forEach(o => node.appendChild(o.row));
+      sync = () => list.forEach(o => syncSlider(o.item, o.inp, o.val, st));
+    } else if (d.type === 'actions') {
+      node = makeActions(d, compact, st, api);
+      sync = () => {
+        Array.from(node.children).forEach((b, i) => {
+          const o = d.items[i];
+          b.disabled = !!(o.when && !o.when(st));
+          if (o.pressed) b.setAttribute('aria-pressed', o.pressed(st) ? 'true' : 'false');
+        });
+      };
+    } else {
+      node = el('div');
+    }
+    if (d.when) { bindWhen(node, d, st); }
+    host.appendChild(node);
+    return { el: node, d, sync };
+  }
+
+  function buildControls() {
+    const host = D.controlsBody;
+    host.innerHTML = '';
+    syncers = [];
+    if (!cur) return;
+    const st = cur.state, api = mkApi();
+    let target = host;
+    for (const d of (cur.scene.controls ? cur.scene.controls(st) : [])) {
+      if (d.type === 'section') {
+        const res = buildCtl(d, host, false, st, api);
+        syncers.push({ d, el: res.el, sync: () => { if (d.when) bindWhen(res.el, d, st); } });
+        target = res.body;
+      } else {
+        const res = buildCtl(d, target, false, st, api);
+        if (res.sync) syncers.push(res);
+        else if (d.when) syncers.push({ d, el: res.el, sync: () => bindWhen(res.el, d, st) });
+      }
+    }
+  }
+  function syncControls() {
+    if (!cur) return;
+    const st = cur.state;
+    for (const s of syncers) {
+      if (s.d && s.d.when && s.el) s.el.hidden = !s.d.when(st);
+      if (s.sync) s.sync();
+    }
+  }
+
+  function buildQuick() {
+    const host = D.quickbar;
+    host.innerHTML = '';
+    quickSyncers = [];
+    if (!cur) return;
+    const st = cur.state, api = mkApi();
+    let list = cur.scene.quick ? cur.scene.quick(st) : [];
+    if (!list.length) { host.hidden = true; return; }
+    host.hidden = false;
+    for (const d of list) {
+      if (d.type === 'sep') { const s = el('span', 'qsp'); s.style.cssText = 'width:1px;height:18px;background:rgba(118,166,221,.14);flex:none'; host.appendChild(s); continue; }
+      const res = buildCtl(d, host, true, st, api);
+      if (res.el) { res.el.classList.add('quick-ctl'); }
+      if (res.sync) quickSyncers.push(res);
+    }
+    // quickbar separator and spacer
+  }
+  function syncQuick() {
+    if (!cur) return;
+    for (const s of quickSyncers) if (s.sync) s.sync();
+  }
+
+  /* ---------------- transport ---------------- */
+  function buildTransport() {
+    const host = D.transport;
+    host.innerHTML = '';
+    if (!cur) return;
+    const st = cur.state, mode = st.play.mode;
+    const main = el('div', 'transport-main');
+    const playBtn = el('button', 'tbtn', svg(ICON.pause, '0 0 16 16'));
+    playBtn.type = 'button'; playBtn.id = 'playBtn'; playBtn.title = '播放 / 暂停'; playBtn.setAttribute('aria-label', '播放或暂停');
+    playBtn.addEventListener('click', () => togglePlay());
+    const resetBtn = el('button', 'tbtn', svg(ICON.reset, '0 0 16 16'));
+    resetBtn.type = 'button'; resetBtn.title = '复位'; resetBtn.setAttribute('aria-label', '复位');
+    resetBtn.addEventListener('click', () => resetPlayback());
+    const revBtn = el('button', 'tbtn', svg(ICON.rev, '0 0 16 16'));
+    revBtn.type = 'button'; revBtn.title = '反向播放'; revBtn.setAttribute('aria-label', '反向播放');
+    revBtn.addEventListener('click', () => { st.play.dir = -st.play.dir; st.play.playing = true; syncTransport(); draw3D(); });
+    main.appendChild(playBtn);
+    if (mode === 'progress') {
+      const prev = el('button', 'tbtn', svg(ICON.prev, '0 0 16 16'));
+      prev.type = 'button'; prev.title = '上一阶段'; prev.setAttribute('aria-label', '上一阶段');
+      prev.addEventListener('click', () => stepStage(-1));
+      const next = el('button', 'tbtn', svg(ICON.next, '0 0 16 16'));
+      next.type = 'button'; next.title = '下一阶段'; next.setAttribute('aria-label', '下一阶段');
+      next.addEventListener('click', () => stepStage(1));
+      main.appendChild(prev);
+      main.appendChild(next);
+    }
+    main.appendChild(resetBtn);
+    main.appendChild(revBtn);
+    main.appendChild(el('span', 'timecode', '—')).id = 'timeCode';
+    const speed = el('div', 'speed');
+    speed.innerHTML = '<span>速度</span><input type="range" min="0.25" max="2" step="0.05" aria-label="播放速度"><b>1.00×</b>';
+    const sp = speed.querySelector('input');
+    sp.addEventListener('input', () => { st.play.speed = +sp.value; speed.querySelector('b').textContent = (+sp.value).toFixed(2) + '×'; rangeFill(sp); });
+    main.appendChild(speed);
+    host.appendChild(main);
+
+    let seek = null, progressText = null, marks = null;
+    if (mode === 'progress') {
+      const pw = el('div', 'progress-wrap');
+      const top = el('div', 'progress-top');
+      top.innerHTML = '<span>反应进度</span><b id="progressPct">0%</b>';
+      seek = el('input');
+      seek.type = 'range'; seek.min = 0; seek.max = 1000; seek.step = 1; seek.className = 'seek';
+      seek.setAttribute('aria-label', '反应进度');
+      seek.style.width = '100%';
+      seek.addEventListener('input', () => {
+        st.play.playing = false;
+        st.progress = +seek.value / 1000;
+        if (cur.scene.onSeek) cur.scene.onSeek(st, st.progress, mkApi());
+        syncTransport(); draw3D(); updateLight();
+      });
+      pw.appendChild(top); pw.appendChild(seek);
+      marks = el('div', 'stage-marks');
+      const stages = cur.scene.stages ? cur.scene.stages(st) : [];
+      stages.forEach(sg => {
+        const b = el('button', 'stage-mark', sg.label);
+        b.type = 'button'; b.dataset.p = sg.p;
+        b.title = sg.label + ' · ' + Math.round(sg.p * 100) + '%';
+        b.addEventListener('click', () => { st.progress = sg.p; st.play.playing = false; syncTransport(); draw3D(); updateLight(); });
+        marks.appendChild(b);
+      });
+      pw.appendChild(marks);
+      host.appendChild(pw);
+      progressText = top.querySelector('b');
+    } else {
+      const pw = el('div', 'progress-wrap');
+      const top = el('div', 'progress-top');
+      top.innerHTML = '<span>动画时间</span><b id="timePct">0%</b>';
+      seek = el('input');
+      seek.type = 'range'; seek.min = 0; seek.max = 1000; seek.step = 1; seek.className = 'seek';
+      seek.setAttribute('aria-label', '动画时间');
+      seek.style.width = '100%';
+      seek.addEventListener('input', () => {
+        st.play.playing = false;
+        st.time = (+seek.value / 1000) * (st.play.span || 12);
+        if (cur.scene.onSeek) cur.scene.onSeek(st, st.time, mkApi());
+        syncTransport(); draw3D(); updateLight();
+      });
+      pw.appendChild(top); pw.appendChild(seek);
+      host.appendChild(pw);
+      progressText = top.querySelector('b');
+    }
+    transportSync = { playBtn, revBtn, seek, progressText, marks, mode, speed: sp, speedVal: speed.querySelector('b') };
+    syncTransport();
+  }
+
+  function timeSpan(st) { return Math.max(1, st.play.span || 12); }
+  function wrappedTime(st) {
+    const s = timeSpan(st);
+    return ((st.time % s) + s) % s;
+  }
+  function syncTransport() {
+    if (!cur || !transportSync) return;
+    const st = cur.state, t = transportSync;
+    const playing = st.play.playing;
+    t.playBtn.innerHTML = svg(playing ? ICON.pause : ICON.play, '0 0 16 16');
+    t.playBtn.classList.toggle('on', playing);
+    t.playBtn.setAttribute('aria-pressed', playing ? 'true' : 'false');
+    t.revBtn.classList.toggle('on', st.play.dir < 0);
+    t.speed.value = st.play.speed;
+    t.speedVal.textContent = (+st.play.speed).toFixed(2) + '×';
+    rangeFill(t.speed);
+    if (t.mode === 'progress') {
+      if (document.activeElement !== t.seek) t.seek.value = Math.round(st.progress * 1000);
+      rangeFill(t.seek);
+      t.progressText.textContent = Math.round(st.progress * 100) + '%';
+      if (t.marks) {
+        const stages = cur.scene.stages ? cur.scene.stages(st) : [];
+        Array.from(t.marks.children).forEach((b, i) => {
+          const sg = stages[i];
+          b.classList.toggle('active', sg && Math.abs(st.progress - sg.p) < .045);
+        });
+      }
+    } else {
+      const span = timeSpan(st), wt = wrappedTime(st);
+      if (document.activeElement !== t.seek) t.seek.value = Math.round(wt / span * 1000);
+      rangeFill(t.seek);
+      t.progressText.textContent = Math.round(wt / span * 100) + '%';
+    }
+    const tc = document.getElementById('timeCode');
+    if (tc) {
+      if (t.mode === 'progress') tc.textContent = Math.round(st.progress * 100) + '%';
+      else {
+        const span = timeSpan(st), wt = wrappedTime(st);
+        tc.textContent = U.fmt(wt, 2) + ' / ' + U.fmt(span, 1) + ' s';
+      }
+    }
+    const statusEl = D.status;
+    if (statusEl) statusEl.classList.toggle('paused', !playing);
+  }
+
+  function togglePlay() {
+    const st = cur.state;
+    if (st.play.mode === 'progress') {
+      if (!st.play.playing && st.play.dir > 0 && st.progress >= .999) st.progress = 0;
+      if (!st.play.playing && st.play.dir < 0 && st.progress <= .001) st.progress = 1;
+    }
+    st.play.playing = !st.play.playing;
+    if (cur.scene.onPlay) cur.scene.onPlay(st, st.play.playing, mkApi());
+    syncTransport(); updateStatus(); draw3D();
+  }
+  function resetPlayback() {
+    const st = cur.state;
+    st.play.playing = false;
+    st.time = 0;
+    if (st.play.mode === 'progress') st.progress = 0;
+    if (cur.scene.onReset) cur.scene.onReset(st, mkApi());
+    syncTransport(); draw3D(); updateLight();
+  }
+  function stepStage(dir) {
+    const st = cur.state;
+    if (st.play.mode !== 'progress' || !cur.scene.stages) return;
+    const stages = cur.scene.stages(st).slice().sort((a, b) => a.p - b.p);
+    if (!stages.length) return;
+    let idx = 0, best = 9;
+    stages.forEach((s, i) => { const d = Math.abs(s.p - st.progress); if (d < best) { best = d; idx = i; } });
+    let ni = idx;
+    if (dir > 0) {
+      if (st.progress < stages[idx].p - .02) ni = idx;
+      else ni = Math.min(stages.length - 1, idx + 1);
+    } else {
+      if (st.progress > stages[idx].p + .02) ni = idx;
+      else ni = Math.max(0, idx - 1);
+    }
+    st.progress = stages[ni].p;
+    st.play.playing = false;
+    syncTransport(); draw3D(); updateLight();
+  }
+
+  /* ---------------- scene api ---------------- */
+  function mkApi() {
+    return api;
+  }
+  const api = {
+    get state() { return cur ? cur.state : null; },
+    get scene() { return cur ? cur.scene : null; },
+    set(key, value) {
+      if (!cur) return;
+      setPath(cur.state, key, value);
+      if (cur.scene.onSet) cur.scene.onSet(cur.state, key, value, api);
+      updateAll();
+    },
+    patch(obj) {
+      if (!cur) return;
+      Object.assign(cur.state, obj);
+      if (cur.scene.onSet) cur.scene.onSet(cur.state, null, null, api);
+      updateAll();
+    },
+    commit() { updateAll(); },
+    refresh() { updateAll(); },
+    rebuild() { buildControls(); buildQuick(); buildTransport(); updateAll(); },
+    action(name, payload) {
+      if (cur && cur.scene.action) cur.scene.action(cur.state, name, payload, api);
+    },
+    play() { if (!cur.state.play.playing) togglePlay(); },
+    pause() { if (cur && cur.state.play.playing) togglePlay(); },
+    seek(p) {
+      if (!cur) return;
+      cur.state.progress = U.clamp(p, 0, 1);
+      cur.state.play.playing = false;
+      syncTransport(); draw3D(); updateLight();
+    },
+    go(id, patch) { mountScene(id, patch); },
+    toast(msg) { showToast(msg); },
+    draw() { draw3D(); },
+    update() { updateAll(); }
+  };
+  V.api = api;
+
+  /* ---------------- scene mount / UI ---------------- */
+  function normalizeState(scene, st) {
+    st = st || {};
+    st.cam = Object.assign({ az: -.9, el: .3, zoom: 1 }, scene.camera || {}, st.cam || {});
+    st.play = Object.assign({ mode: scene.playMode || 'time', playing: !!scene.autoplay, speed: 1, dir: 1 }, scene.play || {}, st.play || {});
+    st.play.mode = scene.playMode || st.play.mode || 'time';
+    st.play.speed = +st.play.speed || 1;
+    st.play.dir = st.play.dir < 0 ? -1 : 1;
+    st.play.span = st.play.span || scene.playSpan || 12;
+    if (st.time == null) st.time = 0;
+    if (st.progress == null) st.progress = scene.startProgress || 0;
+    st.progress = U.clamp(st.progress, 0, 1);
+    if (!st.sel || typeof st.sel !== 'object') st.sel = {};
+    if (!st.show || typeof st.show !== 'object') st.show = {};
+    return st;
+  }
+  function mountScene(id, patch) {
+    const scene = V.byId[id];
+    if (!scene) { console.warn('unknown scene', id); return; }
+    if (cur) {
+      try { if (cur.scene.leave) cur.scene.leave(cur.state, api); } catch (e) { console.error(e); }
+      cur.state.play.playing = false;
+    }
+    const st = normalizeState(scene, scene.initialState ? scene.initialState() : {});
+    if (patch) Object.assign(st, patch);
+    cur = { scene, state: st, frame: null, specs: [], chartIds: '', handleHits: [], view: null };
+    D.charts.innerHTML = '';
+    if (D.readouts) D.readouts.hidden = true;
+    buildControls();
+    buildQuick();
+    buildTransport();
+    if (D.refTabs) D.refTabs.hidden = scene.refTabs === false;
+    if (D.refTabs) Array.from(D.refTabs.children).forEach(b => b.classList.toggle('active', b.dataset.ref === (st.view || 'fixed')));
+    buildSceneTabs();
+    try { if (scene.enter) scene.enter(st, api); } catch (e) { console.error('enter error', e); }
+    updateAll();
+  }
+  function buildSceneTabs() {
+    if (!D.tabs) return;
+    D.tabs.innerHTML = '';
+    V.scenes.forEach(sc => {
+      const b = el('button', 'scene-tab');
+      b.type = 'button';
+      b.dataset.scene = sc.id;
+      b.innerHTML = '<b>' + (sc.tab || sc.name || sc.id) + '</b>' + (sc.tag ? '<i>' + sc.tag + '</i>' : '');
+      b.title = sc.title || sc.name || sc.id;
+      b.addEventListener('click', () => { if (!cur || cur.scene.id !== sc.id) mountScene(sc.id); });
+      D.tabs.appendChild(b);
+    });
+    Array.from(D.tabs.children).forEach(b => b.classList.toggle('active', !!(cur && b.dataset.scene === cur.scene.id)));
+  }
+  function updateAll() {
+    if (!cur) return;
+    draw3D();
+    updateChrome();
+    syncControls();
+    syncQuick();
+    syncTransport();
+    renderCharts();
+    renderReadouts();
+  }
+  function updateLight() {
+    if (!cur) return;
+    updateChrome();
+    syncTransport();
+    renderCharts();
+    renderReadouts();
+    syncControls();
+    syncQuick();
+  }
+  function updateStatus() {
+    if (!cur || !D.statusText) return;
+    const st = cur.state;
+    let text = '';
+    if (cur.frame && cur.frame.status) text = cur.frame.status;
+    else if (cur.scene.status) text = cur.scene.status(st);
+    else text = st.play.playing ? '播放中' : '已暂停';
+    D.statusText.textContent = text;
+    D.status.classList.toggle('paused', !st.play.playing);
+  }
+  function updateChrome() {
+    if (!cur) return;
+    const st = cur.state, sc = cur.scene, fr = cur.frame || {};
+    D.sceneKicker.textContent = sc.kicker || 'SCENE';
+    D.sceneTitle.innerHTML = sc.title || sc.name || sc.id;
+    D.sceneDesc.innerHTML = sc.desc || '';
+    D.sceneBadge.textContent = (sc.badge ? sc.badge(st) : sc.tag) || '—';
+    const hud = fr.hud || {};
+    D.hudTitle.textContent = hud.title || sc.hudTitle || sc.name || sc.id;
+    D.hudSub.textContent = hud.sub || sc.hudSub || '';
+    D.hudKicker.textContent = fr.hudKicker || 'CURRENT MODEL';
+    D.legend.innerHTML = (fr.legend || sc.legend && sc.legend(st) || []).map(l =>
+      '<span><i style="background:' + l.color + ';' + (l.ring ? 'border-radius:50%;' : '') + '"></i>' + l.label + '</span>').join('');
+    D.stageTag.innerHTML = (fr.tags || []).map(t => '<span>' + t + '</span>').join('');
+    D.chartBadge.textContent = fr.badge || sc.chartBadge || '坐标固定';
+    D.footnote.innerHTML = fr.footnote || sc.footnote || '图表横纵坐标由模型给定；旋转相机或调整播放速度不会改变坐标。所有能量与谱线为定性教学示意。';
+    if (D.refTabs) {
+      D.refTabs.hidden = sc.refTabs === false;
+      Array.from(D.refTabs.children).forEach(b => b.classList.toggle('active', b.dataset.ref === (st.view || 'fixed')));
+    }
+    updateStatus();
+    const cbs = Array.from(D.tabs.children);
+    cbs.forEach(b => b.classList.toggle('active', b.dataset.scene === sc.id));
+  }
+  function renderReadouts() {
+    if (!cur || !D.readouts) return;
+    const list = (cur.frame && cur.frame.readouts) || [];
+    if (!list.length) { D.readouts.hidden = true; return; }
+    D.readouts.hidden = false;
+    D.readouts.innerHTML = '<div class="rh"><span>当前读数</span><span>LIVE</span></div><div class="readout-grid">' +
+      list.map(r => '<div class="readout ' + (r.tone || '') + '"><span>' + r.label + '</span><b>' + (r.value == null ? '—' : r.value) + '</b></div>').join('') + '</div>';
+  }
+  function renderCharts() {
+    if (!cur || !V.charts) return;
+    V.charts.render(D.charts, cur, api);
+  }
+
+  function showToast(msg) {
+    if (!D.toast) return;
+    D.toast.textContent = msg;
+    D.toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => D.toast.classList.remove('show'), 1800);
+  }
+
+  /* ---------------- interaction ---------------- */
+  function resetCamera() {
+    if (!cur) return;
+    cur.state.cam = Object.assign({ az: -.9, el: .3, zoom: 1 }, cur.scene.camera || {});
+    draw3D();
+  }
+  function bind3D() {
+    const pane = D.viewport, canvas = D.canvas;
+    const pointers = new Map();
+    let last = null, pinch = 0, handle = null, moved = false;
+    function hitHandle(x, y) {
+      if (!cur || !cur.handleHits) return null;
+      const r = canvas.getBoundingClientRect();
+      const px = x - r.left, py = y - r.top;
+      let best = null;
+      for (const h of cur.handleHits) {
+        const d = Math.hypot(h.x - px, h.y - py);
+        if (d < Math.max(16, h.r) && (!best || d < best.d)) best = { h, d };
+      }
+      return best ? best.h : null;
+    }
+    pane.addEventListener('pointerdown', ev => {
+      if (ev.button != null && ev.button !== 0 && ev.pointerType === 'mouse') return;
+      if (!cur) return;
+      moved = false;
+      pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      if (pointers.size === 1) {
+        handle = hitHandle(ev.clientX, ev.clientY);
+        if (handle) {
+          drag = { type: 'handle', id: handle.id, x: ev.clientX, y: ev.clientY };
+          canvas.classList.add('handle');
+        } else {
+          drag = { type: 'cam' };
+          last = { x: ev.clientX, y: ev.clientY };
+          canvas.classList.add('dragging');
+        }
+        pane.setPointerCapture && pane.setPointerCapture(ev.pointerId);
+      } else if (pointers.size === 2) {
+        const [a, b] = Array.from(pointers.values());
+        pinch = Math.hypot(a.x - b.x, a.y - b.y);
+        drag = null;
+      }
+    });
+    pane.addEventListener('pointermove', ev => {
+      if (!pointers.has(ev.pointerId)) return;
+      pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      if (!cur) return;
+      if (pointers.size === 2) {
+        const [a, b] = Array.from(pointers.values());
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (pinch > 0 && d > 0) {
+          cur.state.cam.zoom = U.clamp(cur.state.cam.zoom * pinch / d, .5, 2.4);
+          draw3D();
+        }
+        pinch = d; moved = true;
+        return;
+      }
+      if (drag && drag.type === 'handle') {
+        const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+        drag.x = ev.clientX; drag.y = ev.clientY; moved = true;
+        if (cur.scene.handleDrag) cur.scene.handleDrag(cur.state, drag.id, { dx, dy }, api);
+        draw3D();
+        if (Math.abs(dx) + Math.abs(dy) > 3) updateLight();
+      } else if (drag && drag.type === 'cam' && last) {
+        const dx = ev.clientX - last.x, dy = ev.clientY - last.y;
+        cur.state.cam.az -= dx * .0065;
+        cur.state.cam.el = U.clamp(cur.state.cam.el + dy * .0065, -1.42, 1.42);
+        last = { x: ev.clientX, y: ev.clientY };
+        moved = true;
+        draw3D();
+      }
+    });
+    function up(ev) {
+      pointers.delete(ev.pointerId);
+      if (!pointers.size) {
+        if (drag && drag.type === 'cam' && !moved) { /* tap on empty space */ }
+        drag = null; handle = null; last = null; pinch = 0;
+        canvas.classList.remove('dragging'); canvas.classList.remove('handle');
+      } else if (pointers.size === 1) {
+        const p = Array.from(pointers.values())[0];
+        last = { x: p.x, y: p.y }; drag = { type: 'cam' }; pinch = 0;
+      }
+    }
+    pane.addEventListener('pointerup', up);
+    pane.addEventListener('pointercancel', up);
+    pane.addEventListener('pointerleave', ev => { if (!ev.buttons) up(ev); });
+    pane.addEventListener('wheel', ev => {
+      ev.preventDefault();
+      if (!cur) return;
+      cur.state.cam.zoom = U.clamp(cur.state.cam.zoom * Math.exp(ev.deltaY * .0011), .5, 2.4);
+      draw3D();
+    }, { passive: false });
+    pane.addEventListener('dblclick', () => resetCamera());
+    pane.addEventListener('keydown', ev => {
+      if (!cur) return;
+      const k = ev.key;
+      if (k === 'ArrowLeft') { cur.state.cam.az += .1; draw3D(); ev.preventDefault(); }
+      else if (k === 'ArrowRight') { cur.state.cam.az -= .1; draw3D(); ev.preventDefault(); }
+      else if (k === 'ArrowUp') { cur.state.cam.el = U.clamp(cur.state.cam.el + .08, -1.42, 1.42); draw3D(); ev.preventDefault(); }
+      else if (k === 'ArrowDown') { cur.state.cam.el = U.clamp(cur.state.cam.el - .08, -1.42, 1.42); draw3D(); ev.preventDefault(); }
+      else if (k === '+' || k === '=') { cur.state.cam.zoom = U.clamp(cur.state.cam.zoom * .9, .5, 2.4); draw3D(); ev.preventDefault(); }
+      else if (k === '-') { cur.state.cam.zoom = U.clamp(cur.state.cam.zoom / .9, .5, 2.4); draw3D(); ev.preventDefault(); }
+    });
+  }
+
+  /* ---------------- loop ---------------- */
+  function loop(t) {
+    raf = requestAnimationFrame(loop);
+    const now = t || 0;
+    const dt = lastFrameT ? Math.min(.05, (now - lastFrameT) / 1000) : 0;
+    lastFrameT = now;
+    if (document.hidden || !cur) return;
+    const st = cur.state;
+    let changed = false;
+    if (st.play.playing) {
+      if (st.play.mode === 'progress') {
+        const d = dt * .17 * st.play.speed * st.play.dir;
+        st.progress = U.clamp(st.progress + d, 0, 1);
+        changed = true;
+        if ((st.play.dir > 0 && st.progress >= 1) || (st.play.dir < 0 && st.progress <= 0)) {
+          st.play.playing = false;
+        }
+      } else {
+        st.time += dt * st.play.speed * st.play.dir;
+        changed = true;
+      }
+    }
+    if (cur.scene.tick) {
+      try { if (cur.scene.tick(st, dt, api)) changed = true; }
+      catch (e) { console.error('tick error', e); }
+    }
+    if (changed) {
+      draw3D();
+      if (now - lastLight > 90) {
+        lastLight = now;
+        updateStatus(); syncTransport(); renderCharts(); renderReadouts();
+      }
+    }
+  }
+
+  /* ---------------- boot ---------------- */
+  function cacheDom() {
+    D.tabs = $('#sceneTabs'); D.controlsBody = $('#controlsBody');
+    D.sceneKicker = $('#sceneKicker'); D.sceneTitle = $('#sceneTitle');
+    D.sceneDesc = $('#sceneDesc'); D.sceneBadge = $('#sceneBadge');
+    D.viewport = $('#viewport'); D.canvas = $('#scene'); D.sctx = D.canvas.getContext('2d');
+    D.status = $('#status'); D.statusText = $('#statusText');
+    D.hudTitle = $('#hudTitle'); D.hudSub = $('#hudSub'); D.hudKicker = $('#hudKicker');
+    D.legend = $('#legend'); D.stageTag = $('#stageTag');
+    D.quickbar = $('#quickbar'); D.transport = $('#transport');
+    D.charts = $('#charts'); D.readouts = $('#readouts'); D.footnote = $('#footnote');
+    D.chartBadge = $('#chartBadge'); D.refTabs = $('#refTabs');
+    D.toast = $('#toast');
+    D.docsModal = $('#docsModal'); D.docsBody = $('#docsBody');
+  }
+  function bindGlobal() {
+    $('#docsBtn').addEventListener('click', () => { D.docsModal.hidden = false; $('#docsClose').focus(); });
+    $('#docsClose').addEventListener('click', () => D.docsModal.hidden = true);
+    D.docsModal.addEventListener('click', ev => { if (ev.target === D.docsModal) D.docsModal.hidden = true; });
+    document.addEventListener('keydown', ev => {
+      if (ev.key === 'Escape') D.docsModal.hidden = true;
+      if (ev.key === ' ' && !/INPUT|TEXTAREA|BUTTON|SELECT/.test((document.activeElement || {}).tagName || '')) {
+        ev.preventDefault(); if (cur) togglePlay();
+      }
+    });
+    $('#camResetBtn').addEventListener('click', resetCamera);
+    Array.from(D.refTabs.children).forEach(b => b.addEventListener('click', () => {
+      if (!cur) return;
+      cur.state.view = b.dataset.ref;
+      api.commit();
+    }));
+    window.addEventListener('resize', () => { if (cur) { draw3D(); renderCharts(); } });
+    if ('ResizeObserver' in window) {
+      const ro = new ResizeObserver(() => { if (cur) { draw3D(); renderCharts(); } });
+      ro.observe(D.viewport);
+    }
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) lastFrameT = 0; });
+  }
+  V.boot = function (opts) {
+    if (booted) return;
+    booted = true;
+    opts = opts || {};
+    cacheDom();
+    buildSceneTabs();
+    bindGlobal();
+    bind3D();
+    if (!V.scenes.length) { console.warn('no scenes registered'); return; }
+    const id = opts.defaultScene && V.byId[opts.defaultScene] ? opts.defaultScene : V.scenes[0].id;
+    mountScene(id);
+    raf = requestAnimationFrame(loop);
+  };
+
+  /* test hooks (harmless in production) */
+  V._internals = {
+    get current() { return cur; },
+    mount: mountScene,
+    updateAll, draw3D, updateLight,
+    togglePlay, resetPlayback, stepStage,
+    drawCharts: renderCharts,
+    cameraData, makeProjector, resizeCanvas,
+    rgba, shade
+  };
+})();
+
+
+/* =====================================================================
+   Linked chart components: curve / stick spectrum / bar chart / level
+   ladder.  All coordinates are fixed by the model, never by the camera
+   or playback speed.  Charts expose generous touch hit areas.
+   ===================================================================== */
+(function () {
+  'use strict';
+  const V = window.ChemVis;
+  const U = V.utils, C = V.colors;
+  const TAU = Math.PI * 2;
+  const FONT = '"SFMono-Regular",Consolas,"Liberation Mono",monospace';
+  const SANS = '"Segoe UI","Noto Sans SC","PingFang SC",sans-serif';
+
+  function niceTicks(min, max, n) {
+    const span = max - min;
+    if (!(span > 0)) return [min];
+    const raw = span / Math.max(1, n);
+    const p = Math.pow(10, Math.floor(Math.log10(raw)));
+    const m = raw / p;
+    const step = (m >= 7.5 ? 10 : m >= 3.5 ? 5 : m >= 1.5 ? 2 : 1) * p;
+    const out = [];
+    for (let v = Math.ceil(min / step) * step; v <= max + step * 1e-6; v += step) out.push(Math.round(v * 1e6) / 1e6);
+    if (!out.length) out.push(min, max);
+    return out;
+  }
+  function tickText(v) {
+    if (Math.abs(v) >= 1000) return String(Math.round(v));
+    if (Math.abs(v) >= 10) return String(Math.round(v * 10) / 10).replace(/\.0$/, '');
+    if (Math.abs(v) >= 1) return String(Math.round(v * 100) / 100).replace(/\.0+$/, '');
+    return String(Math.round(v * 1000) / 1000);
+  }
+  function roundRect(ctx, x, y, w, h, r) {
+    r = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+  function canvasSize(canvas) {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return null;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+      canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { w, h, ctx };
+  }
+  function boxFor(w, h, spec) {
+    const pad = spec.pad || {};
+    const l = pad.l == null ? 34 : pad.l;
+    const r = pad.r == null ? 11 : pad.r;
+    const t = pad.t == null ? 12 : pad.t;
+    const b = pad.b == null ? 27 : pad.b;
+    return { l, r, t, b, w, h, pw: Math.max(10, w - l - r), ph: Math.max(10, h - t - b) };
+  }
+  function grid(ctx, bx, x, y, rows) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(118,170,220,.10)'; ctx.lineWidth = 1;
+    for (let i = 0; i <= rows; i++) {
+      const yy = bx.t + bx.ph * i / rows;
+      ctx.beginPath(); ctx.moveTo(bx.l, yy); ctx.lineTo(bx.l + bx.pw, yy); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(156,192,220,.22)';
+    ctx.beginPath(); ctx.moveTo(bx.l, bx.t); ctx.lineTo(bx.l, bx.t + bx.ph); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx.l, bx.t + bx.ph); ctx.lineTo(bx.l + bx.pw, bx.t + bx.ph); ctx.stroke();
+    ctx.restore();
+  }
+  function xTicks(ctx, bx, spec, X) {
+    const x = spec.x || {};
+    const ticks = x.ticks || niceTicks(x.min, x.max, x.count || 5);
+    ctx.save();
+    ctx.fillStyle = 'rgba(143,169,192,.72)';
+    ctx.font = '7.5px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ticks.forEach(v => {
+      if (v < x.min - 1e-9 || v > x.max + 1e-9) return;
+      const xx = X(v);
+      ctx.strokeStyle = 'rgba(118,170,220,.16)';
+      ctx.beginPath(); ctx.moveTo(xx, bx.t + bx.ph); ctx.lineTo(xx, bx.t + bx.ph + 3); ctx.stroke();
+      ctx.fillText(v.label != null ? v.label : tickText(v), xx, bx.t + bx.ph + 5);
+    });
+    if (x.label) {
+      ctx.fillStyle = 'rgba(159,184,207,.62)'; ctx.font = '8px ' + FONT;
+      ctx.fillText(x.label, bx.l + bx.pw / 2, bx.t + bx.ph + 16);
+    }
+    ctx.restore();
+  }
+  function yLabel(ctx, bx, text) {
+    if (!text) return;
+    ctx.save();
+    ctx.translate(10, bx.t + bx.ph / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = 'rgba(143,169,192,.55)'; ctx.font = '7.5px ' + FONT;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, 0, 0);
+    ctx.restore();
+  }
+  function legendDots(ctx, w, y, items) {
+    ctx.save(); ctx.font = '7.5px ' + FONT; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    let x = 8;
+    items.forEach(it => {
+      ctx.fillStyle = it.color; ctx.beginPath(); ctx.arc(x + 2.5, y, 2.2, 0, TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(160,186,208,.72)'; ctx.fillText(it.label, x + 8, y + .5);
+      x += 8 + ctx.measureText(it.label).width + 10;
+    });
+    ctx.restore();
+  }
+
+  /* ---------------- profile ---------------- */
+  function drawProfile(ctx, w, h, spec, cur) {
+    const bx = boxFor(w, h, spec);
+    const x = Object.assign({ min: 0, max: 1 }, spec.x);
+    const y = Object.assign({ min: 0, max: 1 }, spec.y);
+    const X = v => bx.l + (v - x.min) / ((x.max - x.min) || 1) * bx.pw;
+    const Y = v => bx.t + bx.ph - (v - y.min) / ((y.max - y.min) || 1) * bx.ph;
+    grid(ctx, bx, x, y, 4);
+    // bands
+    (spec.bands || []).forEach(bd => {
+      const x0 = X(Math.max(x.min, bd.from)), x1 = X(Math.min(x.max, bd.to));
+      ctx.save();
+      ctx.fillStyle = bd.color || 'rgba(110,170,220,.06)';
+      ctx.fillRect(x0, bx.t, Math.max(0, x1 - x0), bx.ph);
+      if (bd.label) {
+        ctx.font = '7px ' + FONT; ctx.fillStyle = bd.labelColor || 'rgba(150,178,200,.66)';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        const cx = (x0 + x1) / 2;
+        if (x1 - x0 > ctx.measureText(bd.label).width + 6) ctx.fillText(bd.label, cx, bx.t + 3);
+      }
+      ctx.restore();
+    });
+    // curve + fill (supports multiple series)
+    const series = spec.series || (spec.curve ? [{ pts: spec.curve, color: spec.color, width: spec.width, fill: spec.fill !== false }] : []);
+    series.forEach((s) => {
+      const pts = s.pts || s.curve || [];
+      if (pts.length < 2) return;
+      ctx.save();
+      const path = new Path2D();
+      path.moveTo(X(pts[0][0]), Y(pts[0][1]));
+      for (let i = 1; i < pts.length; i++) path.lineTo(X(pts[i][0]), Y(pts[i][1]));
+      const col = s.color || spec.color || '#6fd6ff';
+      if (s.fill) {
+        const area = new Path2D(path);
+        area.lineTo(X(pts[pts.length - 1][0]), bx.t + bx.ph);
+        area.lineTo(X(pts[0][0]), bx.t + bx.ph); area.closePath();
+        const g = ctx.createLinearGradient(0, bx.t, 0, bx.t + bx.ph);
+        g.addColorStop(0, V.rgba(col, .2)); g.addColorStop(1, V.rgba(col, .012));
+        ctx.fillStyle = g; ctx.fill(area);
+      }
+      ctx.strokeStyle = col; ctx.lineWidth = s.width || spec.width || 1.8;
+      if (s.dash) ctx.setLineDash(s.dash);
+      ctx.shadowColor = V.rgba(col, .35); ctx.shadowBlur = 6; ctx.stroke(path); ctx.shadowBlur = 0;
+      ctx.restore();
+    });
+    if (spec.legend && spec.legend.length) {
+      ctx.save(); ctx.font = '7px ' + FONT; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      let lx = bx.l + 5, ly = bx.t + 9;
+      spec.legend.forEach(it => {
+        const tw = ctx.measureText(it.label).width;
+        if (lx + tw + 16 > bx.l + bx.pw) { lx = bx.l + 5; ly += 11; }
+        ctx.fillStyle = it.color; ctx.beginPath(); ctx.arc(lx + 3, ly, 2.2, 0, TAU); ctx.fill();
+        ctx.fillStyle = 'rgba(175,200,220,.8)'; ctx.fillText(it.label, lx + 8, ly + .5);
+        lx += tw + 17;
+      });
+      ctx.restore();
+    }
+    // reference horizontal lines
+    (spec.hlines || []).forEach(l => {
+      const yy = Y(l.y);
+      ctx.save(); ctx.strokeStyle = l.color || 'rgba(156,192,220,.25)'; ctx.lineWidth = 1;
+      if (l.dash !== false) ctx.setLineDash([3, 4]);
+      ctx.beginPath(); ctx.moveTo(bx.l, yy); ctx.lineTo(bx.l + bx.pw, yy); ctx.stroke();
+      if (l.label) { ctx.font = '7px ' + FONT; ctx.fillStyle = l.color || 'rgba(159,184,207,.6)'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText(l.label, bx.l + 3, yy - 2); }
+      ctx.restore();
+    });
+    // cursor
+    const cursor = spec.cursor || (cur.state.progress != null && spec.showProgressCursor ? { x: cur.state.progress, label: Math.round(cur.state.progress * 100) + '%' } : null);
+    if (cursor && cursor.x >= x.min && cursor.x <= x.max) {
+      const xx = X(cursor.x);
+      ctx.save();
+      ctx.strokeStyle = cursor.color || 'rgba(255,215,110,.72)'; ctx.lineWidth = 1;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath(); ctx.moveTo(xx, bx.t); ctx.lineTo(xx, bx.t + bx.ph); ctx.stroke(); ctx.setLineDash([]);
+      // dot on each curve
+      series.forEach(s => {
+        const pts = s.pts || s.curve || [];
+        if (!pts.length) return;
+        let best = pts[0], bd = 1e9;
+        for (const p of pts) { const d = Math.abs(p[0] - cursor.x); if (d < bd) { bd = d; best = p; } }
+        const yy = Y(best[1]);
+        ctx.beginPath(); ctx.arc(xx, yy, 2.8, 0, TAU); ctx.fillStyle = s.color || spec.color || cursor.color || '#ffd76e'; ctx.fill();
+        ctx.beginPath(); ctx.arc(xx, yy, 5.2, 0, TAU); ctx.strokeStyle = V.rgba(s.color || spec.color || cursor.color || '#ffd76e', .35); ctx.lineWidth = 1; ctx.stroke();
+      });
+      if (cursor.label) {
+        ctx.font = '600 7.5px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        const tw = ctx.measureText(cursor.label).width;
+        const lx = U.clamp(xx, bx.l + tw / 2 + 3, bx.l + bx.pw - tw / 2 - 3);
+        ctx.fillStyle = 'rgba(5,12,20,.86)'; roundRect(ctx, lx - tw / 2 - 4, bx.t + 1, tw + 8, 13, 3); ctx.fill();
+        ctx.fillStyle = cursor.color || '#ffd76e'; ctx.fillText(cursor.label, lx, bx.t + 12);
+      }
+      ctx.restore();
+    }
+    // markers
+    const hits = [];
+    (spec.markers || []).forEach(m => {
+      const xx = X(m.x), yy = Y(m.y);
+      const on = spec.selected != null && m.id === spec.selected;
+      const col = m.color || '#ffcf7a';
+      ctx.save();
+      if (on) { ctx.beginPath(); ctx.arc(xx, yy, 9, 0, TAU); ctx.fillStyle = V.rgba(col, .12); ctx.fill(); ctx.strokeStyle = V.rgba(col, .7); ctx.lineWidth = 1; ctx.stroke(); }
+      ctx.beginPath(); ctx.arc(xx, yy, on ? 4.2 : 3.2, 0, TAU); ctx.fillStyle = col; ctx.fill();
+      ctx.beginPath(); ctx.arc(xx, yy, on ? 7 : 5.5, 0, TAU); ctx.strokeStyle = V.rgba(col, on ? .8 : .38); ctx.lineWidth = 1; ctx.stroke();
+      if (m.label) {
+        ctx.font = '600 7.5px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        const tw = ctx.measureText(m.label).width;
+        const lx = U.clamp(xx, bx.l + tw / 2 + 2, bx.l + bx.pw - tw / 2 - 2);
+        ctx.fillStyle = 'rgba(5,12,20,.82)'; roundRect(ctx, lx - tw / 2 - 3.5, yy - 20, tw + 7, 12, 3); ctx.fill();
+        ctx.fillStyle = col; ctx.fillText(m.label, lx, yy - 9);
+      }
+      if (m.sub) {
+        ctx.font = '6.5px ' + FONT; ctx.fillStyle = 'rgba(170,196,216,.55)'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(m.sub, U.clamp(xx, bx.l + 30, bx.l + bx.pw - 30), yy + 9);
+      }
+      ctx.restore();
+      hits.push({ type: 'marker', id: m.id, x: xx, y: yy, r: 20, value: m.x });
+    });
+    // annotations
+    (spec.annotations || []).forEach(a => {
+      ctx.save(); ctx.font = '7px ' + FONT; ctx.fillStyle = a.color || 'rgba(170,196,216,.62)';
+      ctx.textAlign = a.align || 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(a.text, X(a.x), Y(a.y));
+      ctx.restore();
+    });
+    xTicks(ctx, bx, spec, X);
+    yLabel(ctx, bx, spec.yLabel);
+    const yl = (spec.y && spec.y.labels) || spec.yLabels;
+    if (yl) {
+      ctx.save(); ctx.fillStyle = 'rgba(143,169,192,.55)'; ctx.font = '7px ' + FONT; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      yl.forEach(l => ctx.fillText(l.text, bx.l - 4, Y(l.y)));
+      ctx.restore();
+    }
+    return { hits, x, X, fallback: spec.noSeek ? null : { type: 'x', xOf: px => U.clamp(x.min + (px - bx.l) / bx.pw * (x.max - x.min), x.min, x.max) } };
+  }
+
+  /* ---------------- sticks ---------------- */
+  function drawSticks(ctx, w, h, spec, cur) {
+    const bx = boxFor(w, h, spec);
+    const x = Object.assign({ min: 0, max: 100 }, spec.x);
+    const X = v => bx.l + (v - x.min) / ((x.max - x.min) || 1) * bx.pw;
+    const base = bx.t + bx.ph;
+    const topH = bx.ph - 18;
+    grid(ctx, bx, x, null, 3);
+    (spec.bands || []).forEach(bd => {
+      const x0 = X(Math.max(x.min, bd.from)), x1 = X(Math.min(x.max, bd.to));
+      ctx.save(); ctx.fillStyle = bd.color || 'rgba(110,170,220,.055)';
+      ctx.fillRect(x0, bx.t, Math.max(0, x1 - x0), bx.ph);
+      if (bd.label) {
+        ctx.font = '7px ' + FONT; ctx.fillStyle = 'rgba(155,184,208,.62)'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        if (x1 - x0 > ctx.measureText(bd.label).width + 4) ctx.fillText(bd.label, (x0 + x1) / 2, bx.t + 2);
+      }
+      ctx.restore();
+    });
+    // sticks
+    const hits = [];
+    const sticks = spec.sticks || [];
+    sticks.forEach(s => {
+      const xx = X(s.x);
+      if (xx < bx.l - 2 || xx > bx.l + bx.pw + 2) return;
+      const hgt = base - (s.height == null ? .72 : s.height) * topH;
+      const on = spec.selected != null && s.id === spec.selected;
+      const col = s.color || '#6fd6ff';
+      ctx.save();
+      ctx.globalAlpha = s.alpha == null ? 1 : s.alpha;
+      if (on) {
+        const g = ctx.createLinearGradient(0, hgt, 0, base);
+        g.addColorStop(0, V.rgba(col, .26)); g.addColorStop(1, V.rgba(col, .02));
+        ctx.fillStyle = g; ctx.fillRect(xx - 6, hgt, 12, base - hgt);
+        ctx.shadowColor = V.rgba(col, .6); ctx.shadowBlur = 9;
+      }
+      ctx.strokeStyle = col; ctx.lineWidth = on ? 3 : 1.6;
+      ctx.beginPath(); ctx.moveTo(xx, base); ctx.lineTo(xx, hgt); ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(xx, hgt, on ? 3 : 1.8, 0, TAU); ctx.fill();
+      ctx.restore();
+      hits.push({ type: 'stick', id: s.id, x: xx, y: (hgt + base) / 2, r: 16, value: s.x, label: s.label });
+      if (s.label && (s.showLabel || on || spec.labelAll)) {
+        ctx.save();
+        ctx.font = '600 7px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        const tw = ctx.measureText(s.label).width;
+        const lx = U.clamp(xx, bx.l + tw / 2 + 1, bx.l + bx.pw - tw / 2 - 1);
+        ctx.fillStyle = 'rgba(5,12,20,.88)';
+        roundRect(ctx, lx - tw / 2 - 2.5, hgt - 12.5, tw + 5, 11, 2.5); ctx.fill();
+        ctx.fillStyle = on ? '#fff4d2' : V.rgba(col, .92); ctx.fillText(s.label, lx, hgt - 3);
+        ctx.restore();
+      }
+    });
+    // group labels
+    (spec.groupLabels || []).forEach(g => {
+      const xx = X(g.x);
+      ctx.save(); ctx.font = '600 7px ' + FONT; ctx.fillStyle = V.rgba(g.color || '#9fc0d8', .8);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(g.label, xx, bx.t + 1);
+      if (g.from != null && g.to != null) {
+        ctx.strokeStyle = V.rgba(g.color || '#9fc0d8', .25); ctx.lineWidth = .8;
+        ctx.beginPath(); ctx.moveTo(X(g.from), bx.t + 12); ctx.lineTo(X(g.to), bx.t + 12); ctx.stroke();
+      }
+      ctx.restore();
+    });
+    // refs
+    (spec.refs || []).forEach(r => {
+      if (r.x < x.min || r.x > x.max) return;
+      const xx = X(r.x);
+      ctx.save();
+      ctx.strokeStyle = r.color || 'rgba(190,216,236,.45)'; ctx.lineWidth = 1;
+      ctx.setLineDash(r.dash || [3, 4]);
+      ctx.beginPath(); ctx.moveTo(xx, bx.t + (r.top || 0)); ctx.lineTo(xx, base); ctx.stroke();
+      if (r.label) {
+        ctx.setLineDash([]);
+        ctx.font = '7px ' + FONT; ctx.fillStyle = r.color || 'rgba(190,216,236,.72)'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        const ly = r.labelY == null ? bx.t + 10 : r.labelY;
+        ctx.fillText(r.label, xx, ly);
+      }
+      ctx.restore();
+    });
+    // Q gap marker
+    if (spec.qGap) {
+      const xx = X(spec.qGap.x);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,197,107,.5)'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+      ctx.beginPath(); ctx.moveTo(xx, bx.t + 13); ctx.lineTo(xx, base); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = '600 7px ' + FONT; ctx.fillStyle = '#ffc56b'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(spec.qGap.label || '无 Q 支', U.clamp(xx, bx.l + 24, bx.l + bx.pw - 24), bx.t + 14);
+      ctx.restore();
+    }
+    if (!sticks.length && spec.empty) {
+      ctx.save(); ctx.fillStyle = 'rgba(160,186,208,.55)'; ctx.font = '9px ' + SANS; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(spec.empty, bx.l + bx.pw / 2, bx.t + bx.ph / 2);
+      ctx.restore();
+    }
+    xTicks(ctx, bx, spec, X);
+    yLabel(ctx, bx, spec.yLabel);
+    return { hits, x, X, fallback: null };
+  }
+
+  /* ---------------- bars ---------------- */
+  function drawBars(ctx, w, h, spec, cur) {
+    const bx = boxFor(w, h, { pad: { l: 58, r: 36, t: 14, b: 26 } });
+    const max = spec.max || 4.5;
+    const X = v => bx.l + U.clamp(v / max, 0, 1) * bx.pw;
+    const rows = spec.bars || [];
+    const n = rows.length;
+    const rowH = bx.ph / Math.max(1, n);
+    // grid
+    ctx.save();
+    ctx.strokeStyle = 'rgba(118,170,220,.10)'; ctx.lineWidth = 1;
+    const ticks = spec.ticks || niceTicks(0, max, 5);
+    ticks.forEach(t => {
+      const xx = X(t);
+      ctx.beginPath(); ctx.moveTo(xx, bx.t); ctx.lineTo(xx, bx.t + bx.ph); ctx.stroke();
+      ctx.fillStyle = 'rgba(143,169,192,.6)'; ctx.font = '7px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(tickText(t) + (spec.unit || ''), xx, bx.t + bx.ph + 5);
+    });
+    ctx.strokeStyle = 'rgba(156,192,220,.22)';
+    ctx.beginPath(); ctx.moveTo(bx.l, bx.t); ctx.lineTo(bx.l, bx.t + bx.ph); ctx.stroke();
+    ctx.restore();
+    const hits = [];
+    rows.forEach((b, i) => {
+      const cy = bx.t + rowH * (i + .5);
+      const bh = Math.min(20, rowH * .44);
+      const col = b.color || '#6fd6ff';
+      const val = Math.max(0, b.value);
+      const xx = X(val);
+      ctx.save();
+      // label
+      ctx.font = '8px ' + SANS; ctx.fillStyle = b.muted ? 'rgba(130,154,174,.8)' : '#a8c2d6';
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText(b.label, bx.l - 6, cy - (b.sub ? 4 : 0));
+      if (b.sub) { ctx.font = '6.5px ' + FONT; ctx.fillStyle = 'rgba(110,136,156,.8)'; ctx.fillText(b.sub, bx.l - 6, cy + 6); }
+      // track
+      ctx.fillStyle = 'rgba(92,124,152,.12)'; ctx.fillRect(bx.l, cy - bh / 2, bx.pw, bh);
+      // bar
+      const g = ctx.createLinearGradient(bx.l, 0, bx.l + bx.pw, 0);
+      g.addColorStop(0, V.rgba(col, .5)); g.addColorStop(1, col);
+      ctx.fillStyle = g;
+      roundRect(ctx, bx.l, cy - bh / 2, Math.max(2, xx - bx.l), bh, Math.min(3.5, bh / 2)); ctx.fill();
+      ctx.strokeStyle = V.rgba(col, .45); ctx.lineWidth = .7; ctx.stroke();
+      // value
+      ctx.font = '600 8px ' + FONT; ctx.fillStyle = b.value > 0 ? '#e6f7ff' : 'rgba(160,186,208,.6)';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText((spec.fmt ? spec.fmt(val) : U.fmt(val, 2) + '×'), Math.min(xx + 5, bx.l + bx.pw + 3), cy);
+      ctx.restore();
+      hits.push({ type: 'bar', id: b.id, x: bx.l, y: cy - bh / 2, w: bx.pw, h: bh, value: val });
+    });
+    if (spec.ref != null) {
+      const xx = X(spec.ref);
+      ctx.save(); ctx.strokeStyle = 'rgba(255,215,110,.5)'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+      ctx.beginPath(); ctx.moveTo(xx, bx.t - 2); ctx.lineTo(xx, bx.t + bx.ph + 2); ctx.stroke();
+      ctx.setLineDash([]); ctx.font = '6.5px ' + FONT; ctx.fillStyle = 'rgba(255,215,110,.75)'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText(spec.refLabel || '基准 1×', xx + 3, bx.t + 8);
+      ctx.restore();
+    }
+    return { hits, fallback: null };
+  }
+
+  /* ---------------- level ladder ---------------- */
+  function drawLevels(ctx, w, h, spec, cur) {
+    const bx = boxFor(w, h, { pad: { l: 30, r: 14, t: 16, b: 24 } });
+    const levels = spec.levels || [];
+    const trans = spec.transitions || [];
+    const byId = {};
+    let eMin = Infinity, eMax = -Infinity;
+    levels.forEach(l => { eMin = Math.min(eMin, l.energy); eMax = Math.max(eMax, l.energy); byId[l.id] = l; });
+    if (!levels.length) return { hits: [] };
+    if (eMax - eMin < 1e-9) eMax = eMin + 1;
+    const pad = (eMax - eMin) * .16;
+    const Y = e => bx.t + (1 - (e - eMin + pad) / (eMax - eMin + pad * 2)) * bx.ph;
+    const rotation = spec.ladder === 'rotation';
+    const hits = [];
+    ctx.save();
+    ctx.font = '7px ' + FONT;
+    if (rotation) {
+      const Js = levels.map(l => l.J);
+      const jMin = Math.min.apply(null, Js), jMax = Math.max.apply(null, Js);
+      const X = J => bx.l + 12 + (J - jMin) / ((jMax - jMin) || 1) * (bx.pw - 30);
+      const half = spec.half || 13;
+      levels.forEach(l => {
+        const yy = Y(l.energy);
+        ctx.strokeStyle = 'rgba(160,196,224,.55)'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(X(l.J) - half, yy); ctx.lineTo(X(l.J) + half, yy); ctx.stroke();
+        ctx.fillStyle = 'rgba(160,186,208,.8)'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText('J=' + l.J, X(l.J), yy + 4);
+      });
+      trans.forEach(t => {
+        const a = byId[t.from], b = byId[t.to]; if (!a || !b) return;
+        const x0 = X(a.J), y0 = Y(a.energy), x1 = X(b.J), y1 = Y(b.energy);
+        const on = spec.selected === t.id;
+        const col = on ? '#ffd76e' : (t.color || '#6fd6ff');
+        const mx = (x0 + x1) / 2 + 4, my = (y0 + y1) / 2 - 9;
+        ctx.strokeStyle = col; ctx.lineWidth = on ? 1.8 : 1.1; ctx.setLineDash(on ? [] : [3, 3]);
+        ctx.beginPath(); ctx.moveTo(x0 + 6, y0 - 2); ctx.quadraticCurveTo(mx + 8, my, x1 - 6, y1 + 2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = col;
+        ctx.beginPath(); ctx.arc(x1 - 6, y1 + 2, on ? 2.6 : 1.8, 0, TAU); ctx.fill();
+        if (on) { ctx.font = '600 7px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillStyle = col; ctx.fillText(t.label || '', mx + 10, my - 2); }
+        hits.push({ type: 'level', id: t.id, x: mx + 4, y: my, r: 17 });
+      });
+      ctx.fillStyle = 'rgba(143,169,192,.55)'; ctx.font = '7px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('J″', bx.l + bx.pw - 6, bx.t + bx.ph + 5);
+    } else {
+      const groups = spec.groups || [];
+      const gx = g => bx.l + 26 + (groups.length <= 1 ? bx.pw / 2 - 26 : (g.indexOf(groups.find(x => x.id === g)) + .5) * (bx.pw - 20) / groups.length);
+      // more robust group x
+      const gxp = gid => {
+        const i = Math.max(0, groups.findIndex(g => g.id === gid));
+        return bx.l + 24 + (i + .5) * (bx.pw - 38) / Math.max(1, groups.length);
+      };
+      groups.forEach(g => {
+        const xx = gxp(g.id);
+        ctx.fillStyle = 'rgba(160,186,208,.8)'; ctx.font = '600 7.5px ' + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText(g.label, xx, bx.t - 3);
+        ctx.strokeStyle = 'rgba(118,170,220,.10)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(xx, bx.t + 6); ctx.lineTo(xx, bx.t + bx.ph); ctx.stroke();
+      });
+      levels.forEach(l => {
+        const xx = gxp(l.group);
+        const yy = Y(l.energy);
+        const ww = 22;
+        ctx.strokeStyle = 'rgba(160,196,224,.6)'; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(xx - ww, yy); ctx.lineTo(xx + ww, yy); ctx.stroke();
+        if (l.label) {
+          ctx.font = '6.5px ' + FONT; ctx.fillStyle = 'rgba(160,186,208,.66)'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+          ctx.fillText(l.label, xx - ww - 3, yy);
+        }
+      });
+      trans.forEach(t => {
+        const a = byId[t.from], b = byId[t.to]; if (!a || !b) return;
+        const x0 = gxp(a.group) + 22, y0 = Y(a.energy);
+        const x1 = gxp(b.group) - 22, y1 = Y(b.energy);
+        const on = spec.selected === t.id;
+        const col = on ? '#ffd76e' : (t.color || '#6fd6ff');
+        const mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+        ctx.strokeStyle = col; ctx.lineWidth = on ? 1.8 : 1.1; ctx.setLineDash(on ? [] : [3, 3]);
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.bezierCurveTo(mx, y0, mx, y1, x1, y1); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x1, y1, on ? 2.7 : 1.8, 0, TAU); ctx.fill();
+        if (on || t.alwaysLabel) {
+          ctx.font = '600 7px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.fillStyle = col; ctx.fillText(t.label || '', mx, my - 3);
+        }
+        hits.push({ type: 'level', id: t.id, x: mx, y: my, r: 18 });
+      });
+    }
+    ctx.restore();
+    return { hits };
+  }
+
+  /* ---------------- render / events ---------------- */
+  function buildCard(spec) {
+    const card = document.createElement('div');
+    card.className = 'chart-card';
+    card.dataset.chart = spec.id;
+    const head = document.createElement('div'); head.className = 'card-head';
+    head.innerHTML = '<b>' + (spec.title || '') + '</b><span>' + (spec.sub || '') + '</span>';
+    const canvas = document.createElement('canvas');
+    canvas.className = 'chart-canvas';
+    canvas.style.height = (spec.height || 150) + 'px';
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-label', spec.aria || ((spec.title || '图表') + '：' + (spec.caption || '')));
+    card.appendChild(head); card.appendChild(canvas);
+    if (spec.caption) { const p = document.createElement('p'); p.className = 'caption'; p.innerHTML = spec.caption; card.appendChild(p); }
+    canvas.addEventListener('pointermove', ev => {
+      const hits = canvas._hits || [];
+      const r = canvas.getBoundingClientRect();
+      const x = ev.clientX - r.left, y = ev.clientY - r.top;
+      canvas.style.cursor = nearest(hits, x, y) ? 'pointer' : (canvas._spec && canvas._spec.kind === 'profile' && !canvas._spec.noSeek ? 'crosshair' : 'default');
+    });
+    canvas.addEventListener('click', ev => {
+      if (!V._internals.current) return;
+      const c = V._internals.current;
+      const specNow = canvas._spec;
+      if (!specNow) return;
+      const r = canvas.getBoundingClientRect();
+      const x = ev.clientX - r.left, y = ev.clientY - r.top;
+      let hit = nearest(canvas._hits || [], x, y);
+      if (!hit) {
+        const fallback = canvas._fallback;
+        if (fallback && fallback.type === 'x' && fallback.xOf) {
+          hit = { type: 'x', x: fallback.xOf(x) };
+        }
+      }
+      if (hit && c.scene.chartClick) {
+        c.scene.chartClick(c.state, specNow.id, hit, V.api);
+      }
+    });
+    return { card, canvas };
+  }
+  function nearest(hits, x, y) {
+    let best = null, bd = 1e9;
+    for (const h of hits) {
+      let d;
+      if (h.w != null && h.h != null) {
+        if (x < h.x - 2 || x > h.x + h.w + 2 || y < h.y - 2 || y > h.y + h.h + 2) continue;
+        d = 0;
+      } else {
+        d = Math.hypot((h.x || 0) - x, (h.y || 0) - y);
+        if (d > (h.r || 18)) continue;
+      }
+      if (d < bd) { bd = d; best = h; }
+    }
+    return best;
+  }
+
+  function drawOne(canvas, spec, cur) {
+    const sz = canvasSize(canvas);
+    if (!sz) return;
+    const { w, h, ctx } = sz;
+    ctx.clearRect(0, 0, w, h);
+    let res = { hits: [] };
+    try {
+      if (spec.kind === 'profile') res = drawProfile(ctx, w, h, spec, cur);
+      else if (spec.kind === 'sticks') res = drawSticks(ctx, w, h, spec, cur);
+      else if (spec.kind === 'bars') res = drawBars(ctx, w, h, spec, cur);
+      else if (spec.kind === 'levels') res = drawLevels(ctx, w, h, spec, cur);
+      else if (spec.kind === 'custom' && spec.draw) res = spec.draw(ctx, { w, h, box: boxFor(w, h, spec) }, cur, V.api) || { hits: [] };
+    } catch (e) { console.error('chart error', spec.id, e); }
+    canvas._spec = spec;
+    canvas._hits = res.hits || [];
+    canvas._fallback = res.fallback || null;
+  }
+
+  function render(host, cur, api) {
+    let specs = [];
+    try { specs = (cur.scene.charts ? cur.scene.charts(cur.state) : []) || []; }
+    catch (e) { console.error('charts error', e); }
+    const sig = specs.map(s => [s.id, s.height || '', s.title || '', s.sub || '', s.caption || ''].join('~')).join('|');
+    if (sig !== cur.chartIds || host.children.length !== specs.length) {
+      cur.chartIds = sig;
+      host.innerHTML = '';
+      if (!specs.length) {
+        const p = document.createElement('p');
+        p.className = 'caption';
+        p.textContent = '该场景没有联动图表；所有交互集中在左侧控件与 3D 视窗。';
+        host.appendChild(p);
+      }
+      specs.forEach(spec => {
+        const { card, canvas } = buildCard(spec);
+        host.appendChild(card);
+      });
+    }
+    cur.specs = specs;
+    Array.from(host.children).forEach((card, i) => {
+      const canvas = card.querySelector('canvas');
+      if (canvas && specs[i]) drawOne(canvas, specs[i], cur);
+    });
+  }
+
+  V.charts = { render, drawOne, nearest, niceTicks };
+})();
+
+
+/* =====================================================================
+   Demo scene 1 — HCl 伸缩（验证连续时间播放、复位、球棍、质心与键长曲线）
+   ===================================================================== */
+(function () {
+  'use strict';
+  if (!window.ChemVis) return;
+  const V = window.ChemVis, U = V.utils, C = V.colors;
+  const TAU = Math.PI * 2;
+  const R0 = 1.2746;
+  const MH = 1.00794, MCL = 35.453;
+  const XH = -R0 * MCL / (MH + MCL);   // 平衡位置（质心在原点）
+  const XCL = R0 * MH / (MH + MCL);
+
+  function phaseOf(st) {
+    const span = Math.max(1, st.play.span || 3.2);
+    return (((st.time % span) + span) % span) / span;
+  }
+  function disp(st) {
+    return st.amp * 0.34 * Math.sin(phaseOf(st) * TAU);
+  }
+  function positions(st) {
+    const d = disp(st);
+    return {
+      d,
+      h: XH - d * MCL / (MH + MCL),
+      cl: XCL + d * MH / (MH + MCL),
+      r: R0 + d,
+      phase: phaseOf(st)
+    };
+  }
+
+  V.registerScene({
+    id: 'hcl',
+    tab: 'HCl 伸缩',
+    tag: '01',
+    kicker: 'DEMO 01 / VIBRATION',
+    title: 'HCl 伸缩振动',
+    desc: '连续时间的最小示例：播放/暂停/复位、球棍模型、质心与键长曲线联动。按质量分配位移，质心严格固定在原点；动画为慢放示意。',
+    playMode: 'time',
+    autoplay: true,
+    playSpan: 3.2,
+    camera: { az: -0.92, el: 0.24, zoom: 1 },
+    refTabs: false,
+    badge: () => 'H–Cl',
+
+    initialState() {
+      return {
+        amp: .55,
+        time: 0,
+        show: { com: true, arrows: true, labels: true, bond: true },
+        sel: {},
+        play: { mode: 'time', playing: true, speed: 1, span: 3.2 },
+        cam: { az: -0.92, el: 0.24, zoom: 1 }
+      };
+    },
+
+    controls() {
+      return [
+        { type: 'section', label: '振动参数', hint: 'MASS-WEIGHTED' },
+        { type: 'slider', key: 'amp', label: '振幅', min: .15, max: 1, step: .01, fmt: v => v.toFixed(2) + '×' },
+        { type: 'note', text: 'u<sub>H</sub> = −δ·m<sub>Cl</sub>/(m<sub>H</sub>+m<sub>Cl</sub>)，u<sub>Cl</sub> = δ·m<sub>H</sub>/(m<sub>H</sub>+m<sub>Cl</sub>)；两者反向，质心位移为零。H 的位移约为 Cl 的 35 倍。' },
+        { type: 'section', label: '显示图层', hint: 'LAYERS' },
+        {
+          type: 'checks', key: 'show', options: [
+            { k: 'com', label: '质心 COM', sub: '十字标记', color: C.hl },
+            { k: 'arrows', label: '位移箭头', sub: '按质量分配', color: C.flowNuc },
+            { k: 'labels', label: '原子 / 键长标签', sub: '跟随分子坐标', color: '#9fc0d8' },
+            { k: 'bond', label: '化学键', sub: '球棍模型', color: '#8fb3c9' }
+          ]
+        },
+        { type: 'section', label: '复位', hint: 'TIMELINE' },
+        { type: 'actions', items: [{ label: '回到 t = 0（暂停）', act: 'rewind', primary: true }] },
+        { type: 'note', text: '播放按钮与时间滑杆在画布下方。暂停后仍可拖拽旋转相机、缩放和切换图层。' }
+      ];
+    },
+
+    quick() {
+      return [
+        { type: 'checks', key: 'show', options: [{ k: 'com', label: '质心', color: C.hl }, { k: 'arrows', label: '位移', color: C.flowNuc }] }
+      ];
+    },
+
+    action(st, name, payload, api) {
+      if (name === 'rewind') { st.time = 0; st.play.playing = false; api.commit(); }
+    },
+
+    frame(st) {
+      const p = positions(st);
+      const dH = p.h - XH, dCl = p.cl - XCL;
+      const atoms = [
+        { el: 'H', pos: [p.h, 0, 0], r: .30, color: C.hydrogen, label: 'H' },
+        { el: 'Cl', pos: [p.cl, 0, 0], r: .47, color: C.chlorine, label: 'Cl' }
+      ];
+      const bonds = st.show.bond === false ? [] : [{ a: [p.h, 0, 0], b: [p.cl, 0, 0], color: '#9fb6c9', width: .075 }];
+      const arrows = [];
+      if (st.show.arrows) {
+        const s = 2.1;
+        if (Math.abs(dH) > 1e-4) arrows.push({
+          from: [p.h, 0, 0], to: [p.h + dH * s, 0, 0],
+          color: C.flowNuc, width: 1.8, head: 7,
+          label: 'H 位移大', labelOffset: [0, -13]
+        });
+        if (Math.abs(dCl) > 1e-4) arrows.push({
+          from: [p.cl, 0, 0], to: [p.cl + dCl * s, 0, 0],
+          color: C.flowLg, width: 1.8, head: 6,
+          label: 'Cl 位移小', labelOffset: [0, 13]
+        });
+      }
+      const labels = [];
+      if (st.show.labels) {
+        labels.push({ pos: [0, 0, 0], text: 'r = ' + p.r.toFixed(3) + ' Å', offset: [0, -40], color: '#cfe6f5', size: 10, chip: true });
+      }
+      return {
+        fit: 2.6,
+        hud: { title: 'HCl', sub: '伸缩振动 · 慢放示意' },
+        status: (st.play.playing ? '播放中' : '已暂停') + ' · r = ' + p.r.toFixed(3) + ' Å · 质心固定',
+        badge: 'DEMO · TIME',
+        legend: [
+          { color: C.hydrogen, label: 'H' },
+          { color: C.chlorine, label: 'Cl' },
+          { color: C.hl, label: '质心' },
+          { color: C.flowNuc, label: '原子位移' }
+        ],
+        tags: ['慢放示意', '质心固定'],
+        readouts: [
+          { label: '键长 r', value: p.r.toFixed(3) + ' Å' },
+          { label: '相位', value: (p.phase * 100).toFixed(0) + '%' },
+          { label: 'H 位移', value: (dH * 1000).toFixed(0) + ' ‰ Å', tone: 'hot' },
+          { label: 'Cl 位移', value: (dCl * 1000).toFixed(1) + ' ‰ Å' },
+          { label: '质心 x', value: '0.000 Å', tone: 'ok' },
+          { label: '约化质量 μ', value: (MH * MCL / (MH + MCL)).toFixed(3) + ' u' }
+        ],
+        atoms, bonds, arrows, labels,
+        coms: st.show.com ? [{ pos: [0, 0, 0], label: 'COM', color: C.hl }] : [],
+        guides: [{ a: [-1.8, -.55, 0], b: [1.8, -.55, 0], color: 'rgba(140,180,215,.28)', dash: [3, 5], width: .01 }],
+        footnote: '连续时间模式：时间推进 → 键长变化 → 右侧曲线游标同步。相机、时间与光谱/图表坐标互相独立。'
+      };
+    },
+
+    charts(st) {
+      const p = positions(st);
+      const N = 120, curve = [];
+      for (let i = 0; i <= N; i++) {
+        const ph = i / N;
+        const d = st.amp * .34 * Math.sin(ph * TAU);
+        curve.push([ph, R0 + d]);
+      }
+      const amp = st.amp * .34;
+      return [
+        {
+          id: 'bond', kind: 'profile', title: '键长 r(t)', sub: 'Å · 一个振动周期', height: 128,
+          x: { min: 0, max: 1, label: '相位 / 周期', ticks: [{ v: 0, label: '0' }, { v: .25, label: '¼' }, { v: .5, label: '½' }, { v: .75, label: '¾' }, { v: 1, label: '1' }] },
+          y: { min: R0 - amp - .03, max: R0 + amp + .03 },
+          curve, color: '#6fd6ff', cursor: { x: p.phase, label: 't = ' + (p.phase * (st.play.span || 3.2)).toFixed(2) + ' s', color: '#ffd76e' },
+          hlines: [{ y: R0, label: 'r₀ = 1.2746 Å', color: 'rgba(160,196,224,.4)' }],
+          yLabels: [{ y: R0, text: 'r₀' }],
+          caption: '曲线由 <b>r = r₀ + A·sin 2πt/T</b> 给出；游标跟随播放，拖动/点击曲线可定位相位。'
+        },
+        {
+          id: 'com', kind: 'profile', title: '质心 x_COM(t)', sub: '应恒为 0', height: 92,
+          x: { min: 0, max: 1, label: '相位 / 周期', ticks: [{ v: 0, label: '0' }, { v: .5, label: '½' }, { v: 1, label: '1' }] },
+          y: { min: -.05, max: .05 },
+          curve: [[0, 0], [1, 0]], color: '#7ce9b8', width: 1.6,
+          cursor: { x: p.phase, label: '0', color: '#ffd76e' },
+          hlines: [{ y: 0, label: '0', color: 'rgba(124,233,184,.5)' }],
+          caption: '两原子位移按质量反比分配，质心位置保持不变；这是“质心与键长联动”的校验线。'
+        }
+      ];
+    },
+
+    chartClick(st, chartId, hit, api) {
+      if (hit && hit.type === 'x') {
+        st.time = hit.x * (st.play.span || 3.2);
+        st.play.playing = false;
+        api.commit();
+      }
+    }
+  });
+})();
+
+
+/* =====================================================================
+   Demo scene 2 — SN2 三阶段（验证进度/能量图双向跳转与原子身份稳定）
+   ===================================================================== */
+(function () {
+  'use strict';
+  if (!window.ChemVis) return;
+  const V = window.ChemVis, U = V.utils, C = V.colors;
+  const TAU = Math.PI * 2;
+  const S = U.smooth;
+
+  function geom(p) {
+    p = U.clamp(p, 0, 1);
+    const flip = Math.cos(Math.PI * p);
+    const dCBr = p <= .5
+      ? U.lerp(1.93, 2.35, S(p * 2))
+      : U.lerp(2.35, 4.9, S((p - .5) * 2));
+    const dCO = p <= .5
+      ? U.lerp(6.2, 2.12, S(p * 2))
+      : U.lerp(2.12, 1.43, S((p - .5) * 2));
+    const zH = -0.36 * flip;
+    const rad = Math.sqrt(Math.max(.02, 1.09 * 1.09 - zH * zH));
+    const hs = [0, 1, 2].map(i => {
+      const a = Math.PI / 2 + i * TAU / 3 + .22;
+      return [rad * Math.cos(a), rad * Math.sin(a), zH];
+    });
+    return { p, flip, dCBr, dCO, hs, C: [0, 0, 0], Br: [0, 0, dCBr], O: [0, 0, -dCO] };
+  }
+  function stageName(p) {
+    if (p < .18) return '反应物 · 背面接近';
+    if (p < .36) return '接近 · 部分成键';
+    if (p < .64) return '过渡态 · 五配位';
+    if (p < .84) return '构型翻转 · Br 离去';
+    return '产物 · 构型反转';
+  }
+  function bump(x, a, b) { return U.smooth((x - a) / (b - a)); }
+  function fadeOut(x, a, b) { return 1 - bump(x, a, b); }
+
+  V.registerScene({
+    id: 'sn2demo',
+    tab: 'SN2 三阶段',
+    tag: '02',
+    kicker: 'DEMO 02 / REACTION',
+    title: 'SN2 三阶段',
+    desc: '有界反应进度的最小示例：反应物、过渡态、产物。拖动进度条或点击能量峰顶，3D 构型、两根部分键、能量游标与原子身份同步更新。',
+    playMode: 'progress',
+    autoplay: false,
+    startProgress: 0,
+    playSpan: 8,
+    camera: { az: -.82, el: .28, zoom: 1 },
+    refTabs: false,
+    badge: () => 'OH⁻ + CH₃Br',
+    footnote: '能量剖面为定性单峰示意；原子颜色按元素固定，不随反应进度变化。SW2 几何为教学近似，键长不是实验值。',
+
+    initialState() {
+      return {
+        progress: 0,
+        show: { flow: true, partials: true, plane: true, labels: true, bonds: true },
+        sel: {},
+        play: { mode: 'progress', playing: false, speed: 1, dir: 1 },
+        cam: { az: -.82, el: .28, zoom: 1 }
+      };
+    },
+
+    controls() {
+      return [
+        { type: 'section', label: '反应进度', hint: 'BOUNDED' },
+        {
+          type: 'buttons', key: 'progress', cols: 3, options: [
+            { v: 0, label: '反应物', sub: 'p = 0' },
+            { v: .5, label: '过渡态', sub: 'p = 0.5' },
+            { v: 1, label: '产物', sub: 'p = 1' }
+          ],
+          after: (st, api) => { st.play.playing = false; st.sel = {}; api.commit(); }
+        },
+        { type: 'note', text: '三个按钮只是把进度跳到固定点；连续拖动请用画布下方的进度条。点击右侧能量峰顶会定格在过渡态。' },
+        { type: 'section', label: '显示', hint: 'LAYERS' },
+        {
+          type: 'checks', key: 'show', options: [
+            { k: 'flow', label: '电子流弯箭头', sub: 'O→C 与 C–Br→Br', color: C.flowNuc },
+            { k: 'partials', label: '部分键', sub: '过渡态两根虚线', color: '#ffd76e' },
+            { k: 'plane', label: 'H₃ 反应平面', sub: '接近共面', color: '#8fd6ff' },
+            { k: 'labels', label: '距离 / 标注', sub: '跟随 3D 坐标', color: '#9fc0d8' }
+          ]
+        },
+        { type: 'actions', items: [{ label: '跳到过渡态并暂停', act: 'ts', primary: true }] },
+        { type: 'note', text: 'C–O 成键与 C–Br 断键在同一段反应坐标内发生；过渡态处两根键都画成部分键。H 的排列由四面体一侧翻到另一侧。' }
+      ];
+    },
+
+    quick() {
+      return [
+        {
+          type: 'buttons', key: 'progress', options: [
+            { v: 0, label: '反应物' }, { v: .5, label: '过渡态' }, { v: 1, label: '产物' }
+          ],
+          after: (st, api) => { st.play.playing = false; api.commit(); }
+        }
+      ];
+    },
+
+    action(st, name, payload, api) {
+      if (name === 'ts') { st.progress = .5; st.play.playing = false; api.commit(); }
+    },
+
+    stages() {
+      return [{ p: 0, label: '反应物' }, { p: .5, label: '过渡态' }, { p: 1, label: '产物' }];
+    },
+
+    frame(st) {
+      const g = geom(st.progress);
+      const atoms = [
+        { el: 'C', pos: g.C, r: .36, color: C.central, label: 'C', ring: '#9ef0ff' },
+        { el: 'Br', pos: g.Br, r: .52, color: C.bromine, label: 'Br' },
+        { el: 'O', pos: g.O, r: .40, color: C.oxygen, label: 'O' }
+      ];
+      const ohDir = U.norm([.82, .18, .38]);
+      const oh = U.add(g.O, U.mul(ohDir, .96));
+      atoms.push({ el: 'H', pos: oh, r: .25, color: C.hydrogen, label: 'H' });
+      g.hs.forEach((h, i) => atoms.push({ el: 'H', pos: h, r: .25, color: C.hydrogen, label: 'H' }));
+
+      const bonds = [], partials = [], labels = [], arrows = [];
+      if (st.show.bonds !== false) {
+        g.hs.forEach(h => bonds.push({ a: g.C, b: h, color: '#9fb6c9', width: .075 }));
+        bonds.push({ a: g.O, b: oh, color: '#c9a9b8', width: .07 });
+        const brA = fadeOut(st.progress, .12, .68);
+        if (brA > .02) bonds.push({ a: g.C, b: g.Br, color: '#c98f7c', width: .08, alpha: brA });
+        const coA = bump(st.progress, .42, .86);
+        if (coA > .02) bonds.push({ a: g.C, b: g.O, color: '#d792a6', width: .08, alpha: coA });
+      }
+      if (st.show.partials && st.progress > .05 && st.progress < .95) {
+        const pa = Math.max(bump(st.progress, .05, .25) * fadeOut(st.progress, .55, .9),
+          bump(st.progress, .2, .4) * fadeOut(st.progress, .7, .95));
+        if (g.dCBr < 4.2) partials.push({ a: g.C, b: g.Br, color: '#ffcf7a', width: .055, alpha: U.clamp(pa, 0, .9) });
+        if (g.dCO < 4.4) partials.push({ a: g.C, b: g.O, color: '#ffcf7a', width: .055, alpha: U.clamp(pa, 0, .9) });
+      }
+      // 反应平面（H3 共面）
+      const planes = [];
+      if (st.show.plane && st.progress > .15 && st.progress < .9) {
+        planes.push({
+          center: [0, 0, 0], normal: [0, 0, 1], radius: 1.75,
+          color: 'rgba(120,200,255,.055)', edge: 'rgba(150,220,255,.35)', alpha: 1, dash: [4, 6]
+        });
+      }
+      // 电子流
+      const flowA = bump(st.progress, .06, .18) * fadeOut(st.progress, .62, .8);
+      if (st.show.flow && flowA > .03) {
+        const oLone = U.add(g.O, [.1, .16, .45]);
+        arrows.push({
+          from: oLone, to: [0, 0, -.28], ctrl: [1.05, .35, -1.6],
+          color: C.flowNuc, alpha: flowA, width: 2, head: 8.5,
+          label: 'O 孤对 → C'
+        });
+        const mid = [0, 0, g.dCBr * .45];
+        arrows.push({
+          from: mid, to: U.add(g.Br, [0, 0, .55]), ctrl: [1.0, .3, g.dCBr * .7],
+          color: C.flowLg, alpha: flowA, width: 2, head: 8,
+          label: 'C–Br → Br'
+        });
+      }
+      if (st.show.labels) {
+        labels.push({
+          pos: [0, 0, 0], text: 'C–Br ' + g.dCBr.toFixed(2) + ' Å', offset: [0, 34],
+          color: '#ffcf9b', size: 9, chip: true
+        });
+        labels.push({
+          pos: [0, 0, 0], text: 'C–O ' + g.dCO.toFixed(2) + ' Å', offset: [0, 52],
+          color: '#a9e8ff', size: 9, chip: true
+        });
+        if (st.progress > .38 && st.progress < .62) {
+          labels.push({ pos: [0, 0, 0], text: '过渡态', offset: [0, -48], color: '#ffe6ad', size: 11, chip: true });
+        }
+        labels.push({ pos: g.Br, text: 'δ−', offset: [0, -30], color: '#ffb59a', size: 9 });
+        labels.push({ pos: g.O, text: 'Nu', offset: [0, -28], color: '#ffc0d0', size: 9 });
+      }
+      const warnNear = Math.abs(g.flip) < .18;
+      return {
+        fit: 5.4,
+        hud: { title: 'OH⁻ + CH₃Br', sub: '背面进攻 · 单步协同' },
+        status: stageName(st.progress) + ' · ' + Math.round(st.progress * 100) + '%',
+        badge: 'p = ' + st.progress.toFixed(2),
+        legend: [
+          { color: C.central, label: '中心 C' },
+          { color: C.bromine, label: 'Br' },
+          { color: C.oxygen, label: 'O' },
+          { color: C.flowNuc, label: '电子流' }
+        ],
+        tags: ['SN2', '定性', warnNear ? 'H₃ 共面' : '构型反转'],
+        readouts: [
+          { label: '反应进度', value: (st.progress * 100).toFixed(0) + '%' },
+          { label: '阶段', value: stageName(st.progress).split(' · ')[0] },
+          { label: 'C–Br', value: g.dCBr.toFixed(2) + ' Å', tone: 'hot' },
+          { label: 'C–O', value: g.dCO.toFixed(2) + ' Å', tone: 'ok' },
+          { label: 'H₃ 平面 z', value: g.hs[0][2].toFixed(2) + ' Å' },
+          { label: '中心 C', value: '同一原子' }
+        ],
+        atoms, bonds, partials, planes, arrows, labels,
+        footnote: '颜色按元素/身份固定：中心 C 始终青色，Br 始终橙色，O 始终粉色。切换进度或倒放不会交换原子身份。'
+      };
+    },
+
+    charts(st) {
+      const curve = [];
+      for (let i = 0; i <= 100; i++) { const p = i / 100; curve.push([p, 4 * p * (1 - p)]); }
+      return [{
+        id: 'energy', kind: 'profile', title: '能量剖面', sub: '定性 · 单峰', height: 158,
+        x: { min: 0, max: 1, label: '反应坐标', ticks: [{ v: 0, label: '0' }, { v: .5, label: '0.5' }, { v: 1, label: '1' }] },
+        y: { min: 0, max: 1.08 },
+        curve, color: '#6fd6ff',
+        markers: [{ x: .5, y: 1, id: 'ts', label: 'TS', sub: '过渡态', color: '#ffcf7a' }],
+        selected: st.sel.ts || null,
+        cursor: { x: st.progress, label: 'p = ' + st.progress.toFixed(2), color: '#ffd76e' },
+        yLabels: [{ y: 0, text: '反应物' }, { y: 1, text: 'TS' }],
+        caption: '点击<b>峰顶</b>定格过渡态；点击曲线其他位置或拖动进度条会移到对应反应坐标。能量值仅为示意。'
+      }];
+    },
+
+    chartClick(st, chartId, hit, api) {
+      if (!hit) return;
+      st.play.playing = false;
+      if (hit.type === 'marker' && hit.id === 'ts') {
+        st.progress = .5; st.sel = { ts: 'ts' }; api.commit(); return;
+      }
+      if (hit.type === 'x') {
+        st.progress = U.clamp(hit.x, 0, 1);
+        st.sel = {};
+        api.commit();
+      }
+    }
+  });
+})();
+
+
+/* ---- boot ---- */
+window.addEventListener('DOMContentLoaded', function () {
+  if (!window.ChemVis) return;
+  ChemVis.boot({ defaultScene: 'hcl' });
+});
+
+</script>
+</body>
+</html>

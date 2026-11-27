@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#05080f">
+<title>类氢杂化 · 多轨道 · Hydrogenic Hybridization</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#04070c;--line:rgba(118,166,221,.15);--line-hot:rgba(111,207,255,.55);
+  --text:#e9f3ff;--muted:#7f94ae;--accent:#71d7ff;--pos:#ff9a62;--neg:#58d7ff;--ok:#77e6b2;
+  --mono:"SFMono-Regular","Cascadia Code",Consolas,monospace;
+  --serif:"STIX Two Math","Cambria Math","Times New Roman",Georgia,serif;
+  --r:18px;--shadow:0 24px 64px rgba(0,0,0,.42);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text)}
+body{font-family:"SF Pro Display","Segoe UI","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;font-size:14px;line-height:1.5;overflow:hidden;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:-15%;z-index:0;pointer-events:none;background:radial-gradient(circle at 12% 8%,rgba(59,131,202,.17),transparent 33%),radial-gradient(circle at 88% 12%,rgba(144,104,255,.10),transparent 30%),radial-gradient(circle at 52% 92%,rgba(31,190,219,.07),transparent 38%),linear-gradient(135deg,#05080f,#04070c 55%,#060b13)}
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;background-image:linear-gradient(rgba(124,170,220,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(124,170,220,.028) 1px,transparent 1px);background-size:46px 46px;-webkit-mask-image:radial-gradient(ellipse at 50% 42%,#000,transparent 72%);mask-image:radial-gradient(ellipse at 50% 42%,#000,transparent 72%)}
+button{font:inherit;color:inherit}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+::selection{background:rgba(98,207,255,.3);color:#fff}
+.app{position:relative;z-index:1;height:100vh;height:100dvh;min-height:620px;display:flex;flex-direction:column;padding:16px 20px 18px;gap:13px}
+.topbar{flex:none;min-height:58px;display:flex;align-items:center;gap:18px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.mark{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;flex:none;border:1px solid rgba(121,197,255,.22);background:radial-gradient(circle at 50% 50%,rgba(255,181,112,.12),transparent 62%),linear-gradient(145deg,rgba(21,39,60,.9),rgba(7,13,23,.86));box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 30px rgba(0,0,0,.3)}
+.mark svg{width:36px;height:36px;overflow:visible}
+.eyebrow{font-size:10px;line-height:1.2;letter-spacing:.2em;text-transform:uppercase;color:#6d88a5;font-weight:650;white-space:nowrap}
+.eyebrow em{font-style:normal;color:var(--accent)}
+.brand h1{margin:2px 0 0;font-size:21px;line-height:1.2;font-weight:630;letter-spacing:.015em;color:#f1f8ff;white-space:nowrap}
+.brand h1 span{color:#8ea9c7;font-weight:400}
+.top-note{display:flex;align-items:center;gap:7px;margin-left:auto;color:#7d96b1;font-size:11px;white-space:nowrap}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--ok);animation:pulse 2.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(119,230,178,.35)}60%{box-shadow:0 0 0 7px rgba(119,230,178,0)}100%{box-shadow:0 0 0 0 rgba(119,230,178,0)}}
+.badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;background:rgba(16,29,45,.62);color:#8fa7c0;padding:5px 10px;font-size:10.5px;white-space:nowrap}
+.top-actions{display:flex;align-items:center;gap:8px;margin-left:4px}
+.badge i{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.layout{flex:1;min-height:0;display:grid;gap:13px;grid-template-columns:326px minmax(0,1fr) 330px;align-items:stretch}
+.panel{min-height:0;border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(158deg,rgba(12,22,36,.90),rgba(6,12,20,.90));box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.035);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.controls,.inspector{padding:15px;overflow:auto;overscroll-behavior:contain}
+.panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:5px}
+.kicker{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#64809c;font-weight:700}
+.panel-head h2{margin:2px 0 0;font-size:17px;line-height:1.25;font-weight:620;color:#eef7ff}
+.desc{margin:2px 0 12px;color:#7289a3;font-size:11px;line-height:1.6}
+.section{padding-top:13px;margin-top:13px;border-top:1px solid rgba(120,166,220,.11)}
+.section:first-of-type{padding-top:0;margin-top:0;border-top:0}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.section-head span:first-child{font-size:11px;font-weight:650;letter-spacing:.09em;color:#8fa7c1;text-transform:uppercase}
+.hint{font-family:var(--mono);font-size:9px;letter-spacing:.04em;color:#536a82;white-space:nowrap}
+.shell-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.shell-btn{border:1px solid rgba(119,164,216,.14);border-radius:10px;background:rgba(8,16,27,.66);padding:8px 6px;cursor:pointer;text-align:left;transition:.16s}
+.shell-btn:hover{border-color:rgba(112,198,248,.35);background:rgba(17,32,51,.7)}
+.shell-btn b{display:block;font-size:16px;color:#c6d9ed;line-height:1.2}
+.shell-btn span{display:block;margin-top:2px;font-family:var(--mono);font-size:8.5px;color:#607891}
+.shell-btn.active{border-color:rgba(105,213,255,.55);background:linear-gradient(150deg,rgba(27,72,105,.55),rgba(11,27,44,.75));box-shadow:inset 0 1px 0 rgba(180,239,255,.1)}
+.shell-btn.active b{color:#f0fbff}.shell-btn.active span{color:#9bdbff}
+.group-label{display:flex;align-items:center;gap:6px;margin:7px 0 2px;font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;color:#5d7891;text-transform:uppercase}
+.group-label:first-child{margin-top:0}
+.group-label i{width:4px;height:4px;border-radius:50%;background:#5d7891}
+.orb-row{border:1px solid transparent;border-radius:9px;padding:6px 7px 5px;background:rgba(9,18,30,.35);transition:.14s}
+.orb-row:hover{background:rgba(15,29,46,.55)}
+.orb-row.active{border-color:rgba(112,181,231,.16);background:rgba(14,28,44,.62)}
+.orb-row.disabled{opacity:.34;filter:saturate(.35)}
+.orb-row.disabled input,.orb-row.disabled button{cursor:not-allowed}
+.orb-top{display:flex;align-items:center;gap:6px;min-height:20px}
+.orb-name{appearance:none;border:0;background:none;padding:0;cursor:pointer;display:inline-flex;align-items:center;gap:5px;color:#c4d6e8;font-size:12.5px;font-family:var(--serif);white-space:nowrap}
+.orb-name:hover{color:#fff}.orb-name i{font-style:italic}
+.orb-name sub{font-size:8.5px;opacity:.8}
+.orb-dot{width:6px;height:6px;border-radius:50%;background:#55718f;flex:none}
+.orb-row.active .orb-dot{background:var(--dot);box-shadow:0 0 8px var(--dot)}
+.sym-tag{font-family:var(--mono);font-size:7.5px;border:1px solid rgba(112,162,210,.18);border-radius:4px;padding:1px 4px;margin-left:2px;color:#8ca5bd;background:rgba(18,37,55,.5);line-height:1.4;flex:none}
+.sym-tag.a1{color:#ffd18a;border-color:rgba(255,190,100,.26);background:rgba(120,80,20,.16)}
+.sym-tag.t1{color:#ffb0a0;border-color:rgba(255,130,110,.25);background:rgba(130,50,40,.14)}
+.sym-tag.eg{color:#c9b0ff;border-color:rgba(166,132,255,.28);background:rgba(80,54,140,.18)}
+.sym-tag.t2{color:#7bdcff;border-color:rgba(88,190,235,.25);background:rgba(28,90,120,.16)}
+.orb-right{margin-left:auto;display:flex;align-items:center;gap:5px}
+.orb-weight{font-family:var(--mono);font-size:8px;color:#526a82;min-width:30px;text-align:right}
+.coef-num{width:48px;border:1px solid rgba(119,164,216,.16);border-radius:5px;background:rgba(4,10,18,.55);padding:2px 4px;text-align:right;font-family:var(--mono);font-size:9.5px;color:#a9d8ef;outline:none;-moz-appearance:textfield}
+.coef-num:focus{border-color:rgba(105,213,255,.55);background:rgba(10,24,37,.9);color:#e1f7ff}
+.coef-num.negative{color:#83c9e6}
+.coef-num::-webkit-outer-spin-button,.coef-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.coef-num:hover{border-color:rgba(107,191,240,.24);background:rgba(66,135,184,.09);color:#d3e9f9}
+.coef-num.negative{color:#83c9e6}
+.slider-wrap{margin-top:2px;display:flex;align-items:center;gap:6px}
+.slider-wrap input[type=range]{flex:1}
+.mini-btn{width:20px;height:19px;border:1px solid rgba(112,162,210,.16);border-radius:5px;background:rgba(17,32,47,.6);color:#6e879f;display:grid;place-items:center;cursor:pointer;font-size:9px;padding:0}
+.mini-btn:hover{border-color:var(--line-hot);color:#eaf8ff}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:16px;margin:0;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:999px;background:linear-gradient(90deg,transparent 49.3%,rgba(192,225,247,.23) 49.3%,rgba(192,225,247,.23) 50.7%,transparent 50.7%),linear-gradient(90deg,rgba(76,101,124,.36),rgba(116,145,169,.34))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;margin-top:-4px;border-radius:50%;background:#e5f8ff;border:2px solid #64c9ee;box-shadow:0 0 0 3px rgba(78,195,239,.10)}
+input[type=range]::-moz-range-track{height:3px;border-radius:999px;background:rgba(109,139,164,.35)}
+input[type=range]::-moz-range-thumb{width:9px;height:9px;border-radius:50%;background:#e5f8ff;border:2px solid #64c9ee}
+.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.preset{border:1px solid rgba(112,162,210,.13);border-radius:7px;background:rgba(9,18,29,.56);padding:5px 6px;text-align:left;cursor:pointer;transition:.15s;overflow:hidden}
+.preset:hover{border-color:rgba(104,201,248,.38);background:rgba(21,41,61,.65)}
+.preset b{display:block;font-size:10px;font-weight:550;color:#aec6db;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.preset span{display:block;margin-top:1px;font-family:var(--mono);font-size:7.5px;color:#536b83;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.point-tabs{display:flex;align-items:center;gap:3px}
+.point-tabs button{border:1px solid rgba(112,162,210,.16);border-radius:5px;background:rgba(12,23,36,.55);color:#718ba3;font-family:var(--mono);font-size:9px;padding:3px 7px;cursor:pointer}
+.point-tabs button:hover{border-color:var(--line-hot);color:#d9f6ff}
+.point-tabs button.active{border-color:rgba(101,199,244,.35);background:rgba(28,88,125,.26);color:#aceaff}
+.tool-row{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;border:1px solid rgba(112,162,210,.13);border-radius:7px;background:rgba(9,18,29,.45);padding:6px 8px;color:#8ca3ba;font-size:10px;cursor:pointer;margin-top:4px}
+.tool-row:hover{border-color:rgba(111,204,250,.32);color:#d9f6ff}
+.tool-row b{font-family:var(--mono);font-size:8.5px;font-weight:500;color:#6e8aa3}
+.tool-row.on{border-color:rgba(101,199,244,.3);background:rgba(25,72,103,.2);color:#bceeff}
+.norm-box{margin-top:12px;padding:8px 9px;border:1px solid rgba(112,174,222,.14);border-radius:9px;background:rgba(16,36,54,.5)}
+.norm-line{display:flex;justify-content:space-between;gap:8px;font-size:9px;color:#66819a}
+.norm-line+.norm-line{margin-top:4px}
+.norm-line b{font-family:var(--mono);font-size:9.5px;font-weight:500;color:#b7d7e9}
+.norm-bar{height:4px;border-radius:999px;background:rgba(81,115,142,.2);overflow:hidden;margin-top:6px;display:flex}
+.norm-bar i{display:block;height:100%}
+.stage{position:relative;min-width:0;min-height:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:radial-gradient(circle at 50% 39%,rgba(43,104,150,.17),transparent 39%),radial-gradient(circle at 50% 50%,rgba(16,42,68,.28),transparent 70%),linear-gradient(160deg,rgba(8,16,27,.94),rgba(4,9,16,.97));box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.035)}
+.stage::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.7;background-image:linear-gradient(rgba(109,174,226,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(109,174,226,.035) 1px,transparent 1px);background-size:54px 54px;-webkit-mask-image:radial-gradient(ellipse at 50% 50%,#000 10%,transparent 79%);mask-image:radial-gradient(ellipse at 50% 50%,#000 10%,transparent 79%)}
+.stage::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,transparent 45%,rgba(2,5,10,.38))}
+.stage-head{position:relative;z-index:5;flex:none;min-height:51px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 13px;border-bottom:1px solid rgba(118,166,221,.1);background:linear-gradient(180deg,rgba(12,22,36,.72),rgba(8,15,25,.18))}
+.view-tabs{display:flex;gap:3px;padding:3px;border:1px solid rgba(118,166,221,.12);border-radius:9px;background:rgba(5,11,18,.48)}
+.view-tab{border:0;border-radius:6px;background:transparent;color:#6f879f;padding:5px 10px;font-size:10.5px;cursor:pointer;white-space:nowrap}
+.view-tab:hover{color:#c9e9ff;background:rgba(81,161,213,.08)}
+.view-tab.active{background:rgba(41,101,143,.3);color:#d9f4ff;box-shadow:inset 0 0 0 1px rgba(107,196,244,.14)}
+.status{display:flex;align-items:center;gap:6px;color:#607991;font-size:9.5px;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status .dot{width:5px;height:5px;border-radius:50%;background:var(--ok);box-shadow:0 0 7px rgba(119,230,178,.5)}
+.status.busy .dot{background:var(--accent);animation:pulse 1s infinite}
+.stage-viewport{position:relative;flex:1;min-height:0;overflow:hidden}
+.pane{position:absolute;inset:0;display:none}
+.pane.active{display:block}
+#scene{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#scene.dragging{cursor:grabbing}
+#sliceCanvas,#radialCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{position:absolute;left:16px;top:14px;z-index:4;pointer-events:none;padding:7px 10px;border:1px solid rgba(118,178,225,.13);border-radius:9px;background:linear-gradient(145deg,rgba(8,17,28,.72),rgba(7,13,22,.38));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.hud .hk{font-family:var(--mono);font-size:8px;letter-spacing:.17em;color:#516a82;text-transform:uppercase}
+.hud .hs{display:flex;align-items:baseline;gap:7px;margin-top:2px;white-space:nowrap}
+.hud .hs b{font-family:var(--mono);font-size:15px;font-weight:500;color:#dff6ff}
+.hud .hs span{font-size:10px;color:#7993ad}
+.phase-key{position:absolute;right:16px;top:14px;z-index:4;display:flex;gap:10px;pointer-events:none;padding:6px 8px;border:1px solid rgba(118,178,225,.11);border-radius:8px;background:rgba(6,12,20,.45);font-size:9px;color:#8da8c1}
+.phase-key span{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.phase-key i{width:6px;height:6px;border-radius:50%;display:inline-block}
+.phase-key i.p{background:var(--pos);box-shadow:0 0 8px rgba(255,154,98,.5)}
+.phase-key i.n{background:var(--neg);box-shadow:0 0 8px rgba(88,215,255,.5)}
+.tip{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:3;color:#506981;font-size:9px;white-space:nowrap;pointer-events:none}
+.tip b{color:#89a7c0;font-weight:500}
+.slice-tools{position:absolute;right:14px;bottom:12px;z-index:5;display:flex;align-items:center;gap:4px;padding:5px 7px;border:1px solid rgba(118,174,221,.15);border-radius:8px;background:rgba(8,17,28,.88)}
+.slice-tools button{border:1px solid transparent;border-radius:4px;background:transparent;color:#6e879e;padding:3px 6px;font-family:var(--mono);font-size:9px;cursor:pointer}
+.slice-tools button:hover{color:#d3f2ff;background:rgba(69,144,190,.1)}
+.slice-tools button.active{background:rgba(41,101,143,.3);border-color:rgba(107,196,244,.16);color:#d0f3ff}
+.empty{position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;background:rgba(4,9,15,.55)}
+.empty div{position:relative;text-align:center;padding:22px 24px 18px;border:1px solid rgba(118,174,221,.2);border-radius:12px;background:rgba(8,16,27,.94);font-size:11px;color:#7891a8;line-height:1.7;box-shadow:0 18px 45px rgba(0,0,0,.35)}
+.empty-close{position:absolute;top:7px;right:8px;width:24px;height:24px;border:1px solid rgba(118,174,221,.18);border-radius:50%;background:rgba(16,30,46,.8);color:#9db7cd;font-size:15px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.empty-close:hover{border-color:var(--line-hot);color:#fff}
+.empty b{display:block;font-family:var(--serif);font-size:26px;color:#a9d6f0;margin-bottom:4px;font-weight:500}
+.empty button{margin-top:9px;border:1px solid rgba(111,204,250,.35);border-radius:6px;background:rgba(35,89,120,.3);color:#c9f3ff;padding:4px 9px;font-size:9.5px;cursor:pointer}
+.eq-card{border:1px solid rgba(112,174,222,.16);border-radius:12px;padding:10px 11px;background:radial-gradient(circle at 12% 0%,rgba(59,151,208,.10),transparent 55%),linear-gradient(145deg,rgba(16,32,49,.7),rgba(8,16,26,.62));overflow:hidden}
+.eq-label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:var(--mono);font-size:8px;letter-spacing:.13em;text-transform:uppercase;color:#58738c}
+.eq-label i{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(113,215,255,.4);display:inline-block;margin-right:4px}
+.eq-main{margin-top:7px;display:flex;align-items:baseline;flex-wrap:wrap;gap:1px 3px;font-family:var(--serif);font-size:19px;line-height:1.45;color:#f2f9ff}
+.eq-main .psi{color:var(--accent);font-style:italic}
+.eq-main .sign{color:#7d95ad;font-size:14px}
+.eq-main .coef{font-family:var(--mono);font-size:11.5px;color:#c1dced}
+.eq-main .orb{font-family:var(--serif);font-style:italic;white-space:nowrap}
+.eq-main .orb sub{font-style:normal;font-size:.56em;color:#8ca8c2}
+.eq-note{margin-top:7px;font-family:var(--mono);font-size:8px;line-height:1.55;color:#526b83}
+.sym-card{margin-top:11px;padding:10px 11px;border:1px solid rgba(112,174,222,.13);border-radius:10px;background:rgba(8,17,28,.42)}
+.sym-head{display:flex;justify-content:space-between;gap:8px;font-size:9.5px;color:#7b93ab}
+.sym-head .sg{font-family:var(--mono);font-size:8.5px;color:#94b7d2;border:1px solid rgba(112,174,222,.16);border-radius:999px;padding:1px 7px;background:rgba(20,40,60,.4)}
+.sym-verdict{margin-top:7px;font-family:var(--mono);font-size:10.5px;line-height:1.4;color:#b9d6e8}
+.sym-verdict.mixed{color:#ffbe8c}
+.sym-bars{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.sym-row{display:grid;grid-template-columns:38px 1fr 38px;align-items:center;gap:5px;font-family:var(--mono);font-size:7.8px;color:#66829a}
+.sym-row .track{height:4px;border-radius:999px;background:rgba(81,115,142,.2);overflow:hidden}
+.sym-row i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#d3a85e,#ffd18a)}
+.sym-row.t1 i{background:linear-gradient(90deg,#d97562,#ffb0a0)}
+.sym-row.eg i{background:linear-gradient(90deg,#8e6bff,#c9b0ff)}
+.sym-row.t2 i{background:linear-gradient(90deg,#3aa6d8,#7bdcff)}
+.sym-row b{text-align:right;font-weight:500;color:#a9c6db}
+.sym-meta{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}
+.sym-meta span{font-family:var(--mono);font-size:7.5px;color:#66829a;border:1px solid rgba(112,162,210,.13);border-radius:4px;padding:1px 5px;background:rgba(12,26,40,.4)}
+.sym-note{margin:6px 0 0;font-size:8.3px;line-height:1.6;color:#5f7890}
+.stats{display:grid;grid-template-columns:1fr 1fr;margin-top:11px;border-top:1px solid rgba(118,174,221,.11);border-left:1px solid rgba(118,174,221,.11)}
+.stat{padding:7px 8px 6px;border-right:1px solid rgba(118,174,221,.11);border-bottom:1px solid rgba(118,174,221,.11);background:rgba(9,18,29,.26);min-width:0}
+.stat span{display:block;font-size:8.3px;color:#5e7892;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat b{display:block;margin-top:1px;font-family:var(--mono);font-size:10px;font-weight:500;color:#c9e2f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.note{margin:8px 0 0;padding:7px 8px;border-left:1px solid rgba(112,202,251,.32);background:rgba(66,148,201,.05);border-radius:0 5px 5px 0;font-size:9.5px;line-height:1.6;color:#69829c}
+.model-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.model-btn{border:1px solid rgba(119,164,216,.14);border-radius:8px;background:rgba(8,16,27,.66);padding:6px 7px;color:#839bb3;font-size:10px;cursor:pointer;transition:.15s;text-align:left}
+.model-btn:hover{border-color:rgba(112,198,248,.35);color:#d9f6ff}
+.model-btn.active{border-color:rgba(105,213,255,.5);background:rgba(27,72,105,.38);color:#dff7ff}
+.zeff-row{display:flex;align-items:center;gap:8px;margin-top:8px;font-family:var(--mono);font-size:9px;color:#7f9ab2}
+.zeff-row input{flex:1;min-width:50px}
+.zeff-row b{font-weight:500;color:#b8e8ff;min-width:28px;text-align:right}
+.overview-btn{appearance:none;border:1px solid rgba(105,213,255,.28);border-radius:7px;background:rgba(19,53,78,.42);color:#bfeeff;font-family:var(--sans);font-size:10px;padding:6px 10px;cursor:pointer;letter-spacing:.02em}
+.overview-btn:hover{border-color:rgba(105,213,255,.62);background:rgba(27,83,118,.5);color:#fff}
+.overview{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(2,7,12,.72);backdrop-filter:blur(7px)}
+.overview-card{width:min(640px,100%);max-height:82vh;overflow:auto;border:1px solid rgba(118,174,221,.25);border-radius:14px;background:linear-gradient(180deg,rgba(15,29,43,.98),rgba(7,15,24,.98));box-shadow:0 30px 80px rgba(0,0,0,.55);padding:18px 18px 15px}
+.overview-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.overview-head h3{margin:4px 0 0;font-size:17px;color:#eef8ff;font-weight:550;letter-spacing:.02em}
+.overview-head h3 span{font-family:var(--mono);font-size:9px;color:#7e9ab2;font-weight:400;margin-left:6px}
+.overview-close{appearance:none;width:28px;height:28px;border:1px solid rgba(118,174,221,.18);border-radius:50%;background:rgba(16,30,46,.8);color:#9db7cd;font-size:17px;line-height:1;cursor:pointer}
+.overview-close:hover{border-color:rgba(105,213,255,.55);color:#fff}
+.overview-summary{margin-top:12px;padding:9px 10px;border:1px solid rgba(112,202,251,.12);border-radius:8px;background:rgba(46,122,170,.08);font-family:var(--mono);font-size:9px;line-height:1.7;color:#9fc4da}
+.overview-table{margin-top:10px;border:1px solid rgba(118,174,221,.12);border-radius:9px;overflow:hidden}
+.ov-row{display:grid;grid-template-columns:1.5fr .45fr .7fr .7fr .7fr .7fr;gap:5px;align-items:center;padding:6px 9px;border-bottom:1px solid rgba(118,174,221,.07);font-size:9px;color:#7894ab}
+.ov-row:last-child{border-bottom:0}
+.ov-row.head{background:rgba(20,42,60,.45);color:#5e7c94;font-size:8px;letter-spacing:.04em}
+.ov-row.active{background:rgba(38,103,143,.2);color:#c9ecff}
+.ov-row.off{opacity:.38}
+.ov-orb{display:flex;align-items:center;gap:6px;color:#b9d4e7}
+.ov-dot{width:6px;height:6px;border-radius:50%;flex:0 0 auto}
+.ov-row b{font-weight:500;font-family:var(--mono)}
+.overview-note{margin-top:10px;font-size:9px;line-height:1.6;color:#5e7a91}
+@media(max-width:640px){.overview{padding:10px}.overview-card{padding:14px}.ov-row{grid-template-columns:1.35fr .4fr .7fr .65fr .65fr .65fr;font-size:8px;gap:3px;padding:5px 6px}.overview-btn{font-size:9px;padding:5px 8px}}
+.energy-card{margin-top:11px;padding:10px 11px;border:1px solid rgba(112,174,222,.13);border-radius:10px;background:rgba(8,17,28,.42)}
+.energy-head{display:flex;justify-content:space-between;gap:8px;font-size:9px;color:#7b93ab}
+.energy-head span:last-child{font-family:var(--mono);font-size:8px;color:#5f7890;white-space:nowrap}
+#energyCanvas{display:block;width:100%;height:166px;margin-top:5px;cursor:pointer}
+.energy-gap{margin-top:4px;font-family:var(--mono);font-size:8.5px;line-height:1.5;color:#8fb9d0;text-align:center}
+.energy-table{margin-top:7px;border-top:1px solid rgba(118,174,221,.1)}
+.energy-row{display:grid;grid-template-columns:28px 1fr 1fr;gap:4px;padding:3px 4px;font-family:var(--mono);font-size:8px;color:#637f96;border-bottom:1px solid rgba(118,174,221,.06)}
+.energy-row.head{color:#4f6b82;border-bottom-color:rgba(118,174,221,.15)}
+.energy-row.active{color:#d6f2ff;background:rgba(39,101,140,.18);border-radius:3px}
+.energy-row b{font-weight:500;text-align:right}
+.energy-note{margin-top:6px;font-size:8px;line-height:1.55;color:#557089}
+.guide{margin-top:10px;padding:9px 10px;border:1px solid rgba(112,174,222,.11);border-radius:9px;background:rgba(8,16,26,.36);font-size:9px;line-height:1.65;color:#7189a0}
+.guide b{color:#a9c7dc;font-weight:500}
+@media(max-width:1220px){.layout{grid-template-columns:300px minmax(0,1fr) 300px}.brand h1{font-size:19px}.top-note{display:none}}
+@media(max-width:1000px){body{overflow:auto}.app{height:auto;min-height:100dvh}.layout{display:flex;flex-direction:column;flex:none}.stage{order:1;height:62vh;height:62dvh;min-height:440px;flex:none}.controls{order:2;overflow:visible}.inspector{order:3;overflow:visible}.inspector{display:grid;grid-template-columns:1fr 1fr;gap:11px;align-items:start}.inspector>.panel-head{grid-column:1/-1}.inspector>.eq-card{grid-column:1}.inspector>.sym-card{grid-column:2;margin-top:0}.inspector>.stats{grid-column:1}.inspector>.energy-card{grid-column:1/-1}.inspector>.guide{grid-column:1/-1;margin-top:0}}
+@media(max-width:640px){.app{padding:10px;gap:9px}.topbar{min-height:50px}.mark{width:38px;height:38px}.brand h1{font-size:17px;white-space:normal}.eyebrow{font-size:8px}.badge,.top-note{display:none}.stage{height:58vh;height:58dvh;min-height:400px}.hud{left:10px;top:10px}.phase-key{right:10px;top:10px;gap:6px;font-size:8px}.inspector{display:block}.inspector>.sym-card,.inspector>.guide{margin-top:10px}.layout{gap:9px}}
+.stage-head,.view-tabs{flex-wrap:wrap}
+.stage-head{padding-block:6px}
+.view-tab[data-view="hybrid"]{
+  position:relative;display:inline-flex;align-items:center;gap:6px;
+  color:#e6fbff;font-weight:650;
+  background:linear-gradient(135deg,rgba(31,121,158,.62),rgba(50,77,142,.46));
+  box-shadow:inset 0 0 0 1px rgba(124,228,255,.42),0 0 16px rgba(84,207,255,.14);
+}
+.view-tab[data-view="hybrid"]::before{
+  content:"";width:6px;height:6px;border-radius:2px;flex:none;
+  background:linear-gradient(135deg,#b5f3ff,#ffad78);
+  box-shadow:0 0 8px rgba(147,235,255,.8);transform:rotate(45deg);
+}
+.view-tab[data-view="hybrid"]:hover{color:#fff;background:linear-gradient(135deg,rgba(39,145,184,.72),rgba(58,88,160,.55))}
+.view-tab[data-view="hybrid"].active{
+  color:#fff;
+  background:linear-gradient(135deg,rgba(52,164,203,.82),rgba(71,101,184,.66));
+  box-shadow:inset 0 0 0 1px rgba(173,246,255,.58),0 0 20px rgba(80,210,255,.24);
+}
+.hybrid-controls{position:relative;z-index:5;flex:none;display:grid;gap:7px;padding:9px 13px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0c1a2a,#08131f);box-shadow:inset 0 1px 0 rgba(122,220,255,.06)}
+.hybrid-row{display:flex;align-items:center;flex-wrap:wrap;gap:5px 7px}
+.hybrid-row button{border:1px solid var(--line);border-radius:7px;background:#0c1826;padding:4px 8px;min-height:28px;cursor:pointer;font-size:11px}
+.hybrid-row button:hover,.hybrid-row button[aria-pressed="true"]{border-color:var(--line-hot);background:#18374c}
+.hybrid-row [data-family] em{font-style:normal;font-family:var(--mono);font-size:9.5px;color:#8fdcf7;margin-left:5px;letter-spacing:.02em}
+.hybrid-row [data-family][aria-pressed="true"] em{color:#e3faff}
+.angle-chip{display:inline-flex;align-items:center;font-family:var(--mono);font-size:10px;font-weight:650;color:#06202b;background:linear-gradient(135deg,#9beaff,#64d5ff);border-radius:5px;padding:2px 6px;letter-spacing:.01em;box-shadow:0 0 12px rgba(92,214,255,.2)}
+.hybrid-row .member{color:var(--member);display:inline-flex;gap:5px;align-items:center}
+.hybrid-row .member input{accent-color:var(--member);margin:0}
+.hybrid-row .member{cursor:pointer;border:1px solid var(--line);border-radius:7px;padding:4px 7px;font-size:11px}
+.hybrid-row .member:has(input:checked){border-color:var(--member);background:#142739}
+.hybrid-row .directions{display:inline-flex;gap:4px;align-items:center;font-size:11px;cursor:pointer;color:#afc4d8}
+.hybrid-row .directions input{accent-color:var(--accent);margin:0}
+.hybrid-summary{color:#cee2f4;font-size:11px}
+.hybrid-note{color:#9bb2c9;font-size:10.5px;line-height:1.55;margin:0}
+.hybrid-note b{color:#d7efff;font-weight:600}
+.hybrid-key{right:16px;top:14px;gap:9px;background:rgba(5,13,22,.62)}
+.hybrid-key i{width:8px;height:8px;border-radius:2px;box-shadow:none}
+.hybrid-key span{font-family:var(--mono);font-size:9px;color:#c7ddec}
+.hybrid-key span.off{opacity:.28}
+@media(max-width:640px){.hybrid-key{right:10px;top:10px;gap:6px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none">
+          <circle cx="24" cy="24" r="5.5" fill="url(#sph)"/>
+          <ellipse cx="24" cy="24" rx="4.5" ry="15" fill="url(#pz)" opacity=".85"/>
+          <ellipse cx="24" cy="24" rx="15" ry="4.5" fill="url(#px)" opacity=".55"/>
+          <ellipse cx="24" cy="24" rx="4.5" ry="15" transform="rotate(90 24 24)" fill="url(#py)" opacity=".5"/>
+          <defs>
+            <radialGradient id="sph"><stop stop-color="#fff0d0"/><stop offset="1" stop-color="#ff9a62" stop-opacity=".2"/></radialGradient>
+            <linearGradient id="pz" x1="24" y1="8" x2="24" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#ffb076"/><stop offset=".5" stop-color="#ff7b56" stop-opacity=".1"/><stop offset="1" stop-color="#58d7ff"/></linearGradient>
+            <linearGradient id="px" x1="8" y1="24" x2="40" y2="24" gradientUnits="userSpaceOnUse"><stop stop-color="#58d7ff"/><stop offset=".5" stop-color="#58d7ff" stop-opacity=".1"/><stop offset="1" stop-color="#ff9a62"/></linearGradient>
+            <linearGradient id="py" x1="24" y1="8" x2="24" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#b49cff"/><stop offset=".5" stop-color="#b49cff" stop-opacity=".1"/><stop offset="1" stop-color="#7df0b0"/></linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div>
+        <div class="eyebrow">HYDROGENIC HYBRIDIZATION <em>·</em> S / P / D</div>
+        <h1>类氢杂化 <span>HYDROGENIC HYBRID</span></h1>
+      </div>
+    </div>
+    <div class="top-note"><span class="pulse"></span>点数 · 模型 · 能量 · 对称性</div>
+    <div class="top-actions"><button class="overview-btn" type="button" id="overviewBtn">轨道概览</button><span class="badge"><i></i>9 个实轨道可自选</span></div>
+  </header>
+
+  <main class="layout">
+    <aside class="panel controls">
+      <div class="panel-head"><div><div class="kicker">01 / BASIS</div><h2>轨道系数</h2></div><span class="badge">自动归一</span></div>
+      <p class="desc">同一能层的 9 个实轨道都可以加进来。滑杆调相对权重，也可直接在右侧输入数值（负值反相）；整体振幅自动归一化；点轨道名单独显示。拖动时公式/对称性即时更新，松开后按固定点数重新采样概率云。</p>
+
+      <div class="section">
+        <div class="section-head"><span>主量子层</span><span class="hint">same n</span></div>
+        <div class="shell-tabs" id="shellTabs">
+          <button class="shell-btn" type="button" data-n="1"><b>1</b><span>1s</span></button>
+          <button class="shell-btn" type="button" data-n="2"><b>2</b><span>2s / 2p</span></button>
+          <button class="shell-btn active" type="button" data-n="3"><b>3</b><span>3s / 3p / 3d</span></button>
+          <button class="shell-btn" type="button" data-n="4"><b>4</b><span>4s / 4p / 4d</span></button>
+          <button class="shell-btn" type="button" data-n="5"><b>5</b><span>5s / 5p / 5d</span></button>
+          <button class="shell-btn" type="button" data-n="6"><b>6</b><span>6s / 6p / 6d</span></button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><span>势场模型</span><span class="hint">potential</span></div>
+        <div class="model-tabs" id="modelTabs">
+          <button class="model-btn active" type="button" data-model="H">类氢 Z = 1</button>
+          <button class="model-btn" type="button" data-model="screened">屏蔽 Z<sub>eff</sub></button>
+        </div>
+        <div id="zeffBox" hidden>
+          <div class="zeff-row"><span>Z<sub>eff</sub></span><input type="range" id="zeffRange" min="1" max="10" step="0.1" value="3.2" aria-label="有效核电荷"><b id="zeffVal">3.2</b></div>
+          <p class="note" style="margin-top:6px">中心场屏蔽近似：同一 Z<sub>eff</sub> 作用于 s/p/d，能级按 E<sub>n</sub> = −13.606 Z<sub>eff</sub>²/n² 移动；不是 SCF 逐轨道结果。3D 视图按 Z<sub>eff</sub> 缩放以保持可见，⟨r⟩ 与二维轴仍为真实 a₀。</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><span>基函数权重</span><span class="hint">9 real orbitals</span></div>
+        <div id="orbList"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><span>快捷起点</span><span class="hint">可继续改</span></div>
+        <div class="preset-grid" id="presets"></div>
+        <p class="note">标准 sp / sp² / sp³ 预设使用 2s/2p，并且一次只显示一个等价成员；整套点群分别是 D<sub>∞h</sub>、D<sub>3h</sub>、T<sub>d</sub>。可在「多轨道」视图里同屏勾选整套成员。上方 O<sub>h</sub> 卡片是原子轨道参考。</p>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><span>显示</span><span class="hint">display</span></div>
+        <div class="point-tabs" id="pointTabs"><button type="button" data-points="20000">20k</button><button type="button" data-points="30000" class="active">30k</button><button type="button" data-points="50000">50k</button><button type="button" data-points="80000">80k</button><button type="button" data-points="120000">120k</button><span class="hint" style="margin-left:auto">点数</span></div>
+        <button class="tool-row on" type="button" id="axesBtn"><span>显示 XYZ 轴</span><b>on</b></button>
+        <button class="tool-row" type="button" id="rotateBtn"><span>自动旋转</span><b>off</b></button>
+        <button class="tool-row on" type="button" id="autoResetBtn" title="停止拖动/缩放 8 秒后自动回到默认视角"><span>自动重置视角</span><b>8s</b></button>
+        <button class="tool-row" type="button" id="autoWeightsBtn" title="停止操作 8 秒后回到最近一次快捷预设"><span>自动重置推杆</span><b>off</b></button>
+        <button class="tool-row" type="button" id="resetBtn"><span>重置视角</span><b>reset</b></button>
+      </div>
+
+      <div class="norm-box">
+        <div class="norm-line"><span>Σ aᵢ²（原始权重平方和）</span><b id="rawNorm">1.000</b></div>
+        <div class="norm-line"><span>归一化因子 1/‖a‖</span><b id="normFactor">1.000</b></div>
+        <div class="norm-line"><span>归一化后 Σ cᵢ²</span><b style="color:var(--ok)">1.000</b></div>
+        <div class="norm-bar" id="normBar"></div>
+      </div>
+    </aside>
+
+    <section class="stage">
+      <div class="stage-head">
+        <div class="view-tabs" id="viewTabs"><button class="view-tab active" type="button" data-view="3d">3D 概率云</button><button class="view-tab" type="button" data-view="hybrid" aria-label="多轨道：同屏查看 sp、sp²、sp³ 杂化轨道">多轨道</button><button class="view-tab" type="button" data-view="2d">二维剖面</button><button class="view-tab" type="button" data-view="radial">径向概率</button></div>
+        <div class="status" id="status"><span class="dot"></span><span id="statusText" role="status">30k 点</span></div>
+      </div>
+      <div class="hybrid-controls" id="hybridControls" hidden>
+        <div class="hybrid-row" role="group" aria-label="杂化类型">
+          <button type="button" data-family="sp" aria-pressed="false">sp <em>180°</em></button>
+          <button type="button" data-family="sp2" aria-pressed="false">sp² <em>120°</em></button>
+          <button type="button" data-family="sp3" aria-pressed="true">sp³ <em>109.5°</em></button>
+          <span class="angle-chip" id="hybridAngle">理想 ≈ 109.5°</span>
+          <span class="hybrid-summary" id="hybridSummary">四面体 · 如甲烷中的碳</span>
+        </div>
+        <div class="hybrid-row">
+          <div class="hybrid-row" id="hybridMembers" role="group" aria-label="同时显示的轨道"></div>
+          <button id="hybridAll" type="button" title="勾选当前杂化类型的全部成员">全选</button>
+          <label class="directions" title="从原子中心指向对应主瓣，仅示意可能的 σ 成键方向"><input id="hybridDirections" type="checkbox" checked>成键方向线</label>
+        </div>
+        <p class="hybrid-note"><b>固定类氢 2s/2p（n = 2，Z = 1；不受左侧组合权重影响）</b> · 每个成员按 |ψ<sub>i</sub>|² 独立采样；虚线由原子中心指向该成员主瓣，表示可能的 σ 成键方向（方向示意，不代表真实键长）。</p>
+      </div>
+      <div class="stage-viewport">
+        <div class="pane active" id="pane3d">
+          <canvas id="scene"></canvas>
+          <div class="hud" id="singleHud"><div class="hk">FREE COMBINATION / REAL SPACE</div><div class="hs"><b id="hudN">n = 3</b><span id="hudCount">1 个分量</span></div></div>
+          <div class="hud" id="hybridHud" hidden><div class="hk">MULTI-ORBITAL / SAME ATOM</div><div class="hs"><b id="hybridHudTitle">sp³</b><span id="hybridHudCount">4 / 4 个成员 · 理想 ≈ 109.5°</span></div></div>
+          <div class="phase-key" id="phaseKey"><span><i class="p"></i>ψ &gt; 0</span><span><i class="n"></i>ψ &lt; 0</span></div>
+          <div class="phase-key hybrid-key" id="hybridKey" hidden aria-hidden="true"></div>
+          <div class="tip"><b>拖拽</b> 旋转 · <b>滚轮</b> 缩放 · <b>双击</b> 自动旋转</div>
+        </div>
+        <div class="pane" id="pane2d">
+          <canvas id="sliceCanvas"></canvas>
+          <div class="hud"><div class="hk">SIGNED CROSS SECTION</div><div class="hs"><b id="planeLabel">XY</b><span id="planeSub">z = 0 · 颜色表示 ψ 符号</span></div></div>
+          <div class="slice-tools" id="planeTabs"><button class="active" type="button" data-plane="xy">XY</button><button type="button" data-plane="xz">XZ</button><button type="button" data-plane="yz">YZ</button></div>
+        </div>
+        <div class="pane" id="paneRadial">
+          <canvas id="radialCanvas"></canvas>
+          <div class="hud"><div class="hk">RADIAL PROBABILITY</div><div class="hs"><b id="radialMeta">n = 3</b><span>P(r) = Σ cᵢ² r² |R<sub>n,l</sub>|²</span></div></div>
+          <div class="tip">角向已积分 · 固定 n 下的径向概率密度</div>
+        </div>
+        <div class="empty" id="empty" hidden><div><button class="empty-close" type="button" id="dismissEmpty" aria-label="关闭提示">×</button><b>ψ = 0</b>还没有选择任何分量<br><button type="button" id="restore">恢复 d<sub>z²</sub></button></div></div>
+      </div>
+    </section>
+
+    <aside class="panel inspector">
+      <div class="panel-head"><div><div class="kicker">02 / RESULT</div><h2>组合结果</h2></div><span class="badge" id="compBadge">1 个分量</span></div>
+      <div class="eq-card">
+        <div class="eq-label"><span><i></i>NORMALIZED LINEAR COMBINATION</span><span id="shellTag">3s / 3p / 3d</span></div>
+        <div class="eq-main" id="eqMain"></div>
+        <div class="eq-note">同一 n · 实球谐 · 类氢径向函数 · 自动归一化 Σcᵢ²=1</div>
+      </div>
+
+      <div class="energy-card">
+        <div class="energy-head"><span>能层能量 · n = 1–6</span><span id="energyFormula">E<sub>n</sub> = −13.606 / n² eV</span></div>
+        <canvas id="energyCanvas"></canvas>
+        <div class="energy-gap" id="energyGap"></div>
+        <div class="energy-table" id="energyTable"></div>
+        <div class="energy-note" id="energyNote">类氢 Z = 1：同一 n 的 s/p/d 简并，能量只由 n 决定；真实多电子原子或配体场会使能级移动/分裂。</div>
+      </div>
+
+      <div class="sym-card">
+        <div class="sym-head"><span>对称性 · O<sub>h</sub> 参考</span><span class="sg">a<sub>1g</sub> / t<sub>1u</sub> / e<sub>g</sub> / t<sub>2g</sub></span></div>
+        <div class="sym-verdict" id="symVerdict">尚无组合</div>
+        <div class="sym-bars">
+          <div class="sym-row"><span>a<sub>1g</sub></span><div class="track"><i id="barA1" style="width:0%"></i></div><b id="pctA1">0%</b></div>
+          <div class="sym-row t1"><span>t<sub>1u</sub></span><div class="track"><i id="barT1" style="width:0%"></i></div><b id="pctT1">0%</b></div>
+          <div class="sym-row eg"><span>e<sub>g</sub></span><div class="track"><i id="barEg" style="width:0%"></i></div><b id="pctEg">0%</b></div>
+          <div class="sym-row t2"><span>t<sub>2g</sub></span><div class="track"><i id="barT2" style="width:0%"></i></div><b id="pctT2">0%</b></div>
+        </div>
+        <div class="sym-meta"><span id="parityTag">宇称 —</span><span id="lTag">l 组成 —</span></div>
+        <p class="sym-note" id="symNote">在八面体 O<sub>h</sub> 参考下：s → a<sub>1g</sub>，p → t<sub>1u</sub>，d → e<sub>g</sub> + t<sub>2g</sub>。</p>
+      </div>
+
+      <div class="stats" id="stats"></div>
+
+      <div class="guide"><b>读图：</b>点云按 |ψ|² 分布；橙色/青色表示波函数正/负相位。能级图随当前模型更新；O<sub>h</sub> 分量分类是参考。真实多电子/配体场会使能级移动或分裂。</div>
+    </aside>
+  </main>
+</div>
+
+<div class="overview" id="overview" hidden>
+  <div class="overview-card" role="dialog" aria-modal="true" aria-label="轨道概览">
+    <div class="overview-head">
+      <div><div class="kicker">ORBITAL INDEX</div><h3>轨道概览 <span id="overviewShell">n = 3</span></h3></div>
+      <button class="overview-close" type="button" id="overviewClose" aria-label="关闭轨道概览">×</button>
+    </div>
+    <div class="overview-summary" id="overviewSummary"></div>
+    <div class="overview-table" id="overviewTable"></div>
+    <div class="overview-note">径向节点 = n − l − 1；角向节点 = l（节面数）。标“不可用”表示当前 n 不包含该角量子数。</div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const TAU = Math.PI * 2;
+const SQRT3 = Math.sqrt(3);
+const K_S = 1 / Math.sqrt(4 * Math.PI);
+const K_P = Math.sqrt(3 / (4 * Math.PI));
+const K_D = Math.sqrt(15 / (16 * Math.PI));
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const ENERGY_EV = 13.605693;
+const ENERGY_N = [1, 2, 3, 4, 5, 6];
+const shellL = n => 2.8 * n * n + 3;
+const viewL = (n, z = 1) => shellL(n) / z;
+const energyOf = (n, z = 1) => -ENERGY_EV * z * z / (n * n);
+
+const ORB = [
+  { key: 's',    sub: '',     l: 0, group: 'a1g', tagClass: 'a1', tag: 'a1g', color: '#ffd18a', label: 's' },
+  { key: 'px',   sub: 'x',     l: 1, group: 't1u', tagClass: 't1', tag: 't1u', color: '#ff9a9a', label: 'p_x' },
+  { key: 'py',   sub: 'y',     l: 1, group: 't1u', tagClass: 't1', tag: 't1u', color: '#ffc08a', label: 'p_y' },
+  { key: 'pz',   sub: 'z',     l: 1, group: 't1u', tagClass: 't1', tag: 't1u', color: '#ffd18a', label: 'p_z' },
+  { key: 'dz2',  sub: 'z²',    l: 2, group: 'eg',  tagClass: 'eg', tag: 'eg',  color: '#c9b0ff', label: 'd_z²' },
+  { key: 'dxz',  sub: 'xz',    l: 2, group: 't2g', tagClass: 't2', tag: 't2g', color: '#7bdcff', label: 'd_xz' },
+  { key: 'dyz',  sub: 'yz',    l: 2, group: 't2g', tagClass: 't2', tag: 't2g', color: '#8fd2ff', label: 'd_yz' },
+  { key: 'dxy',  sub: 'xy',    l: 2, group: 't2g', tagClass: 't2', tag: 't2g', color: '#7df0b0', label: 'd_xy' },
+  { key: 'dx2',  sub: 'x²−y²', l: 2, group: 'eg',  tagClass: 'eg', tag: 'eg',  color: '#d59bff', label: 'd_x²−y²' }
+];
+const GROUP_NAMES = ['a1g', 't1u', 'eg', 't2g'];
+
+const state = {
+  n: 3,
+  weights: [0, 0, 0, 0, 1, 0, 0, 0, 0],
+  view: '3d',
+  plane: 'xy',
+  points: 30000,
+  axes: true,
+  autoReset: true,
+  autoResetWeights: false,
+  baseWeights: [0,0,0,0,1,0,0,0,0],
+  model: 'H',
+  zeff: 3.2,
+  auto: false,
+  cam: { az: -1.02, el: 0.32, zoom: 1, dragging: false },
+  analysis: null,
+  cloud: null,
+  cloudKey: '',
+  emptyDismissed: false,
+  dirty: true
+};
+
+const INV_SQRT3 = 1 / SQRT3;
+const HYBRIDS = {
+  sp:  { label: 'sp',  angle: '180°',      geometry: '直线形 · 如乙炔中的碳',   directions: [[1,0,0], [-1,0,0]] },
+  sp2: { label: 'sp²', angle: '120°',      geometry: '平面三角形 · 如乙烯中的碳', directions: [[1,0,0], [-.5,SQRT3/2,0], [-.5,-SQRT3/2,0]] },
+  sp3: { label: 'sp³', angle: '≈ 109.5°',  geometry: '四面体 · 如甲烷中的碳',
+    directions: [[1,1,1], [1,-1,-1], [-1,1,-1], [-1,-1,1]].map(d => d.map(x => x * INV_SQRT3)) }
+};
+const HYBRID_COLORS = [
+  { solid: '#ffad78', point: 'rgba(255,155,90,.27)' },
+  { solid: '#78dfff', point: 'rgba(87,207,255,.27)' },
+  { solid: '#a4ef8f', point: 'rgba(134,230,103,.27)' },
+  { solid: '#efb4fc', point: 'rgba(226,146,247,.27)' }
+];
+const hybrid = { family: 'sp3', selected: new Map(), directions: true, cacheKey: '', clouds: new Map() };
+const in3D = () => state.view === '3d' || state.view === 'hybrid';
+
+const FACT = [1];
+function fact(n) {
+  if (n < 0) return NaN;
+  for (let i = FACT.length; i <= n; i++) FACT[i] = FACT[i - 1] * i;
+  return FACT[n];
+}
+const radialNormCache = new Map();
+function radialNorm(n, l, z = 1) {
+  const key = `${n},${l},${z}`;
+  if (!radialNormCache.has(key)) {
+    radialNormCache.set(key, Math.sqrt(Math.pow(2 * z / n, 3) * fact(n - l - 1) / (2 * n * fact(n + l))));
+  }
+  return radialNormCache.get(key);
+}
+function laguerre(k, a, x) {
+  if (k <= 0) return 1;
+  let lm1 = 1, l = 1 + a - x;
+  for (let i = 1; i < k; i++) {
+    const lp = ((2 * i + 1 + a - x) * l - (i + a) * lm1) / (i + 1);
+    lm1 = l; l = lp;
+  }
+  return l;
+}
+function radialR(n, l, r, z = 1) {
+  const rho = 2 * z * r / n;
+  return radialNorm(n, l, z) * Math.exp(-rho / 2) * Math.pow(rho, l) * laguerre(n - l - 1, 2 * l + 1, rho);
+}
+
+function angular(ux, uy, uz, c) {
+  let s = 0;
+  if (c[0]) s += K_S * c[0];
+  if (c[1] || c[2] || c[3]) s += K_P * (c[1] * ux + c[2] * uy + c[3] * uz);
+  if (c[4] || c[5] || c[6] || c[7] || c[8]) {
+    const z2 = uz * uz;
+    s += K_D * (
+      c[4] * (3 * z2 - 1) / SQRT3 +
+      2 * c[5] * ux * uz +
+      2 * c[6] * uy * uz +
+      2 * c[7] * ux * uy +
+      c[8] * (ux * ux - uy * uy)
+    );
+  }
+  return s;
+}
+
+function psiAtWorld(a, x, y, z) {
+  const r = Math.hypot(x, y, z);
+  if (r < 1e-10) return 0;
+  const ux = x / r, uy = y / r, uz = z / r;
+  let psi = 0;
+  if (a.c[0]) psi += radialR(a.n, 0, r, a.z) * (K_S * a.c[0]);
+  if (a.c[1] || a.c[2] || a.c[3]) psi += radialR(a.n, 1, r, a.z) * (K_P * (a.c[1] * ux + a.c[2] * uy + a.c[3] * uz));
+  if (a.c[4] || a.c[5] || a.c[6] || a.c[7] || a.c[8]) {
+    const z2 = uz * uz;
+    psi += radialR(a.n, 2, r, a.z) * K_D * (
+      a.c[4] * (3 * z2 - 1) / SQRT3 +
+      2 * a.c[5] * ux * uz +
+      2 * a.c[6] * uy * uz +
+      2 * a.c[7] * ux * uy +
+      a.c[8] * (ux * ux - uy * uy)
+    );
+  }
+  return psi;
+}
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shellLabel(n) {
+  if (n === 1) return '1s';
+  if (n === 2) return '2s / 2p';
+  return `${n}s / ${n}p / ${n}d`;
+}
+function applyShell(n) {
+  state.n = n;
+  for (let i = 0; i < 9; i++) {
+    if (ORB[i].l > n - 1) state.weights[i] = 0;
+  }
+  if (Math.hypot(...state.weights) < 1e-9) state.weights[0] = 1;
+  updateAnalysis();
+}
+
+/* ---------- analysis ---------- */
+function updateAnalysis() {
+  const raw = state.weights.map(v => clamp(Number(v) || 0, -1, 1));
+  state.weights = raw;
+  const norm = Math.hypot(...raw);
+  state.norm = norm;
+  const c = norm > 1e-9 ? raw.map(v => v / norm) : new Array(9).fill(0);
+  const zero = norm <= 1e-9;
+  const gw = { a1g: c[0] * c[0], t1u: c[1] * c[1] + c[2] * c[2] + c[3] * c[3], eg: c[4] * c[4] + c[8] * c[8], t2g: c[5] * c[5] + c[6] * c[6] + c[7] * c[7] };
+  const lw = { s: c[0] * c[0], p: gw.t1u, d: gw.eg + gw.t2g };
+  const z = state.model === 'H' ? 1 : state.zeff;
+  let meanR = 0;
+  for (let i = 0; i < 9; i++) meanR += c[i] * c[i] * 0.5 * (3 * state.n * state.n - ORB[i].l * (ORB[i].l + 1)) / z;
+  const parity = zero ? '—' : (gw.t1u > 1e-4 && (gw.a1g + gw.eg + gw.t2g) > 1e-4) ? 'g + u 混合' : (gw.t1u > 1e-4 ? 'u（奇）' : 'g（偶）');
+  state.analysis = { n: state.n, z, model: state.model, raw, c, norm, zero, gw, lw, meanR, parity, nonzero: c.map((v, i) => Math.abs(v) > 4e-4 ? i : -1).filter(i => i >= 0) };
+  if (!zero) state.emptyDismissed = false;
+  renderUI();
+  if (state.view === 'hybrid') return;
+  if (zero) {
+    state.cloud = null;
+    state.cloudKey = '';
+    if (state.view === '3d') { state.dirty = false; drawScene(); }
+    else if (state.view === '2d') drawSlice();
+    else drawRadialView();
+    setStatus('空组合 · 无分量', false);
+    return;
+  }
+  if (state.view === '3d') scheduleCloud();
+  else if (state.view === '2d') scheduleSlice();
+  else { drawRadialView(); setStatus('径向概率 · 就绪', false); }
+}
+
+function fmt(x, d = 3) { return Math.abs(x) < 5e-4 ? '0' : x.toFixed(d); }
+
+function orbHTML(i) {
+  return `<span class="orb"><i>${ORB[i].key === 's' ? 's' : ORB[i].key[0]}</i><sub>${ORB[i].sub}</sub></span>`;
+}
+function termHTML(c) {
+  let first = true;
+  const out = [];
+  for (let i = 0; i < 9; i++) {
+    if (Math.abs(c[i]) < 4e-4) continue;
+    const neg = c[i] < 0, abs = Math.abs(c[i]);
+    const sign = first ? (neg ? '<span class="sign">−</span>' : '') : `<span class="sign">${neg ? '−' : '+'}</span>`;
+    const num = Math.abs(abs - 1) < 5e-4 ? '' : `<span class="coef">${abs.toFixed(3)}</span>`;
+    out.push(`${sign}${num}${orbHTML(i)}`);
+    first = false;
+  }
+  return out.join('');
+}
+
+let energyLevels = [];
+function drawEnergyChart() {
+  const n = state.analysis ? state.analysis.n : state.n;
+  const z = state.analysis ? state.analysis.z : 1;
+  const cur = energyOf(n, z);
+  const other = n > 1 ? n - 1 : n + 1;
+  const gap = Math.abs(energyOf(n, z) - energyOf(other, z));
+  $('#energyGap').textContent = `当前 n=${n} · ${cur.toFixed(3)} eV　|　到 n=${other}: ΔE=${gap.toFixed(3)} eV`;
+  const table = ['<div class="energy-row head"><span>n</span><span>E / eV</span><span>ΔE / eV</span></div>'];
+  for (const m of ENERGY_N) {
+    const e = energyOf(m, z);
+    const dg = m > 1 ? Math.abs(e - energyOf(m - 1, z)) : null;
+    table.push(`<div class="energy-row${m === n ? ' active' : ''}" data-n="${m}"><span>${m}</span><b>${e.toFixed(3)}</b><b>${dg === null ? '—' : dg.toFixed(3)}</b></div>`);
+  }
+  $('#energyTable').innerHTML = table.join('');
+
+  const c = $('#energyCanvas');
+  if (!c) return;
+  const w = c.clientWidth;
+  if (!w) return;
+  const h = c.clientHeight || 166;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) {
+    c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+  }
+  const ctx = c.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  const top = 13, bottom = 12, lx = 17, rx = w - 46;
+  const plotH = h - top - bottom;
+  const yOf = e => top + (e / energyOf(1, z)) * plotH;
+  energyLevels = [];
+  const levels = ENERGY_N.map(m => ({ n: m, e: energyOf(m, z), y: yOf(energyOf(m, z)) }));
+  const sorted = levels.slice().sort((a, b) => a.y - b.y);
+  let lastLabel = -100;
+  const labels = new Map();
+  for (const lv of sorted) {
+    const ly = Math.max(lv.y, lastLabel + 9.5);
+    labels.set(lv.n, ly);
+    lastLabel = ly;
+  }
+  ctx.strokeStyle = 'rgba(118,166,221,.16)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(lx, top); ctx.lineTo(lx, h - bottom); ctx.stroke();
+  ctx.fillStyle = 'rgba(111,138,160,.7)';
+  ctx.font = '7.5px "SFMono-Regular",Consolas,monospace';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText('0', 3, top);
+  ctx.fillText(energyOf(1, z).toFixed(1), 3, h - bottom);
+  for (const lv of levels) {
+    const active = lv.n === n;
+    ctx.strokeStyle = active ? 'rgba(113,215,255,.9)' : 'rgba(118,166,221,.28)';
+    ctx.lineWidth = active ? 1.6 : 1;
+    ctx.beginPath(); ctx.moveTo(lx, lv.y); ctx.lineTo(rx, lv.y); ctx.stroke();
+    ctx.fillStyle = active ? '#71d7ff' : 'rgba(141,176,204,.5)';
+    ctx.beginPath(); ctx.arc(lx, lv.y, active ? 2.5 : 1.4, 0, TAU); ctx.fill();
+    const ly = labels.get(lv.n);
+    if (Math.abs(ly - lv.y) > 1.2) {
+      ctx.strokeStyle = active ? 'rgba(113,215,255,.45)' : 'rgba(118,166,221,.2)';
+      ctx.lineWidth = .7;
+      ctx.beginPath(); ctx.moveTo(rx, lv.y); ctx.lineTo(rx + 3, ly); ctx.stroke();
+    }
+    ctx.fillStyle = active ? '#d8f5ff' : 'rgba(141,166,190,.7)';
+    ctx.fillText(`n=${lv.n}`, rx + 5, ly);
+    energyLevels.push({ n: lv.n, y: lv.y });
+  }
+}
+
+function renderOverview() {
+  const a = state.analysis;
+  if (!a) return;
+  $('#overviewShell').textContent = `n = ${a.n}`;
+  const gs = [['a1g', a.gw.a1g], ['t1u', a.gw.t1u], ['eg', a.gw.eg], ['t2g', a.gw.t2g]];
+  const active = gs.filter(([, v]) => v > 1e-4).map(([k]) => k);
+  const verdict = active.length ? active.join(' + ') : '空组合';
+  $('#overviewSummary').innerHTML = `E<sub>${a.n}</sub> = ${energyOf(a.n, a.z).toFixed(3)} eV　·　${a.model === 'H' ? 'Z = 1' : `Z<sub>eff</sub> = ${a.z.toFixed(1)}`}　·　s ${(a.lw.s * 100).toFixed(0)}% / p ${(a.lw.p * 100).toFixed(0)}% / d ${(a.lw.d * 100).toFixed(0)}%　·　${verdict}`;
+  const rows = ['<div class="ov-row head"><span>轨道</span><span>l</span><span>O<sub>h</sub></span><span>径向节点</span><span>角向节点</span><span>c<sub>i</sub></span></div>'];
+  ORB.forEach((o, i) => {
+    const avail = o.l <= a.n - 1;
+    const c = a.c[i];
+    const rad = avail ? String(a.n - o.l - 1) : '—';
+    const ang = avail ? String(o.l) : '—';
+    rows.push(`<div class="ov-row${avail && Math.abs(c) > 4e-4 ? ' active' : ''}${avail ? '' : ' off'}" data-i="${i}">
+      <span class="ov-orb"><i class="ov-dot" style="background:${o.color}"></i>${o.label}</span>
+      <span>${o.l}</span><span>${o.tag}</span><span>${rad}</span><span>${ang}</span><b>${avail ? c.toFixed(2) : '—'}</b></div>`);
+  });
+  $('#overviewTable').innerHTML = rows.join('');
+}
+
+function renderUI() {
+  const a = state.analysis;
+  $$('#shellTabs .shell-btn').forEach(b => b.classList.toggle('active', Number(b.dataset.n) === a.n));
+  $$('#pointTabs button').forEach(b => b.classList.toggle('active', Number(b.dataset.points) === state.points));
+  $('#hudN').textContent = `n = ${a.n}`;
+  $('#hudCount').textContent = a.zero ? '空组合' : `${a.nonzero.length} 个分量`;
+  $('#shellTag').textContent = shellLabel(a.n);
+  $('#compBadge').textContent = a.zero ? '0 个分量' : `${a.nonzero.length} 个分量`;
+  $('#eqMain').innerHTML = a.zero ? '<span class="psi">ψ</span><span class="sign">=</span><span class="coef">0</span>' : `<span class="psi">ψ</span><span class="sign">=</span>${termHTML(a.c)}`;
+  $('#rawNorm').textContent = (a.norm * a.norm).toFixed(3);
+  $('#normFactor').textContent = a.norm > 1e-9 ? (1 / a.norm).toFixed(3) : '—';
+  $('#normBar').innerHTML = a.zero ? '' : a.c.map((v, i) => v * v < 0.0015 ? '' : `<i style="width:${(v * v * 100).toFixed(2)}%;background:${ORB[i].color}"></i>`).join('');
+  $('#empty').hidden = state.view === 'hybrid' || !a.zero || state.emptyDismissed;
+  $('#axesBtn').classList.toggle('on', state.axes);
+  $('#axesBtn b').textContent = state.axes ? 'on' : 'off';
+  $('#rotateBtn').classList.toggle('on', state.auto);
+  $('#rotateBtn b').textContent = state.auto ? 'on' : 'off';
+  $('#autoResetBtn').classList.toggle('on', state.autoReset);
+  $('#autoResetBtn b').textContent = state.autoReset ? '8s' : 'off';
+  $('#autoWeightsBtn').classList.toggle('on', state.autoResetWeights);
+  $('#autoWeightsBtn b').textContent = state.autoResetWeights ? '8s' : 'off';
+
+  const rows = $$('#orbList .orb-row');
+  rows.forEach((row, i) => {
+    const avail = ORB[i].l <= a.n - 1;
+    const slider = $('input[type=range]', row);
+    const val = $('.coef-num', row);
+    const name = $('.orb-name', row);
+    row.classList.toggle('disabled', !avail);
+    row.classList.toggle('active', avail && Math.abs(a.c[i]) > 4e-4);
+    slider.disabled = !avail;
+    val.disabled = !avail;
+    name.disabled = !avail;
+    if (!avail) {
+      if (document.activeElement !== slider) slider.value = '0';
+      val.value = ''; val.placeholder = '—';
+      val.classList.remove('negative');
+      $('.orb-weight', row).textContent = '—';
+      return;
+    }
+    if (document.activeElement !== slider) slider.value = String(a.raw[i]);
+    val.placeholder = '';
+    if (document.activeElement !== val) val.value = a.raw[i].toFixed(2);
+    val.classList.toggle('negative', a.raw[i] < -1e-9);
+    $('.orb-weight', row).textContent = a.zero ? '0%' : `${Math.round(a.c[i] * a.c[i] * 100)}%`;
+  });
+
+  const groups = [['a1g', a.gw.a1g], ['t1u', a.gw.t1u], ['eg', a.gw.eg], ['t2g', a.gw.t2g]];
+  const ids = { a1g: 'A1', t1u: 'T1', eg: 'Eg', t2g: 'T2' };
+  groups.forEach(([k, v]) => {
+    $('#bar' + ids[k]).style.width = `${v * 100}%`;
+    $('#pct' + ids[k]).textContent = `${(v * 100).toFixed(1)}%`;
+  });
+  const activeGroups = groups.filter(([, v]) => v > 1e-4).map(([k]) => k);
+  const sd = activeGroups.filter(g => g === 'a1g' || g === 'eg' || g === 't2g');
+  const verdict = $('#symVerdict');
+  verdict.classList.toggle('mixed', activeGroups.length > 1);
+  if (a.zero) verdict.textContent = '尚无组合';
+  else if (activeGroups.length === 1) verdict.textContent = `${activeGroups[0]} 子空间`;
+  else verdict.textContent = activeGroups.join(' + ') + ' 混合 · 非单一不可约表示';
+  $('#parityTag').textContent = `宇称 ${a.parity}`;
+  $('#lTag').textContent = `l 组成 s ${(a.lw.s * 100).toFixed(0)}% · p ${(a.lw.p * 100).toFixed(0)}% · d ${(a.lw.d * 100).toFixed(0)}%`;
+  $('#symNote').innerHTML = a.zero
+    ? '在 O<sub>h</sub> 参考下：s → a<sub>1g</sub>，p → t<sub>1u</sub>，d → e<sub>g</sub> + t<sub>2g</sub>。'
+    : (activeGroups.length > 1
+      ? '当前组合跨多个不可约表示。O<sub>h</sub> 中它们能量通常不同，跨组混合不是单一对称性定态。'
+      : `当前组合只落在 ${activeGroups[0]} 子空间；仍可包含该表示内的不同分量。`);
+  const modelZ = a.z;
+  $$('#modelTabs .model-btn').forEach(b => b.classList.toggle('active', b.dataset.model === a.model));
+  $('#zeffBox').hidden = a.model === 'H';
+  $('#zeffVal').textContent = modelZ.toFixed(1);
+  if (a.model !== 'H') $('#zeffRange').value = String(state.zeff);
+  $('#energyFormula').innerHTML = a.model === 'H' ? 'E<sub>n</sub> = −13.606 / n² eV' : `E<sub>n</sub> = −13.606 · ${modelZ.toFixed(1)}² / n² eV`;
+  $('#energyNote').textContent = a.model === 'H'
+    ? '类氢 Z = 1：同一 n 的 s/p/d 简并，能量只由 n 决定；真实多电子原子或配体场会使能级移动/分裂。'
+    : '屏蔽类氢近似：同一 Z_eff 作用于 s/p/d，能级按 −13.606 Z_eff²/n² 计算；真实多电子原子需 SCF 逐轨道处理。';
+  $('#stats').innerHTML = [
+    ['能层', shellLabel(a.n)],
+    ['能层能量', `${energyOf(a.n, a.z).toFixed(3)} eV`],
+    ['分量数', `${a.nonzero.length} / 9`],
+    ['l 种类', [a.lw.s > 1e-4 && 's', a.lw.p > 1e-4 && 'p', a.lw.d > 1e-4 && 'd'].filter(Boolean).join(' + ') || '—'],
+    ['平均半径 ⟨r⟩', `${a.meanR.toFixed(2)} a₀`],
+    ['宇称', a.parity]
+  ].map(([k, v]) => `<div class="stat"><span>${k}</span><b>${v}</b></div>`).join('');
+  drawEnergyChart();
+  if (!$('#overview').hidden) renderOverview();
+}
+
+/* ---------- build point cloud from fixed 3D grid CDF ---------- */
+let cloudTimer = 0, sliceTimer = 0;
+function scheduleCloud() {
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(() => {
+    setStatus('采样中…', true);
+    requestAnimationFrame(() => {
+      if (state.view !== '3d') return;
+      try { buildCloud(); setStatus(`${(state.points / 1000).toFixed(0)}k 点 · 就绪`, false); drawScene(); }
+      catch (err) { console.error(err); setStatus('采样失败 · 降低点数重试', false); }
+    });
+  }, 70);
+}
+function scheduleSlice() {
+  clearTimeout(sliceTimer);
+  sliceTimer = setTimeout(() => {
+    setStatus('切片中…', true);
+    requestAnimationFrame(() => {
+      if (state.view !== '2d') return;
+      try { drawSlice(); setStatus('二维剖面 · 就绪', false); }
+      catch (err) { console.error(err); setStatus('切片计算失败', false); }
+    });
+  }, 70);
+}
+function setStatus(text, busy) {
+  const s = $('#status');
+  s.classList.toggle('busy', !!busy);
+  $('#statusText').textContent = text;
+}
+
+function buildCloud() {
+  const a = state.analysis;
+  if (!a) return;
+  if (a.zero) { state.cloud = null; return; }
+  const key = `${a.n}|${a.z.toFixed(3)}|${a.c.map(v => v.toFixed(6)).join(',')}|${state.points}`;
+  if (state.cloudKey === key && state.cloud) return;
+  state.cloud = sampleCloud(a, state.points);
+  state.cloudKey = key;
+}
+
+function sampleCloud(a, nPts, seed = 0x9e3779b9) {
+  const L = viewL(a.n, a.z);
+  const res = a.n >= 6 ? 56 : a.n === 5 ? 54 : a.n === 4 ? 52 : 50;
+  const N = res * res * res;
+  const step = 2 * L / (res - 1);
+  const field = new Float32Array(N);
+  const cdf = new Float64Array(N + 1);
+  let total = 0;
+  let i = 0;
+  for (let z = 0; z < res; z++) {
+    const wz = -L + z * step;
+    for (let y = 0; y < res; y++) {
+      const wy = -L + y * step;
+      for (let x = 0; x < res; x++, i++) {
+        const wx = -L + x * step;
+        const r = Math.hypot(wx, wy, wz);
+        const v = r > L ? 0 : psiAtWorld(a, wx, wy, wz);
+        field[i] = v;
+        total += v * v;
+        cdf[i + 1] = total;
+      }
+    }
+  }
+  if (!(total > 0)) return null;
+  const pos = new Float32Array(nPts * 3);
+  const signs = new Int8Array(nPts);
+  const rand = mulberry32(seed);
+  for (let p = 0; p < nPts; p++) {
+    const target = rand() * total;
+    let lo = 0, hi = N - 1;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (cdf[mid + 1] < target) lo = mid + 1; else hi = mid;
+    }
+    const cell = lo;
+    const ix = cell % res;
+    const iy = Math.floor(cell / res) % res;
+    const iz = Math.floor(cell / (res * res));
+    const jx = -1 + (ix + rand()) * 2 / res;
+    const jy = -1 + (iy + rand()) * 2 / res;
+    const jz = -1 + (iz + rand()) * 2 / res;
+    const k = p * 3;
+    pos[k] = jx; pos[k + 1] = jy; pos[k + 2] = jz;
+    signs[p] = field[cell] >= 0 ? 1 : -1;
+  }
+  return { pos, signs, count: nPts };
+}
+
+/* ---------- simultaneous hybrid orbitals ---------- */
+function hybridSelection() {
+  if (!hybrid.selected.has(hybrid.family)) {
+    hybrid.selected.set(hybrid.family, new Set(HYBRIDS[hybrid.family].directions.map((_, i) => i)));
+  }
+  return hybrid.selected.get(hybrid.family);
+}
+
+function renderHybridControls() {
+  const family = HYBRIDS[hybrid.family];
+  const selected = hybridSelection();
+  $('#hybridAngle').textContent = `理想 ${family.angle}`;
+  $('#hybridSummary').textContent = family.geometry;
+  $$('#hybridControls [data-family]').forEach(button => {
+    button.setAttribute('aria-pressed', String(button.dataset.family === hybrid.family));
+  });
+  $('#hybridAll').title = `勾选当前全部 ${family.directions.length} 个成员`;
+  const box = $('#hybridMembers');
+  box.replaceChildren();
+  family.directions.forEach((_, i) => {
+    const label = document.createElement('label');
+    label.className = 'member';
+    label.title = `第 ${i + 1} 个 ${family.label} 杂化轨道`;
+    label.style.setProperty('--member', HYBRID_COLORS[i].solid);
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = selected.has(i);
+    input.addEventListener('change', () => {
+      if (input.checked) selected.add(i);
+      else selected.delete(i);
+      updateHybridView();
+    });
+    label.append(input, `轨道 ${i + 1}`);
+    box.appendChild(label);
+  });
+  renderHybridLegend();
+}
+
+function renderHybridLegend() {
+  const family = HYBRIDS[hybrid.family];
+  const selected = hybridSelection();
+  const key = $('#hybridKey');
+  key.replaceChildren();
+  family.directions.forEach((_, i) => {
+    const span = document.createElement('span');
+    if (!selected.has(i)) span.className = 'off';
+    const dot = document.createElement('i');
+    dot.style.background = HYBRID_COLORS[i].solid;
+    span.append(dot, String(i + 1));
+    key.appendChild(span);
+  });
+}
+
+let hybridTimer = 0;
+function updateHybridView() {
+  clearTimeout(hybridTimer);
+  const family = HYBRIDS[hybrid.family];
+  const selected = hybridSelection();
+  const count = family.directions.length;
+  const key = `${hybrid.family}|${state.points}`;
+  if (hybrid.cacheKey !== key) {
+    hybrid.cacheKey = key;
+    hybrid.clouds.clear();
+  }
+  $('#hybridAll').disabled = selected.size === count;
+  $('#hybridHudTitle').textContent = family.label;
+  $('#hybridHudCount').textContent = `${selected.size} / ${count} 个成员 · 理想 ${family.angle}`;
+  renderHybridLegend();
+  drawScene();
+  if (!selected.size) {
+    setStatus('请勾选轨道', false);
+    return;
+  }
+  if ([...selected].every(i => hybrid.clouds.has(i))) {
+    setStatus(`已显示 ${selected.size}/${count} 个轨道`, false);
+    return;
+  }
+  setStatus('采样中…', true);
+  hybridTimer = setTimeout(() => {
+    if (state.view !== 'hybrid' || hybrid.cacheKey !== key) return;
+    try {
+      for (const i of selected) {
+        if (hybrid.clouds.has(i)) continue;
+        // ψ_i = (1/√N)(−2s + √(N−1) p_dir). For this page's 2s radial sign
+        // convention a negative s coefficient makes the main outer lobe point
+        // along the p direction (verified at r > 2 a0).
+        const c = [-1 / Math.sqrt(count), ...family.directions[i].map(x => x * Math.sqrt(1 - 1 / count)), 0, 0, 0, 0, 0];
+        const cloud = sampleCloud({ n: 2, z: 1, c }, Math.floor(state.points / count), 0x9e3779b9 + i);
+        if (!cloud) throw new Error('Missing hybrid cloud');
+        hybrid.clouds.set(i, cloud);
+      }
+      setStatus(`已显示 ${selected.size}/${count} 个轨道`, false);
+      drawScene();
+    } catch (err) {
+      console.error(err);
+      setStatus('轨道采样失败', false);
+    }
+  }, 35);
+}
+
+/* ---------- camera ---------- */
+function perspective(fovy, aspect, near, far) {
+  const f = 1 / Math.tan(fovy / 2), nf = 1 / (near - far);
+  return new Float32Array([f / aspect,0,0,0, 0,f,0,0, 0,0,(far+near)*nf,-1, 0,0,2*far*near*nf,0]);
+}
+function lookAt(eye, center, up) {
+  let zx = eye[0]-center[0], zy = eye[1]-center[1], zz = eye[2]-center[2];
+  let zl = Math.hypot(zx,zy,zz) || 1; zx/=zl; zy/=zl; zz/=zl;
+  let xx = up[1]*zz-up[2]*zy, xy = up[2]*zx-up[0]*zz, xz = up[0]*zy-up[1]*zx;
+  let xl = Math.hypot(xx,xy,xz) || 1; xx/=xl; xy/=xl; xz/=xl;
+  const yx = zy*xz-zz*xy, yy = zz*xx-zx*xz, yz = zx*xy-zy*xx;
+  return new Float32Array([xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0,
+    -(xx*eye[0]+xy*eye[1]+xz*eye[2]), -(yx*eye[0]+yy*eye[1]+yz*eye[2]), -(zx*eye[0]+zy*eye[1]+zz*eye[2]), 1]);
+}
+function multiply(a,b) {
+  const o = new Float32Array(16);
+  for (let c=0;c<4;c++) for (let r=0;r<4;r++) o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];
+  return o;
+}
+function cameraData(aspect) {
+  const az = state.cam.az, el = clamp(state.cam.el, -1.45, 1.45);
+  const base = 1.08 / (Math.tan(19*Math.PI/180) * Math.min(1, aspect));
+  const dist = base * state.cam.zoom;
+  const pos = [dist*Math.cos(el)*Math.cos(az), dist*Math.cos(el)*Math.sin(az), dist*Math.sin(el)];
+  const view = lookAt(pos, [0,0,0], [0,0,1]);
+  return { mvp: multiply(perspective(38*Math.PI/180, aspect, 0.1, 30), view), view, pos, dist };
+}
+function project(m,p,w,h) {
+  const x=m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12];
+  const y=m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13];
+  const ww=m[3]*p[0]+m[7]*p[1]+m[11]*p[2]+m[15];
+  return { x:(x/ww*.5+.5)*w, y:(1-(y/ww*.5+.5))*h, w:ww };
+}
+
+/* ---------- 3D draw ---------- */
+const scene = $('#scene');
+const sctx = scene.getContext('2d');
+function resizeCanvas(canvas, ctx) {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (!w || !h) return null;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (canvas.width !== Math.round(w*dpr) || canvas.height !== Math.round(h*dpr)) {
+    canvas.width = Math.round(w*dpr); canvas.height = Math.round(h*dpr);
+  }
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return { w, h };
+}
+function drawScene() {
+  if (!in3D()) return;
+  const size = resizeCanvas(scene, sctx);
+  if (!size) return;
+  const { w, h } = size;
+  sctx.clearRect(0,0,w,h);
+  const cam = cameraData(w/h);
+  const m = cam.mvp;
+  const multi = state.view === 'hybrid';
+  const cloud = state.cloud;
+  if (multi) drawHybridClouds(m, w, h);
+  else if (cloud && cloud.count) {
+    sctx.save();
+    sctx.globalCompositeOperation = 'lighter';
+    const p = cloud.pos, sg = cloud.signs, n = cloud.count;
+    for (const side of [1, -1]) {
+      sctx.fillStyle = side > 0 ? 'rgba(255,165,108,.46)' : 'rgba(90,219,255,.4)';
+      for (let i=0;i<n;i++) {
+        if (sg[i] !== side) continue;
+        const x=p[i*3], y=p[i*3+1], z=p[i*3+2];
+        const cx=m[0]*x+m[4]*y+m[8]*z+m[12];
+        const cy=m[1]*x+m[5]*y+m[9]*z+m[13];
+        const cw=m[3]*x+m[7]*y+m[11]*z+m[15];
+        if (cw<=0.01) continue;
+        const sx=(cx/cw*.5+.5)*w, sy=(1-(cy/cw*.5+.5))*h;
+        if (sx<-2||sx>w+2||sy<-2||sy>h+2) continue;
+        sctx.fillRect(sx,sy,1.65,1.65);
+      }
+    }
+    sctx.restore();
+  }
+  if (state.axes) drawAxes3D(cam,w,h);
+  if (multi && hybrid.directions) drawHybridDirections(m, w, h);
+  const o = project(m,[0,0,0],w,h);
+  if (o.w>0.01) {
+    const g=sctx.createRadialGradient(o.x,o.y,0,o.x,o.y,8);
+    g.addColorStop(0,'rgba(255,240,210,.98)'); g.addColorStop(.35,'rgba(255,190,120,.55)'); g.addColorStop(1,'rgba(255,160,90,0)');
+    sctx.fillStyle=g; sctx.beginPath(); sctx.arc(o.x,o.y,8,0,TAU); sctx.fill();
+    sctx.fillStyle='rgba(255,245,225,.95)'; sctx.beginPath(); sctx.arc(o.x,o.y,1.7,0,TAU); sctx.fill();
+  }
+}
+function drawHybridClouds(m, w, h) {
+  for (const i of hybridSelection()) {
+    const cloud = hybrid.clouds.get(i);
+    if (!cloud) continue;
+    sctx.fillStyle = HYBRID_COLORS[i].point;
+    const p = cloud.pos;
+    for (let j = 0; j < p.length; j += 3) {
+      const x = p[j], y = p[j+1], z = p[j+2];
+      const cw = m[3]*x + m[7]*y + m[11]*z + m[15];
+      if (cw <= .01) continue;
+      const sx = ((m[0]*x + m[4]*y + m[8]*z + m[12])/cw*.5+.5)*w;
+      const sy = (.5-(m[1]*x + m[5]*y + m[9]*z + m[13])/cw*.5)*h;
+      if (sx >= -2 && sx <= w+2 && sy >= -2 && sy <= h+2) sctx.fillRect(sx, sy, 1.8, 1.8);
+    }
+  }
+}
+
+function drawHybridDirections(m, w, h) {
+  const origin = project(m, [0,0,0], w, h);
+  const dirs = HYBRIDS[hybrid.family].directions;
+  const tips = [...hybridSelection()].map(i => ({ i, ...project(m, dirs[i].map(x => x * .82), w, h) }));
+  sctx.save();
+  sctx.lineCap = 'round';
+  sctx.font = '600 12px system-ui,sans-serif';
+  sctx.textAlign = 'center';
+  sctx.textBaseline = 'middle';
+  for (const tip of tips.sort((a,b) => b.w - a.w)) {
+    if (tip.w <= .01) continue;
+    const color = HYBRID_COLORS[tip.i].solid;
+    const dx = tip.x - origin.x, dy = tip.y - origin.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 8) continue;
+    const ux = dx / len, uy = dy / len, px = -uy, py = ux;
+    // soft glow under the dashed center-to-lobe line
+    sctx.strokeStyle = color;
+    sctx.globalAlpha = .16;
+    sctx.lineWidth = 3.6;
+    sctx.setLineDash([4,4]);
+    sctx.beginPath();
+    sctx.moveTo(origin.x, origin.y);
+    sctx.lineTo(tip.x, tip.y);
+    sctx.stroke();
+    sctx.globalAlpha = 1;
+    sctx.lineWidth = 1.35;
+    sctx.beginPath();
+    sctx.moveTo(origin.x, origin.y);
+    sctx.lineTo(tip.x, tip.y);
+    sctx.stroke();
+    sctx.setLineDash([]);
+    // arrowhead just before the numbered tip (skip when strongly foreshortened)
+    if (len > 30) {
+      sctx.fillStyle = color;
+      sctx.beginPath();
+      sctx.moveTo(tip.x - ux*11, tip.y - uy*11);
+      sctx.lineTo(tip.x - ux*19 + px*4.2, tip.y - uy*19 + py*4.2);
+      sctx.lineTo(tip.x - ux*19 - px*4.2, tip.y - uy*19 - py*4.2);
+      sctx.closePath();
+      sctx.fill();
+    }
+    if (tip.x < 10 || tip.x > w-10 || tip.y < 10 || tip.y > h-10) continue;
+    sctx.beginPath();
+    sctx.arc(tip.x, tip.y, 9, 0, TAU);
+    sctx.fillStyle = '#081522';
+    sctx.fill();
+    sctx.lineWidth = 1.25;
+    sctx.strokeStyle = color;
+    sctx.stroke();
+    sctx.fillStyle = color;
+    sctx.fillText(String(tip.i + 1), tip.x, tip.y);
+  }
+  sctx.restore();
+}
+
+function drawAxes3D(cam,w,h) {
+  const axes=[{v:[1,0,0],c:'#ff9999',l:'x'},{v:[0,1,0],c:'#8cf0b4',l:'y'},{v:[0,0,1],c:'#8cbaff',l:'z'}];
+  const o=project(cam.mvp,[0,0,0],w,h); if(o.w<=0.01) return;
+  sctx.save(); sctx.lineCap='round';
+  for(const ax of axes){
+    const p=project(cam.mvp,[ax.v[0]*1.06,ax.v[1]*1.06,ax.v[2]*1.06],w,h);
+    const n=project(cam.mvp,[ax.v[0]*-.84,ax.v[1]*-.84,ax.v[2]*-.84],w,h);
+    if(p.w<=.01||n.w<=.01) continue;
+    sctx.globalAlpha=.3; sctx.strokeStyle=ax.c; sctx.lineWidth=.9; sctx.setLineDash([3,5]);
+    sctx.beginPath(); sctx.moveTo(o.x,o.y); sctx.lineTo(n.x,n.y); sctx.stroke();
+    sctx.setLineDash([]); sctx.globalAlpha=.82; sctx.lineWidth=1.1;
+    sctx.beginPath(); sctx.moveTo(o.x,o.y); sctx.lineTo(p.x,p.y); sctx.stroke();
+    let dx=p.x-o.x,dy=p.y-o.y,len=Math.hypot(dx,dy);
+    if(len>2){const ux=dx/len,uy=dy/len,px=-uy,py=ux,bx=p.x-ux*7,by=p.y-uy*7;
+      sctx.globalAlpha=.9; sctx.fillStyle=ax.c; sctx.beginPath(); sctx.moveTo(p.x,p.y); sctx.lineTo(bx+px*3.2,by+py*3.2); sctx.lineTo(bx-px*3.2,by-py*3.2); sctx.closePath(); sctx.fill();
+      const lx=clamp(p.x+ux*12,12,w-12),ly=clamp(p.y+uy*12,12,h-12);
+      sctx.font='600 11px "SFMono-Regular",Consolas,monospace'; sctx.textAlign='center'; sctx.textBaseline='middle';
+      sctx.lineWidth=3; sctx.strokeStyle='rgba(4,10,17,.82)'; sctx.strokeText(ax.l,lx,ly); sctx.fillStyle=ax.c; sctx.fillText(ax.l,lx,ly);
+    }
+  }
+  sctx.restore();
+}
+
+/* ---------- 2D slice ---------- */
+function drawSlice() {
+  if (state.view !== '2d') return;
+  const canvas=$('#sliceCanvas'), ctx=canvas.getContext('2d');
+  const size=resizeCanvas(canvas,ctx); if(!size) return;
+  const {w,h}=size; ctx.clearRect(0,0,w,h);
+  const a=state.analysis; if(!a) return;
+  const L=viewL(a.n,a.z);
+  const top=70,bottom=92,pad=38;
+  const side=Math.max(100,Math.min(w-pad*2,h-top-bottom));
+  const left=(w-side)/2, plotTop=top+Math.max(0,(h-top-bottom-side)/2);
+  $('#planeLabel').textContent = state.plane.toUpperCase();
+  if(a.zero){ ctx.fillStyle='rgba(8,16,27,.5)';ctx.fillRect(left,plotTop,side,side);return; }
+  const N=480, values=new Float32Array(N*N); let maxAbs=0;
+  for(let j=0;j<N;j++){
+    const v=(1-2*(j+.5)/N)*L;
+    for(let i=0;i<N;i++){
+      const u=(2*(i+.5)/N-1)*L;
+      let x=u,y=v,z=0;
+      if(state.plane==='xz'){x=u;y=0;z=v;} else if(state.plane==='yz'){x=0;y=u;z=v;}
+      const psi=psiAtWorld(a,x,y,z); values[j*N+i]=psi; if(Math.abs(psi)>maxAbs)maxAbs=Math.abs(psi);
+    }
+  }
+  if(maxAbs<1e-12){ctx.fillStyle='rgba(8,16,27,.5)';ctx.fillRect(left,plotTop,side,side);
+    ctx.fillStyle='#819bb2';ctx.textAlign='center';ctx.font='12px sans-serif';ctx.fillText('该平面是节面',left+side/2,plotTop+side/2);return;}
+  const off=document.createElement('canvas'); off.width=N;off.height=N;
+  const octx=off.getContext('2d'); const img=octx.createImageData(N,N); const data=img.data;
+  const base=[5,11,18], pos=[255,154,98], neg=[88,215,255];
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){
+    const v=values[j*N+i]; const t=Math.pow(Math.min(1,Math.abs(v)/maxAbs),.62);
+    const tg=v>=0?pos:neg; let r=base[0]+(tg[0]-base[0])*t,g=base[1]+(tg[1]-base[1])*t,b=base[2]+(tg[2]-base[2])*t;
+    const leftV=i>0?values[j*N+i-1]:v, upV=j>0?values[(j-1)*N+i]:v;
+    if((v>=0)!==(leftV>=0)||(v>=0)!==(upV>=0)){r=r*.45+220*.55;g=g*.45+235*.55;b=b*.45+250*.55;}
+    const k=(j*N+i)*4; data[k]=r;data[k+1]=g;data[k+2]=b;data[k+3]=255;
+  }
+  octx.putImageData(img,0,0); ctx.imageSmoothingEnabled=true; ctx.drawImage(off,left,plotTop,side,side);
+  ctx.strokeStyle='rgba(115,174,222,.24)';ctx.strokeRect(left+.5,plotTop+.5,side-1,side-1);
+  const cx=left+side/2, cy=plotTop+side/2;
+  ctx.strokeStyle='rgba(225,240,255,.13)'; ctx.setLineDash([2,5]);
+  ctx.beginPath();ctx.moveTo(left,cy);ctx.lineTo(left+side,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,plotTop);ctx.lineTo(cx,plotTop+side);ctx.stroke();ctx.setLineDash([]);
+  const hLabel=state.plane==='yz'?'y':'x';
+  const vLabel=state.plane==='xy'?'y':'z';
+  ctx.fillStyle='rgba(184,208,227,.65)';ctx.font='10px monospace';ctx.textAlign='center';
+  ctx.fillText(`${hLabel} / a₀`,left+side/2,plotTop+side+22);
+  ctx.save();ctx.translate(left-20,cy);ctx.rotate(-Math.PI/2);ctx.fillText(`${vLabel} / a₀`,0,0);ctx.restore();
+  ctx.fillText(`−${L.toFixed(0)}`,left+10,plotTop+side+12);ctx.fillText('0',cx,plotTop+side+12);ctx.fillText(`+${L.toFixed(0)}`,left+side-10,plotTop+side+12);
+  ctx.fillStyle='rgba(159,184,207,.54)';ctx.textAlign='right';
+  ctx.fillText(`+${L.toFixed(0)}`,left-5,plotTop+9);ctx.fillText('0',left-5,cy+3);ctx.fillText(`−${L.toFixed(0)}`,left-5,plotTop+side-1);
+  $('#planeSub').textContent = state.plane==='xy'?'z = 0 · 颜色表示 ψ 符号':state.plane==='xz'?'y = 0 · 颜色表示 ψ 符号':'x = 0 · 颜色表示 ψ 符号';
+}
+
+function drawRadialView() {
+  if (state.view !== 'radial') return;
+  const canvas = $('#radialCanvas'), ctx = canvas.getContext('2d');
+  const size = resizeCanvas(canvas, ctx);
+  if (!size) return;
+  const { w, h } = size;
+  ctx.clearRect(0, 0, w, h);
+  const a = state.analysis;
+  if (!a) return;
+  const L = viewL(a.n, a.z);
+  $('#radialMeta').textContent = `n = ${a.n} · s ${(a.lw.s*100).toFixed(0)}% / p ${(a.lw.p*100).toFixed(0)}% / d ${(a.lw.d*100).toFixed(0)}%`;
+  if (a.zero) {
+    ctx.fillStyle = '#657f96'; ctx.textAlign = 'center'; ctx.font = '12px sans-serif';
+    ctx.fillText('尚无组合分量', w / 2, h / 2);
+    return;
+  }
+  const left = 58, right = 28, top = 74, bottom = 72;
+  const pw = Math.max(80, w - left - right), ph = Math.max(80, h - top - bottom);
+  const steps = 560;
+  const pts = [];
+  let maxP = 0;
+  for (let s = 0; s <= steps; s++) {
+    const r = L * s / steps;
+    let p = 0;
+    for (let i = 0; i < 9; i++) {
+      if (a.c[i] * a.c[i] < 1e-12) continue;
+      const R = radialR(a.n, ORB[i].l, r, a.z);
+      p += a.c[i] * a.c[i] * r * r * R * R;
+    }
+    pts.push([r, p]);
+    if (p > maxP) maxP = p;
+  }
+  if (maxP <= 0) return;
+  const x = r => left + r / L * pw;
+  const y = p => top + ph - p / maxP * ph;
+  ctx.strokeStyle = 'rgba(118,170,220,.11)'; ctx.lineWidth = 1;
+  for (let q = 0; q <= 4; q++) {
+    const yy = top + ph * q / 4;
+    ctx.beginPath(); ctx.moveTo(left, yy); ctx.lineTo(left + pw, yy); ctx.stroke();
+  }
+  for (let q = 0; q <= 5; q++) {
+    const xx = left + pw * q / 5;
+    ctx.beginPath(); ctx.moveTo(xx, top); ctx.lineTo(xx, top + ph); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(156,192,220,.25)';
+  ctx.beginPath(); ctx.moveTo(left, top + ph); ctx.lineTo(left + pw, top + ph); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(left, top); ctx.lineTo(left, top + ph); ctx.stroke();
+  const grad = ctx.createLinearGradient(0, top, 0, top + ph);
+  grad.addColorStop(0, 'rgba(87,213,255,.3)');
+  grad.addColorStop(1, 'rgba(87,213,255,.015)');
+  ctx.beginPath();
+  ctx.moveTo(left, top + ph);
+  for (let i = 0; i < pts.length; i++) ctx.lineTo(x(pts[i][0]), y(pts[i][1]));
+  ctx.lineTo(left + pw, top + ph);
+  ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+  ctx.beginPath();
+  for (let i = 0; i < pts.length; i++) {
+    if (i === 0) ctx.moveTo(x(pts[i][0]), y(pts[i][1]));
+    else ctx.lineTo(x(pts[i][0]), y(pts[i][1]));
+  }
+  ctx.strokeStyle = '#6fd9ff'; ctx.lineWidth = 1.6;
+  ctx.shadowColor = 'rgba(87,213,255,.35)'; ctx.shadowBlur = 8; ctx.stroke(); ctx.shadowBlur = 0;
+  const mr = x(a.meanR);
+  ctx.strokeStyle = 'rgba(202,230,249,.5)'; ctx.setLineDash([2,4]);
+  ctx.beginPath(); ctx.moveTo(mr, top); ctx.lineTo(mr, top + ph); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(222,242,255,.9)';
+  ctx.beginPath(); ctx.arc(mr, y(maxP * .42), 2.4, 0, TAU); ctx.fill();
+  ctx.fillStyle = 'rgba(155,180,203,.65)'; ctx.font = '9px "SFMono-Regular",Consolas,monospace'; ctx.textAlign = 'center';
+  for (let q = 0; q <= 5; q++) ctx.fillText((L * q / 5).toFixed(0), left + pw * q / 5, top + ph + 18);
+  ctx.fillText('r / a₀', left + pw / 2, top + ph + 34);
+  ctx.save(); ctx.translate(left - 40, top + ph / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('P(r) / Pmax', 0, 0); ctx.restore();
+  ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(143,169,192,.55)';
+  ctx.fillText('100%', left - 8, top + 4); ctx.fillText('50%', left - 8, top + ph / 2 + 3); ctx.fillText('0', left - 8, top + ph + 3);
+  ctx.fillStyle = 'rgba(120,151,178,.7)'; ctx.font = '8px "SFMono-Regular",Consolas,monospace'; ctx.textAlign = 'left';
+  ctx.fillText(`⟨r⟩ = ${a.meanR.toFixed(2)} a₀`, left + 8, top + 14);
+}
+
+/* ---------- interaction ---------- */
+function bind3D() {
+  const pane=$('#pane3d');
+  const pointers=new Map(); let last=null,pinch=0;
+  pane.addEventListener('pointerdown',ev=>{
+    lastCamInteraction=performance.now();
+    if(ev.target.closest('.slice-tools'))return;
+    pointers.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+    if(pointers.size===1){state.cam.dragging=true;pane.classList.add('dragging');last={x:ev.clientX,y:ev.clientY};pane.setPointerCapture?.(ev.pointerId);}
+    else if(pointers.size===2){const [a,b]=[...pointers.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}
+  });
+  pane.addEventListener('pointermove',ev=>{
+    if(!pointers.has(ev.pointerId))return;
+    lastCamInteraction=performance.now();
+    pointers.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+    if(pointers.size===1&&state.cam.dragging&&last){
+      state.cam.az-=(ev.clientX-last.x)*.0065; state.cam.el=clamp(state.cam.el+(ev.clientY-last.y)*.0065,-1.42,1.42);
+      last={x:ev.clientX,y:ev.clientY}; state.dirty=true;
+    } else if(pointers.size===2){const [a,b]=[...pointers.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch>0){state.cam.zoom=clamp(state.cam.zoom*pinch/d,.62,1.9);state.dirty=true;}pinch=d;}
+  });
+  function up(ev){pointers.delete(ev.pointerId);if(!pointers.size){state.cam.dragging=false;pane.classList.remove('dragging');last=null;pinch=0;}else if(pointers.size===1){last={x:[...pointers.values()][0].x,y:[...pointers.values()][0].y};pinch=0;}}
+  pane.addEventListener('pointerup',up);pane.addEventListener('pointercancel',up);pane.addEventListener('pointerleave',ev=>{if(!ev.buttons)up(ev);});
+  pane.addEventListener('wheel',ev=>{ev.preventDefault();lastCamInteraction=performance.now();state.cam.zoom=clamp(state.cam.zoom*Math.exp(ev.deltaY*.0011),.62,1.9);state.dirty=true;},{passive:false});
+  pane.addEventListener('dblclick',()=>{state.auto=!state.auto;$('#rotateBtn').classList.toggle('on',state.auto);$('#rotateBtn b').textContent=state.auto?'on':'off';});
+}
+
+function buildRows() {
+  const box=$('#orbList'); box.innerHTML='';
+  let lastL=null;
+  ORB.forEach((o,i)=>{
+    if(o.l!==lastL){lastL=o.l;const h=document.createElement('div');h.className='group-label';h.innerHTML=`<i></i>${o.l===0?'s':o.l===1?'p':'d'} · l = ${o.l}`;box.appendChild(h);}
+    const row=document.createElement('div'); row.className='orb-row'; row.style.setProperty('--dot',o.color);
+    row.innerHTML=`<div class="orb-top"><button class="orb-name" type="button"><span class="orb-dot"></span><i>${o.key==='s'?'s':o.key[0]}</i><sub>${o.sub}</sub><span class="sym-tag ${o.tagClass}">${o.tag}</span></button><div class="orb-right"><span class="orb-weight">0%</span><input class="coef-num" type="number" min="-1" max="1" step="0.01" value="0" title="直接输入系数，负值反相" aria-label="${o.label} 系数"></div></div><div class="slider-wrap"><input type="range" min="-1" max="1" step="0.02" value="0" aria-label="${o.label} 权重"></div>`;
+    $('input[type=range]',row).addEventListener('input',e=>{state.weights[i]=Number(e.target.value);lastWeightInteraction=performance.now();updateAnalysis();});
+    $('.coef-num',row).addEventListener('input',e=>{const v=clamp(Number(e.target.value)||0,-1,1);state.weights[i]=v;lastWeightInteraction=performance.now();updateAnalysis();});
+    $('.coef-num',row).addEventListener('focus',e=>e.target.select());
+    $('.orb-name',row).addEventListener('click',()=>{const w=new Array(9).fill(0);w[i]=state.weights[i]<0?-1:1;state.weights=w;updateAnalysis();});
+    box.appendChild(row);
+  });
+}
+
+const PRESETS=[
+  {name:'sp', sub:'2s + 2p_z', shell:2, w:[1,0,0,1,0,0,0,0,0]},
+  {name:'sp² h₁', sub:'2s + √2 2p_x', shell:2, w:[1/Math.sqrt(3), Math.sqrt(2/3),0,0,0,0,0,0,0]},
+  {name:'sp³ h₁', sub:'2s + 2p_x + 2p_y + 2p_z', shell:2, w:[1,1,1,1,0,0,0,0,0]},
+  {name:'d_z²', sub:'single 3d', shell:3, w:[0,0,0,0,1,0,0,0,0]},
+  {name:'d_xy', sub:'single 3d', shell:3, w:[0,0,0,0,0,0,0,1,0]},
+  {name:'随机', sub:'random mix', random:true}
+];
+function buildPresets() {
+  const box=$('#presets'); box.innerHTML='';
+  PRESETS.forEach(p=>{
+    const b=document.createElement('button'); b.type='button'; b.className='preset'; b.innerHTML=`<b>${p.name}</b><span>${p.sub}</span>`;
+    b.addEventListener('click',()=>{
+      let w;
+      if(p.random){
+        w=new Array(9).fill(0);
+        const idx=[0,1,2,3,4,5,6,7,8].sort(()=>Math.random()-.5).slice(0,3);
+        idx.forEach(i=>{w[i]=(Math.random()*1.4-.7)||0.5;});
+      } else {
+        w=p.w.slice();
+      }
+      if (p.shell) state.n = p.shell;
+      else {
+        if (w.slice(4).some(Boolean)) state.n = Math.max(state.n, 3);
+        if (w.slice(1,4).some(Boolean)) state.n = Math.max(state.n, 2);
+      }
+      state.baseWeights = w.slice();
+      state.weights = w;
+      lastWeightInteraction = performance.now();
+      applyShell(state.n);
+    });
+    box.appendChild(b);
+  });
+}
+
+function bindUI() {
+  $$('#shellTabs .shell-btn').forEach(b=>b.addEventListener('click',()=>applyShell(Number(b.dataset.n))));
+  $$('#viewTabs .view-tab').forEach(b=>b.addEventListener('click',()=>{
+    const v=b.dataset.view; if(state.view===v)return; state.view=v;
+    clearTimeout(cloudTimer);
+    clearTimeout(sliceTimer);
+    clearTimeout(hybridTimer);
+    const multi = v === 'hybrid';
+    $('#hybridControls').hidden = !multi;
+    $('#singleHud').hidden = multi;
+    $('#hybridHud').hidden = !multi;
+    $('#phaseKey').hidden = multi;
+    $('#hybridKey').hidden = !multi;
+    renderUI();
+    $$('#viewTabs .view-tab').forEach(x=>x.classList.toggle('active',x===b));
+    $('#pane3d').classList.toggle('active',in3D());$('#pane2d').classList.toggle('active',v==='2d');$('#paneRadial').classList.toggle('active',v==='radial');
+    if(multi){renderHybridControls(); updateHybridView();}
+    else if(v==='3d'){state.dirty=true; scheduleCloud(); drawScene();}
+    else if(v==='2d'){scheduleSlice();}
+    else {drawRadialView();setStatus('径向概率 · 就绪',false);}
+  }));
+  $$('#hybridControls [data-family]').forEach(button => button.addEventListener('click', () => {
+    if (hybrid.family === button.dataset.family) return;
+    hybrid.family = button.dataset.family;
+    renderHybridControls();
+    updateHybridView();
+  }));
+  $('#hybridAll').addEventListener('click', () => {
+    HYBRIDS[hybrid.family].directions.forEach((_, i) => hybridSelection().add(i));
+    renderHybridControls();
+    updateHybridView();
+  });
+  $('#hybridDirections').addEventListener('change', event => {
+    hybrid.directions = event.target.checked;
+    drawScene();
+  });
+  $$('#planeTabs button').forEach(b=>b.addEventListener('click',()=>{
+    $$('#planeTabs button').forEach(x=>x.classList.toggle('active',x===b));
+    state.plane=b.dataset.plane; scheduleSlice();
+  }));
+  $$('#pointTabs button').forEach(b=>b.addEventListener('click',()=>{
+    state.points=Number(b.dataset.points);state.cloudKey='';$$('#pointTabs button').forEach(x=>x.classList.toggle('active',x===b));
+    if(state.view==='3d')scheduleCloud();
+    else if(state.view==='hybrid')updateHybridView();
+  }));
+  $('#overviewBtn').addEventListener('click', () => { $('#overview').hidden = false; renderOverview(); $('#overviewClose').focus(); });
+  $('#overviewClose').addEventListener('click', () => { $('#overview').hidden = true; });
+  $('#overview').addEventListener('click', ev => { if (ev.target === $('#overview')) $('#overview').hidden = true; });
+  document.addEventListener('keydown', ev => { if (ev.key === 'Escape') $('#overview').hidden = true; });
+  $$('#modelTabs .model-btn').forEach(b => b.addEventListener('click', () => {
+    state.model = b.dataset.model;
+    if (state.model !== 'H' && state.zeff <= 1) { state.zeff = 3.2; $('#zeffRange').value = '3.2'; }
+    updateAnalysis();
+  }));
+  $('#zeffRange').addEventListener('input', ev => {
+    state.zeff = Number(ev.target.value);
+    $('#zeffVal').textContent = state.zeff.toFixed(1);
+    if (state.model === 'screened') updateAnalysis();
+  });
+  $('#energyCanvas').addEventListener('click', ev => {
+    const r = ev.currentTarget.getBoundingClientRect();
+    const y = ev.clientY - r.top;
+    let best = null;
+    for (const lv of energyLevels) {
+      const d = Math.abs(lv.y - y);
+      if (!best || d < best.d) best = { n: lv.n, d };
+    }
+    if (best && best.d < 12) applyShell(best.n);
+  });
+  $('#energyTable').addEventListener('click', ev => {
+    const row = ev.target.closest('[data-n]');
+    if (row) applyShell(Number(row.dataset.n));
+  });
+  $('#axesBtn').addEventListener('click',()=>{state.axes=!state.axes;$('#axesBtn').classList.toggle('on',state.axes);$('#axesBtn b').textContent=state.axes?'on':'off';drawScene();});
+  $('#rotateBtn').addEventListener('click',()=>{state.auto=!state.auto;$('#rotateBtn').classList.toggle('on',state.auto);$('#rotateBtn b').textContent=state.auto?'on':'off';});
+  $('#resetBtn').addEventListener('click',()=>{lastCamInteraction=performance.now();state.cam.az=-1.02;state.cam.el=.32;state.cam.zoom=1;state.dirty=true;drawScene();});
+  $('#autoResetBtn').addEventListener('click',()=>{state.autoReset=!state.autoReset;lastCamInteraction=performance.now();renderUI();});
+  $('#autoWeightsBtn').addEventListener('click',()=>{state.autoResetWeights=!state.autoResetWeights;lastWeightInteraction=performance.now();renderUI();});
+  $('#restore').addEventListener('click',()=>{state.emptyDismissed=false;state.n=Math.max(state.n,3);state.weights=[0,0,0,0,1,0,0,0,0];applyShell(state.n);});
+  const dismissEmpty=()=>{state.emptyDismissed=true;$('#empty').hidden=true;setStatus('空组合 · 无分量', false);};
+  $('#dismissEmpty').addEventListener('click',ev=>{ev.stopPropagation();dismissEmpty();});
+  $('#empty').addEventListener('click',ev=>{if(ev.target===$('#empty'))dismissEmpty();});
+  window.addEventListener('resize',()=>{drawEnergyChart();state.dirty=true;if(in3D())drawScene();else if(state.view==='2d')scheduleSlice();else drawRadialView();});
+  if('ResizeObserver' in window)new ResizeObserver(()=>{if(in3D())drawScene();else if(state.view==='2d')scheduleSlice();else drawRadialView();}).observe($('.stage-viewport'));
+}
+function loop(t){
+  requestAnimationFrame(loop);
+  const now=t||0; const dt=lastFrame?Math.min(.05,(now-lastFrame)/1000):0; lastFrame=now;
+  if(document.hidden)return;
+  if(state.auto&&in3D()){state.cam.az=(state.cam.az+dt*.18)%TAU;state.dirty=true;}
+  if(state.autoReset&&!state.auto&&!state.cam.dragging&&in3D()&&now-lastCamInteraction>8000){
+    const daz=(((-1.02-state.cam.az+Math.PI)%TAU+TAU)%TAU)-Math.PI;
+    const de=.32-state.cam.el, dz=1-state.cam.zoom;
+    if(Math.abs(daz)>.0015||Math.abs(de)>.0015||Math.abs(dz)>.0015){
+      const k=Math.min(1,dt*2.8);
+      state.cam.az+=daz*k; state.cam.el+=de*k; state.cam.zoom+=dz*k; state.dirty=true;
+      if(Math.abs(daz)<.0015&&Math.abs(de)<.0015&&Math.abs(dz)<.0015){state.cam.az=-1.02;state.cam.el=.32;state.cam.zoom=1;}
+    }
+  }
+  if(state.autoResetWeights&&now-lastWeightInteraction>8000&&(!document.activeElement||document.activeElement.tagName!=='INPUT')){
+    const bw=state.baseWeights.map(v=>clamp(Number(v)||0,-1,1));
+    for(let i=0;i<9;i++) if(ORB[i].l>state.n-1) bw[i]=0;
+    if(Math.hypot(...bw)<1e-9) bw[0]=1;
+    if(bw.some((v,i)=>Math.abs(v-state.weights[i])>1e-4)){state.weights=bw;lastWeightInteraction=now;updateAnalysis();}
+  }
+  if(state.dirty&&in3D()){state.dirty=false;drawScene();}
+}
+let lastFrame=0;
+let lastCamInteraction=performance.now();
+let lastWeightInteraction=performance.now();
+
+buildRows(); buildPresets(); bindUI(); bind3D(); updateAnalysis();
+requestAnimationFrame(()=>drawEnergyChart());
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
