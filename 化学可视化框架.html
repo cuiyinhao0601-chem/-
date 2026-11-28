@@ -177,6 +177,23 @@ input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;bac
 .icon-btn{width:27px;height:27px;border:1px solid rgba(118,166,221,.14);border-radius:7px;background:rgba(8,17,28,.5);color:#7891a8;display:grid;place-items:center;flex:none}
 .icon-btn:hover{border-color:var(--line-hot);color:#dff8ff}
 .icon-btn svg{width:13px;height:13px}
+.present-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(105,213,255,.3);border-radius:7px;background:rgba(28,88,125,.28);color:#c9f3ff;padding:5px 9px;font-size:10px;flex:none;white-space:nowrap}
+.present-btn:hover{border-color:rgba(105,213,255,.6);background:rgba(32,104,145,.4);color:#fff}
+.present-btn svg{width:13px;height:13px}
+.present-btn.exit{border-color:rgba(255,197,107,.4);background:rgba(120,86,30,.3);color:#ffe0ad}
+.present-btn.exit:hover{border-color:rgba(255,197,107,.7);color:#fff}
+/* 全屏演示模式：隐藏左右面板与顶栏，3D 舞台铺满 */
+.app.presenting{padding:0;gap:0}
+.app.presenting .topbar{display:none}
+.app.presenting .controls,.app.presenting .inspector{display:none}
+.app.presenting .layout{grid-template-columns:minmax(0,1fr);gap:0}
+.app.presenting .stage{border-radius:0;border:0;height:100vh;height:100dvh}
+.app.presenting .quickbar{display:none}
+.app.presenting .stage-hint{display:none}
+.stage:fullscreen{width:100vw;height:100vh;height:100dvh;border-radius:0;border:0;background:#04070d}
+.stage:fullscreen .quickbar{display:none}
+.stage:fullscreen .stage-hint{display:none}
+.stage:-webkit-full-screen{width:100vw;height:100vh;border-radius:0;border:0}
 .quickbar{position:relative;z-index:5;flex:none;display:flex;align-items:center;gap:6px;padding:7px 10px;border-bottom:1px solid rgba(118,166,221,.08);background:rgba(6,13,22,.4);overflow-x:auto;scrollbar-width:none;min-height:44px}
 .quickbar::-webkit-scrollbar{display:none}
 .quickbar .seg{padding:2px;border-radius:8px;flex:none}
@@ -385,6 +402,14 @@ input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;bac
         <div class="status" id="status"><span class="dot"></span><span class="txt" id="statusText">就绪</span></div>
         <button class="icon-btn" type="button" id="camResetBtn" title="重置视角" aria-label="重置视角">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3.2 6.2A5 5 0 1 1 3 9.4"/><path d="M3.2 2.8v3.5h3.5"/></svg>
+        </button>
+        <button class="present-btn" type="button" id="presentBtn" title="参数调好后进入全屏演示">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5v-3h3M13.5 5.5v-3h-3M2.5 10.5v3h3M13.5 10.5v3h-3"/></svg>
+          <span>全屏演示</span>
+        </button>
+        <button class="present-btn exit" type="button" id="exitPresentBtn" hidden title="退出全屏演示（Esc）">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 2.5v3h-3M10.5 2.5v3h3M5.5 13.5v-3h-3M10.5 13.5v-3h3"/></svg>
+          <span>退出演示</span>
         </button>
       </div>
       <div class="quickbar" id="quickbar"></div>
@@ -741,14 +766,491 @@ input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;bac
     }
     ctx.restore();
   }
+  /* ===== @perf-injected：ChemPerf 性能优化接入（由 apply-perf.mjs 生成；源见 chem-perf-kit.js） ===== */
+  /**
+   * ChemPerfKit (window.ChemPerf) — 化学可视化通用性能优化组件
+   * v1.1.0（Gemini 初版 v1.0.0 的修正与落地版，见 性能优化组件说明.md）
+   *
+   * 设计目标：
+   * 1. 零外链、单文件可内联（IIFE），兼容本项目所有单文件 HTML 与 ChemVis 框架。
+   * 2. 提供即插即用的点云高速渲染（离屏像素缓冲光栅化 + 交互期动态 LOD 降采样）。
+   * 3. 提供有界 LRU 缓存、TypedArray 内存池、内联 Blob Web Worker 异步任务调度。
+   * 4. 提供 FPS / 帧耗时自适应调控器（Adaptive Governor）。
+   *
+   * v1.1.0 相对 v1.0.0 的修正：
+   * a) 离屏像素的 alpha 通道固定写 255：v1.0.0 写入 255*alpha 又被 drawImage 预乘一次，
+   *    单点亮度变成 alpha² 倍（alpha=0.5 时偏暗 4 倍）。
+   * b) 增加设备像素比（DPR）栅格化：按 ctx.getTransform() 的缩放直接渲染到设备像素，
+   *    避免 2x 屏上被放大成糊点；可通过 opts.dpr 显式指定。
+   * c) 整数像素块面积补偿：sz 取整后按 (size²/round(size)²) 回补亮度，视觉总量与原
+   *    fillRect(sz,sz) 一致。
+   * d) 支持 posAlpha / negAlpha 分相位透明度，适配「正相 0.46 / 负相 0.40」这类页面。
+   * e) 支持 posColor / negColor 覆盖，颜色仍可取 cl.posColor / cl.negColor。
+   * f) 移除未使用的端序探测与死变量。
+   *
+   * 协议约定：
+   * 适配 ChemVis 点云标准结构：
+   * cl = { pos: Float32Array(xyz), signs: Int8Array(±1), count, posColor, negColor, alpha, size }
+   */
+  (function (global) {
+    'use strict';
+
+    const ChemPerf = global.ChemPerf = global.ChemPerf || {};
+    ChemPerf.version = '1.1.0';
+
+    /* =========================================================================
+       1. 颜色解析与缓存（避免每帧重复解析 hex）
+       ========================================================================= */
+    const colorCache = new Map();
+
+    /**
+     * 将十六进制颜色字符串解析为 RGB 元组 [r, g, b]
+     * @param {string} hex - 如 '#ff9a62' 或 '#f96'
+     * @returns {number[]} [r, g, b] (0-255)
+     */
+    function parseHexRGB(hex) {
+      if (!hex || typeof hex !== 'string') return [111, 214, 255];
+      const hit = colorCache.get(hex);
+      if (hit) return hit;
+      let h = hex.trim();
+      if (h.startsWith('#')) h = h.slice(1);
+      if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+      const n = parseInt(h, 16);
+      const rgb = Number.isFinite(n)
+        ? [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+        : [111, 214, 255];
+      if (colorCache.size > 128) colorCache.clear();
+      colorCache.set(hex, rgb);
+      return rgb;
+    }
+
+    /* =========================================================================
+       2. 高速点云光栅化器（替代逐点 ctx.fillRect）
+       ========================================================================= */
+    let offCanvas = null;
+    let offCtx = null;
+    let offImg = null;
+    let offData = null;
+    let offBuf32 = null;
+    let offW = 0;
+    let offH = 0;
+
+    /** 最近一次绘制的统计量（调试 / 自检用） */
+    const stats = ChemPerf.stats = { mode: 'fast', points: 0, plotted: 0, dot: 0, scale: 1, stride: 1, dots: 0 };
+
+    /**
+     * 确保离屏像素缓冲与请求尺寸匹配；尺寸不变时原地清零复用
+     * @param {number} iw - 缓冲宽度（设备像素）
+     * @param {number} ih - 缓冲高度（设备像素）
+     */
+    function ensureOffscreenBuffer(iw, ih) {
+      if (!offCanvas) {
+        offCanvas = global.document.createElement('canvas');
+        offCtx = offCanvas.getContext('2d');
+      }
+      if (offW !== iw || offH !== ih) {
+        offW = iw;
+        offH = ih;
+        offCanvas.width = iw;
+        offCanvas.height = ih;
+        offImg = offCtx.createImageData(iw, ih);
+        offData = offImg.data;
+        offBuf32 = new Uint32Array(offData.buffer);
+      }
+      // 尺寸不变时不清零：drawCloudFast 每次结束都会把自己画过的脏矩形清回 0，
+      // 因此缓冲区始终满足「进入时全零」这一约定。
+    }
+
+    /**
+     * 推断栅格化缩放：优先用显式参数，其次读画布的变换矩阵（setTransform(dpr,...)）
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {number} [hint]
+     * @returns {number} 1..2 之间的缩放
+     */
+    function resolveScale(ctx, hint) {
+      if (hint != null && hint > 0) return Math.min(2, hint);
+      try {
+        if (ctx && typeof ctx.getTransform === 'function') {
+          const m = ctx.getTransform();
+          const s = m && m.a ? Math.abs(m.a) : 1;
+          if (s > 0) return Math.min(2, Math.max(1, s));
+        }
+      } catch (e) { /* 老浏览器没有 getTransform：退回 1 倍 */ }
+      return 1;
+    }
+
+    /**
+     * 使用离屏像素缓冲快速绘制点云，再以 'lighter' 一次叠加到主画布。
+     *
+     * @param {CanvasRenderingContext2D} ctx - 主 2D 画布上下文
+     * @param {Object} cl - 点云 { pos, signs, count, posColor, negColor, alpha, size }
+     * @param {Float32Array|number[]} mvp - 4x4 投影矩阵（列主序，同 ChemVis）
+     * @param {number} w - 视口逻辑宽度
+     * @param {number} h - 视口逻辑高度
+     * @param {Object} [opts]
+     * @param {number} [opts.stride=1] - 采样步长（交互期 2~3 实现 LOD 降采样）
+     * @param {number} [opts.alphaScale] - 透明度补偿系数（缺省按 sqrt(stride) 自动补偿）
+     * @param {number} [opts.dpr] - 强制栅格化缩放（缺省读 ctx 变换）
+     * @param {string} [opts.posColor] / [opts.negColor] - 覆盖颜色
+     * @param {number} [opts.posAlpha] / [opts.negAlpha] - 覆盖正/负相位透明度
+     */
+    function drawCloudFast(ctx, cl, mvp, w, h, opts) {
+      if (!cl || !cl.count || !cl.pos || !mvp) return;
+      if (typeof global.document === 'undefined') return;
+      if (!(w > 0) || !(h > 0)) return;
+
+      const o = opts || {};
+      const stride = Math.max(1, o.stride | 0);
+      const scale = resolveScale(ctx, o.dpr);
+      const iw = Math.max(1, Math.round(w * scale));
+      const ih = Math.max(1, Math.round(h * scale));
+
+      ensureOffscreenBuffer(iw, ih);
+      const data = offData;
+
+      const p = cl.pos;
+      const sg = cl.signs;
+      const n = cl.count;
+
+      // 基础透明度：cl.alpha，默认 0.5；降采样时按 sqrt(stride) 补偿亮度
+      const baseAlpha = Math.max(.02, Math.min(1, cl.alpha == null ? .5 : cl.alpha));
+      const comp = o.alphaScale == null ? (stride > 1 ? Math.min(1.9, Math.sqrt(stride)) : 1) : o.alphaScale;
+      const posA = Math.max(.01, Math.min(1, (o.posAlpha == null ? baseAlpha : o.posAlpha) * comp));
+      const negA = Math.max(.01, Math.min(1, (o.negAlpha == null ? baseAlpha : o.negAlpha) * comp));
+
+      // 点尺寸：逻辑像素 -> 设备像素 -> 整数块；按面积回补亮度
+      const sizeLogical = Math.max(1, cl.size || 1.6);
+      const sz = Math.max(1, Math.min(8, Math.round(sizeLogical * scale)));
+      const areaFix = Math.min(1.8, (sizeLogical * sizeLogical * scale * scale) / (sz * sz));
+
+      const posRGB = parseHexRGB(o.posColor || cl.posColor || '#ff9a62');
+      const negRGB = parseHexRGB(o.negColor || cl.negColor || '#58d7ff');
+
+      const ink = (v, a) => {
+        const r = Math.round(v * a * areaFix);
+        return r < 0 ? 0 : (r > 255 ? 255 : r);
+      };
+      const pr = ink(posRGB[0], posA), pg = ink(posRGB[1], posA), pb = ink(posRGB[2], posA);
+      const nr = ink(negRGB[0], negA), ng = ink(negRGB[1], negA), nb = ink(negRGB[2], negA);
+
+      const m0 = mvp[0], m4 = mvp[4], m8 = mvp[8], m12 = mvp[12];
+      const m1 = mvp[1], m5 = mvp[5], m9 = mvp[9], m13 = mvp[13];
+      const m3 = mvp[3], m7 = mvp[7], m11 = mvp[11], m15 = mvp[15];
+
+      let plotted = 0;
+      // 脏矩形：只上传/叠加真正画到的区域，避免每帧整屏 clear+putImageData+drawImage
+      let bx0 = iw, by0 = ih, bx1 = 0, by1 = 0;
+      for (let i = 0; i < n; i += stride) {
+        const i3 = i * 3;
+        const x = p[i3], y = p[i3 + 1], z = p[i3 + 2];
+        const cw = m3 * x + m7 * y + m11 * z + m15;
+        if (cw <= .05) continue;
+
+        const invW = 1 / cw;
+        const sx = ((m0 * x + m4 * y + m8 * z + m12) * invW * .5 + .5) * iw;
+        const sy = (1 - ((m1 * x + m5 * y + m9 * z + m13) * invW * .5 + .5)) * ih;
+
+        const ix = sx | 0;
+        const iy = sy | 0;
+        if (ix < 0 || ix >= iw || iy < 0 || iy >= ih) continue;
+
+        const isPos = !sg || sg[i] >= 0;
+        const ar = isPos ? pr : nr;
+        const ag = isPos ? pg : ng;
+        const ab = isPos ? pb : nb;
+
+        // sz x sz 饱和加法（Uint8ClampedArray 自动截断），alpha 恒为 255，
+        // 由浏览器预乘后以 'lighter' 叠加，避免 v1.0.0 的 alpha 二次衰减。
+        const xEnd = ix + sz < iw ? ix + sz : iw;
+        const yEnd = iy + sz < ih ? iy + sz : ih;
+        for (let py = iy; py < yEnd; py++) {
+          let off = ((py * iw) + ix) << 2;
+          for (let px = ix; px < xEnd; px++, off += 4) {
+            data[off] += ar;
+            data[off + 1] += ag;
+            data[off + 2] += ab;
+            data[off + 3] = 255;
+          }
+        }
+        if (ix < bx0) bx0 = ix;
+        if (iy < by0) by0 = iy;
+        if (xEnd > bx1) bx1 = xEnd;
+        if (yEnd > by1) by1 = yEnd;
+        plotted++;
+      }
+
+      stats.mode = 'fast';
+      stats.points = n;
+      stats.plotted = plotted;
+      stats.dot = sz;
+      stats.scale = scale;
+      stats.stride = stride;
+      stats.dots = plotted * sz * sz;
+      stats.box = plotted ? [bx0, by0, bx1 - bx0, by1 - by0] : null;
+      stats.boxRatio = plotted ? ((bx1 - bx0) * (by1 - by0)) / (iw * ih) : 0;
+
+      if (!plotted) return;
+
+      const bw = bx1 - bx0;
+      const bh = by1 - by0;
+      offCtx.putImageData(offImg, 0, 0, bx0, by0, bw, bh);
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'lighter';
+      // 目标矩形用逻辑坐标：ctx 已按 dpr 缩放，源矩形按设备像素取，1:1 不重采样
+      ctx.drawImage(offCanvas, bx0, by0, bw, bh, bx0 / scale, by0 / scale, bw / scale, bh / scale);
+      ctx.restore();
+
+      // 维持「进入时缓冲全零」的约定：清掉刚画过的区域，下一帧无需整屏清零
+      for (let py = by0; py < by1; py++) {
+        const s = (py * iw + bx0) << 2;
+        data.fill(0, s, s + (bw << 2));
+      }
+    }
+
+    /* =========================================================================
+       3. 有界 LRU 缓存与 TypedArray 内存池
+       ========================================================================= */
+
+    /**
+     * 创建固定容量的 LRU 缓存（适用于轨道/密度采样缓存）
+     * @param {number} [maxEntries=128]
+     */
+    function createLRUCache(maxEntries) {
+      const limit = Math.max(4, maxEntries || 128);
+      const map = new Map();
+      return {
+        get(key) {
+          if (!map.has(key)) return undefined;
+          const val = map.get(key);
+          map.delete(key);
+          map.set(key, val);
+          return val;
+        },
+        set(key, val) {
+          if (map.has(key)) map.delete(key);
+          else if (map.size >= limit) {
+            map.delete(map.keys().next().value);
+          }
+          map.set(key, val);
+          return val;
+        },
+        has(key) { return map.has(key); },
+        clear() { map.clear(); },
+        get size() { return map.size; }
+      };
+    }
+
+    /**
+     * TypedArray 对象池：减少高频重建网格或点云数组引起的 GC 抖动
+     */
+    const arrayPools = new Map();
+
+    function acquireTypedArray(Ctor, length) {
+      const key = Ctor.name + ':' + length;
+      const list = arrayPools.get(key);
+      if (list && list.length > 0) {
+        const arr = list.pop();
+        arr.fill(0);
+        return arr;
+      }
+      return new Ctor(length);
+    }
+
+    function releaseTypedArray(arr) {
+      if (!arr || !arr.constructor || !arr.length) return;
+      const key = arr.constructor.name + ':' + arr.length;
+      let list = arrayPools.get(key);
+      if (!list) {
+        list = [];
+        arrayPools.set(key, list);
+      }
+      if (list.length < 8) list.push(arr);
+    }
+
+    /* =========================================================================
+       4. 自适应画质与 LOD 控制器（Adaptive Governor）
+       ========================================================================= */
+
+    /**
+     * 创建帧率监控与交互降采样控制器
+     * @param {Object} [cfg]
+     * @param {number} [cfg.targetFps=45] - 目标最低流畅帧率
+     * @param {number} [cfg.maxStride=3] - 最大交互降采样步长
+     */
+    function createGovernor(cfg) {
+      const targetFps = (cfg && cfg.targetFps) || 45;
+      const maxStride = (cfg && cfg.maxStride) || 3;
+      const settleDelay = (cfg && cfg.settleMs) || 140;
+      let emaFrameMs = 16.7;
+      let interacting = false;
+      let settleTimer = null;
+      let lastDrawTs = 0;
+
+      return {
+        /**
+         * 标记用户正在拖拽/缩放，进入交互期；结束后自动触发高精度重绘回调
+         * @param {Function} [onSettle] - 交互停止后的高清重绘回调
+         * @param {number} [delayMs=140] - 静止判定延迟
+         */
+        pulseInteraction(onSettle, delayMs) {
+          interacting = true;
+          if (settleTimer) clearTimeout(settleTimer);
+          settleTimer = setTimeout(() => {
+            interacting = false;
+            settleTimer = null;
+            if (typeof onSettle === 'function') onSettle();
+          }, delayMs == null ? settleDelay : delayMs);
+        },
+
+        /**
+         * 在每次渲染结束时记录耗时（毫秒）
+         * @param {number} frameMs - 本帧耗时
+         */
+        recordFrame(frameMs) {
+          if (!Number.isFinite(frameMs) || frameMs <= 0) return;
+          emaFrameMs = emaFrameMs * 0.85 + Math.min(200, frameMs) * 0.15;
+          lastDrawTs = Date.now();
+        },
+
+        /**
+         * 获取当前推荐的点云绘制参数
+         * @returns {{stride:number, fps:number, frameMs:number, isInteracting:boolean}}
+         */
+        getRecommendation() {
+          const fps = 1000 / Math.max(1, emaFrameMs);
+          let stride = 1;
+          if (interacting) {
+            stride = fps < targetFps ? maxStride : 2;
+          } else if (fps < targetFps * 0.65) {
+            stride = 2;
+          }
+          return {
+            stride,
+            fps: Math.round(fps),
+            frameMs: Number(emaFrameMs.toFixed(1)),
+            isInteracting: interacting
+          };
+        }
+      };
+    }
+
+    /* =========================================================================
+       5. 内联 Blob Web Worker 调度器（保持单文件零外链）
+       ========================================================================= */
+
+    /**
+     * 创建一个自包含的内联 Worker 执行器，适合把 40³ 网格 CDF 采样等重任务移出主线程
+     * @param {Function} workerFn - 在 Worker 内运行的函数，签名：(payload) => result
+     *       可返回 { data, __transfer: [buffers] } 以转移所有权
+     * @returns {{ run: (payload: any, transfer?: Transferable[]) => Promise<any>, terminate: () => void }}
+     */
+    function createInlineWorker(workerFn) {
+      const hasWorker = typeof Worker !== 'undefined' && typeof Blob !== 'undefined' && typeof URL !== 'undefined';
+      if (!hasWorker) {
+        // 无 Worker 环境（Node / 无头测试）优雅降级为异步微任务
+        return {
+          run(payload) {
+            return Promise.resolve().then(() => {
+              const res = workerFn(payload);
+              return res && res.__transfer ? res.data : res;
+            });
+          },
+          terminate() {}
+        };
+      }
+
+      const src = [
+        'const __fn = (' + workerFn.toString() + ');',
+        'self.onmessage = function(e) {',
+        '  const d = e.data, id = d.id, payload = d.payload;',
+        '  try {',
+        '    const res = __fn(payload);',
+        '    if (res && res.__transfer) {',
+        '      self.postMessage({ id: id, ok: true, result: res.data }, res.__transfer);',
+        '    } else {',
+        '      self.postMessage({ id: id, ok: true, result: res });',
+        '    }',
+        '  } catch (err) {',
+        '    self.postMessage({ id: id, ok: false, error: String((err && err.message) || err) });',
+        '  }',
+        '};'
+      ].join('\n');
+
+      const blob = new Blob([src], { type: 'application/javascript' });
+      const blobUrl = URL.createObjectURL(blob);
+      const worker = new Worker(blobUrl);
+      URL.revokeObjectURL(blobUrl);
+
+      let seq = 0;
+      const pending = new Map();
+
+      worker.onmessage = function (e) {
+        const d = e.data || {};
+        const p = pending.get(d.id);
+        if (!p) return;
+        pending.delete(d.id);
+        if (d.ok) p.resolve(d.result);
+        else p.reject(new Error(d.error));
+      };
+
+      worker.onerror = function (err) {
+        for (const p of pending.values()) p.reject(err);
+        pending.clear();
+      };
+
+      return {
+        run(payload, transfer) {
+          return new Promise((resolve, reject) => {
+            const id = ++seq;
+            pending.set(id, { resolve, reject });
+            worker.postMessage({ id, payload }, transfer || []);
+          });
+        },
+        terminate() {
+          worker.terminate();
+          pending.clear();
+        }
+      };
+    }
+
+    /* =========================================================================
+       6. 导出
+       ========================================================================= */
+    ChemPerf.parseHexRGB = parseHexRGB;
+    ChemPerf.drawCloudFast = drawCloudFast;
+    ChemPerf.createLRUCache = createLRUCache;
+    ChemPerf.acquireTypedArray = acquireTypedArray;
+    ChemPerf.releaseTypedArray = releaseTypedArray;
+    ChemPerf.createGovernor = createGovernor;
+    ChemPerf.createInlineWorker = createInlineWorker;
+
+  })(typeof window !== 'undefined' ? window : globalThis);
+
+  const perfCloudGov = (window.ChemPerf && window.ChemPerf.createGovernor)
+    ? window.ChemPerf.createGovernor({ targetFps: 50, maxStride: 3 }) : null;
+  /* 实测阈值：低于此点数逐点 fillRect 更快，高于此点数 Chromium 提交批量跳崖 */
+  const PERF_FAST_FROM = 21000;
+  function perfCloudStride() {
+    const rec = perfCloudGov ? perfCloudGov.getRecommendation() : null;
+    return rec ? rec.stride : 1;
+  }
+  function perfUseFast(count) {
+    const mode = window.CHEM_PERF_CLOUD;
+    if (mode === 'fill') return false;
+    if (!window.ChemPerf || !window.ChemPerf.drawCloudFast) return false;
+    return mode === 'fast' || count >= PERF_FAST_FROM;
+  }
+
+  /* 原始逐点实现（兜底）：点云 < PERF_FAST_FROM 时使用；stride 用于交互期降采样 */
   /* 电子云密度点云：按 |ψ|² 采样的散点，相位双色，加色混合。
      cl = { pos:Float32Array(xyz), signs:Int8Array(±1), count,
             posColor, negColor, alpha, size } */
-  function drawCloud(ctx, cl, mvp, w, h) {
+  function drawCloudLegacy(ctx, cl, mvp, w, h, stride, alphaScale) {
     if (!cl || !cl.count || !cl.pos) return;
     const p = cl.pos, sg = cl.signs, n = cl.count;
     const pc = cl.posColor || C.pos, nc = cl.negColor || C.neg;
-    const a = cl.alpha == null ? .5 : cl.alpha;
+    const a = Math.max(0, Math.min(1, (cl.alpha == null ? .5 : cl.alpha) * (alphaScale || 1)));
     const sz = cl.size || 1.6;
     const m0 = mvp[0], m4 = mvp[4], m8 = mvp[8], m12 = mvp[12];
     const m1 = mvp[1], m5 = mvp[5], m9 = mvp[9], m13 = mvp[13];
@@ -757,7 +1259,7 @@ input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;bac
     ctx.globalCompositeOperation = 'lighter';
     for (const side of [1, -1]) {
       ctx.fillStyle = rgba(side > 0 ? pc : nc, a);
-      for (let i = 0; i < n; i++) {
+      for (let i = 0; i < n; i += (stride || 1)) {
         if (sg[i] !== side) continue;
         const x = p[i * 3], y = p[i * 3 + 1], z = p[i * 3 + 2];
         const cw = m3 * x + m7 * y + m11 * z + m15;
@@ -770,6 +1272,32 @@ input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;bac
     }
     ctx.restore();
   }
+
+
+  /* 统一入口：按点数/覆盖开关选择离屏光栅化或逐点 fillRect，两者都吃交互期 stride */
+  function drawCloud(ctx, cl, mvp, w, h) {
+    if (!cl || !cl.count || !cl.pos) return;
+    const stride = perfCloudStride();
+    if (perfUseFast(cl.count)) {
+      window.ChemPerf.drawCloudFast(ctx, cl, mvp, w, h, {
+        stride: stride,
+        posColor: cl.posColor || C.pos,
+        negColor: cl.negColor || C.neg
+      });
+      return;
+    }
+    drawCloudLegacy(ctx, cl, mvp, w, h, stride, stride > 1 ? Math.min(1.9, Math.sqrt(stride)) : 1);
+    if (window.ChemPerf && window.ChemPerf.stats) {
+      window.ChemPerf.stats.mode = 'fill';
+      window.ChemPerf.stats.stride = stride;
+      window.ChemPerf.stats.points = cl.count;
+      window.ChemPerf.stats.plotted = Math.ceil(cl.count / stride);
+    }
+  }
+  function perfPulse() {
+    if (perfCloudGov) perfCloudGov.pulseInteraction(function () { draw3D(); });
+  }
+  function perfRecordFrame(ms) { if (perfCloudGov) perfCloudGov.recordFrame(ms); }
 
   function drawLobe(ctx, l, P, view) {
     const o = P(l.origin), tip = P(U.add(l.origin, U.mul(U.norm(l.axis), l.length)));
@@ -969,6 +1497,7 @@ input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;bac
   /* ---------------- 3D scene render ---------------- */
   function draw3D() {
     if (!cur || !D.canvas) return;
+    const __perfT0 = performance.now();
     const st = cur.state, sc = cur.scene;
     let frame;
     try { frame = sc.frame(st) || {}; }
@@ -1020,6 +1549,7 @@ input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;bac
       try { frame.overlay(ctx, view); } catch (e) { console.error('overlay error', e); }
       ctx.restore();
     }
+    perfRecordFrame(performance.now() - __perfT0);
   }
 
   /* ---------------- control construction ---------------- */
@@ -1659,6 +2189,7 @@ input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;bac
       if (!pointers.has(ev.pointerId)) return;
       pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
       if (!cur) return;
+      perfPulse();
       if (pointers.size === 2) {
         const [a, b] = Array.from(pointers.values());
         const d = Math.hypot(a.x - b.x, a.y - b.y);
@@ -1701,6 +2232,7 @@ input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;bac
     pane.addEventListener('wheel', ev => {
       ev.preventDefault();
       if (!cur) return;
+      perfPulse();
       cur.state.cam.zoom = U.clamp(cur.state.cam.zoom * Math.exp(ev.deltaY * .0011), .5, 2.4);
       draw3D();
     }, { passive: false });
@@ -1772,12 +2304,39 @@ input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;bac
     $('#docsClose').addEventListener('click', () => D.docsModal.hidden = true);
     D.docsModal.addEventListener('click', ev => { if (ev.target === D.docsModal) D.docsModal.hidden = true; });
     document.addEventListener('keydown', ev => {
-      if (ev.key === 'Escape') D.docsModal.hidden = true;
+      if (ev.key === 'Escape') { D.docsModal.hidden = true; if (isPresenting()) setPresent(false); }
       if (ev.key === ' ' && !/INPUT|TEXTAREA|BUTTON|SELECT/.test((document.activeElement || {}).tagName || '')) {
         ev.preventDefault(); if (cur) togglePlay();
       }
     });
     $('#camResetBtn').addEventListener('click', resetCamera);
+    /* 全屏演示：参数调好后隐藏面板、3D 铺满；原生全屏 + CSS 兜底 */
+    const appEl = $('.app'), stageEl = $('.stage');
+    const presentBtn = $('#presentBtn'), exitBtn = $('#exitPresentBtn');
+    function isPresenting() { return !!(appEl && appEl.classList.contains('presenting')); }
+    function setPresent(on) {
+      if (!appEl || !stageEl) return;
+      appEl.classList.toggle('presenting', on);
+      if (presentBtn) presentBtn.hidden = on;
+      if (exitBtn) exitBtn.hidden = !on;
+      if (on) {
+        if (stageEl.requestFullscreen) stageEl.requestFullscreen().catch(() => {});
+        else if (stageEl.webkitRequestFullscreen) stageEl.webkitRequestFullscreen();
+      } else {
+        if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+        else if (document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen();
+      }
+      setTimeout(() => { if (cur) { draw3D(); renderCharts(); } }, 80);
+      setTimeout(() => { if (cur) { draw3D(); } }, 320);
+    }
+    if (presentBtn) presentBtn.addEventListener('click', () => setPresent(true));
+    if (exitBtn) exitBtn.addEventListener('click', () => setPresent(false));
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement && isPresenting()) setPresent(false);
+    });
+    document.addEventListener('webkitfullscreenchange', () => {
+      if (!document.webkitFullscreenElement && isPresenting()) setPresent(false);
+    });
     Array.from(D.refTabs.children).forEach(b => b.addEventListener('click', () => {
       if (!cur) return;
       cur.state.view = b.dataset.ref;

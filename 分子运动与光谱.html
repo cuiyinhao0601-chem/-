@@ -182,6 +182,8 @@ sub,sup{font-size:.7em;line-height:0}
 .act-row.head b{text-align:center;font-weight:500}
 .spec-card{position:relative;border:1px solid rgba(112,174,222,.13);border-radius:10px;background:rgba(6,13,22,.5);padding:6px 6px 2px}
 #specCanvas{display:block;width:100%;height:186px;touch-action:pan-y}
+.src-tag{display:inline-block;font-family:var(--mono);font-size:7.5px;color:#8fd4f5;border:1px solid rgba(105,199,244,.35);border-radius:4px;padding:0 5px;margin-right:5px;background:rgba(20,54,76,.3);vertical-align:1px}
+.src-tag.fict{color:#ffc79c;border-color:rgba(255,154,98,.4);background:rgba(90,44,22,.26)}
 .caption{margin:2px 2px 4px;font-size:8.5px;line-height:1.45;color:#526b82}
 .caption b{color:#8fa9be;font-weight:500}
 #compareWrap{margin-top:7px}
@@ -522,6 +524,8 @@ body.modal-open{overflow:hidden}
             <div class="formula-row"><span class="fx">ν̃<sub>P</sub> = ν̃<sub>0</sub> − 2B·J″</span><span class="fn">P 支：(v″=0, J″) → (v′=1, J″−1)，自 J″ = 1 起</span></div>
             <div class="formula-row"><span class="fx">ν̃<sub>R</sub> = ν̃<sub>0</sub> + 2B(J″+1)</span><span class="fn">R 支：(v″=0, J″) → (v′=1, J″+1)，自 J″ = 0 起</span></div>
             <div class="formula-row"><span class="fx">ν̃ = ν̃<sub>0</sub> + B·J′(J′+1) − B·J″(J″+1)</span><span class="fn">振转跃迁的一般式；两态 B 相同时与上两式一致</span></div>
+            <div class="formula-row"><span class="fx">ν̃<sub>01</sub> = ω<sub>e</sub> − 2ω<sub>e</sub>x<sub>e</sub></span><span class="fn">基频 ≠ 谐振常数 ω_e；红外谱线用 ν̃₀₁（HCl 2886，H₂ 4161）</span></div>
+            <div class="formula-row"><span class="fx">B<sub>0</sub> = B<sub>e</sub> − α<sub>e</sub>/2</span><span class="fn">谱线用振动基态 B₀；B_e 对应平衡构型（HCl B₀ 10.440 / B_e 10.593）</span></div>
             <div class="formula-row"><span class="fx">r(t) = r<sub>0</sub> + A·sin φ(t)</span><span class="fn">HCl 伸缩；A 为振幅，画面中已放大</span></div>
             <div class="formula-row"><span class="fx">r<sub>H</sub> = <span class="frac"><span class="num">r·m<sub>Cl</sub></span><span class="den">m<sub>H</sub>+m<sub>Cl</sub></span></span>　r<sub>Cl</sub> = <span class="frac"><span class="num">r·m<sub>H</sub></span><span class="den">m<sub>H</sub>+m<sub>Cl</sub></span></span></span><span class="fn">质心置原点时两原子到质心的距离，比例即位移比</span></div>
             <div class="formula-row"><span class="fx">λ = <span class="frac"><span class="num">1</span><span class="den">ν̃</span></span></span><span class="fn">λ 用 cm、ν̃ 用 cm⁻¹；换算成纳米：λ(nm) = <span class="frac"><span class="num">10⁷</span><span class="den">ν̃</span></span></span></div>
@@ -596,14 +600,19 @@ body.modal-open{overflow:hidden}
         <p>用 HCl 的 <i>B</i> = 10.4 cm⁻¹ 反推：<i>I</i> = <span class="frac"><span class="num">h</span><span class="den">8π²cB</span></span> = 2.69×10⁻⁴⁷ kg·m²，<i>r</i> = √(<span class="frac"><span class="num"><i>I</i></span><span class="den"><i>μ</i></span></span>) = 1.29 Å，与页面取的 1.274 Å 一致，说明这套公式是自洽的。</p>
         <p>吸收光子时角动量守恒（光子带一个 ħ），选择定则 Δ<i>J</i> = ±1；吸收只能取 +1，于是</p>
         <div class="math">ν̃ = B(J+1)(J+2) − BJ(J+1) = 2B(J+1)</div>
-        <p>相邻两条线的间隔恒为 2<i>B</i> = 20.8 cm⁻¹，第一条在 <i>J</i> = 0→1，即 20.8 cm⁻¹。</p>
+        <p>相邻两条线的间隔恒为 2<i>B</i> ≈ 20.8 cm⁻¹，第一条在 <i>J</i> = 0→1。转动常数同样分两个口径：<b>B_e</b> 对应平衡键长 r_e；振动基态有零点伸长，实际用</p>
+        <div class="math">B<sub>v</sub> = B<sub>e</sub> − α<sub>e</sub>(v+½)　⇒　B<sub>0</sub> = B<sub>e</sub> − α<sub>e</sub>/2</div>
+        <p>H³⁵Cl：B_e = 10.593、B₀ = 10.440 cm⁻¹（本页教学取整为 10.4）。<b>谱线位置用 B₀</b>；B_e 只作对照。同位素取代不改势能面：D³⁵Cl 的 ω_e、B_e 按约化质量缩放，ω_e 比 ≈ √(μ_H/μ_D) ≈ 0.717，B 比 ≈ μ_H/μ_D ≈ 0.515，见「HCl/DCl 对照」页签。</p>
       </div>
 
       <div class="m-sec">
         <h3><span>04</span>振动：简谐近似与力常数</h3>
         <p>把化学键近似成弹簧，角频率 <i>ω</i> = √(<i>k</i>/<i>μ</i>)，<i>k</i> 是力常数。量子化后</p>
         <div class="math">E<sub>vib</sub> = (v + ½)ħω，v = 0,1,2,…　⇒　ν̃<sub>osc</sub> = <span class="frac"><span class="num">1</span><span class="den">2πc</span></span>·√(<span class="frac"><span class="num">k</span><span class="den">μ</span></span>)</div>
-        <p>用 HCl 的 2886 cm⁻¹ 反推：<i>k</i> = <i>μ</i>(2π<i>cν̃</i>)² = 481 N/m，正是典型单键的力常数。经典图像就是画面里的</p>
+        <p>注意口径：由势能面曲率算出的是<b>谐振常数 ω_e</b>，它不是任何一条谱线。真实势能有非谐性，振动能级要加修正项：</p>
+        <div class="math">G(v) = ω<sub>e</sub>(v+½) − ω<sub>e</sub>x<sub>e</sub>(v+½)²　⇒　基频 ν̃<sub>01</sub> = G(1)−G(0) = ω<sub>e</sub> − 2ω<sub>e</sub>x<sub>e</sub></div>
+        <p>例如 H³⁵Cl：ω_e = 2990.9、ω_e x_e = 52.8 → 基频 ν̃₀₁ ≈ 2886 cm⁻¹；H₂ 的 ω_e = 4401 而基频只有 4161 cm⁻¹。<b>红外谱里看到的是 ν̃₀₁，不是 ω_e。</b>本页参考表把两者分列。</p>
+        <p>用 HCl 的 2886 cm⁻¹ 反推：<i>k</i> = <i>μ</i>(2π<i>cν̃</i>)² ≈ 481 N/m（用 ω_e 反推约 516 N/m，差别来自非谐性），是典型单键的力常数。经典图像就是画面里的</p>
         <div class="math">r(t) = r<sub>0</sub> + A·sin(2πνt)</div>
         <p>真实振动周期是 <span class="frac"><span class="num">1</span><span class="den"><i>cν̃</i></span></span> = 1.16×10⁻¹⁴ s，页面放慢了约 10¹⁴ 倍，所以标了“慢放示意”。</p>
       </div>
@@ -727,21 +736,26 @@ const ELEMENTS = {
 };
 const EL_ORDER = ['H', 'D', 'C', 'N', 'O', 'F', 'Cl', 'Br', 'I', 'S'];
 
-/* 常见双原子分子的实验参考值（ν̃ 基频 cm⁻¹；B cm⁻¹）；未收录的组合用模型估算 */
-const DIATOM_REF = {
-  'H|H': { nu: 4401, B: 60.85 },
-  'H|F': { nu: 4138, B: 20.96 },
-  'H|Cl': { nu: 2886, B: 10.40 },
-  'D|Cl': { nu: 2145, B: 5.45 },
-  'H|Br': { nu: 2649, B: 8.47 },
-  'H|I': { nu: 2309, B: 6.55 },
-  'C|O': { nu: 2170, B: 1.931 },
-  'N|N': { nu: 2359, B: 1.998 },
-  'O|O': { nu: 1580, B: 1.446 },
-  'N|O': { nu: 1904, B: 1.672 },
-  'I|I': { nu: 214, B: 0.0374 },
-  'O|H|-1': { nu: 3556, B: 18.90 },
-  'C|N|-1': { nu: 2069, B: 1.891 }
+/* 光谱常数参考表（cm⁻¹，气相基态，Herzberg / NIST 口径）：
+   we   = ω_e   谐振常数（势能面曲率，不是任何一条谱线）
+   wexe = ω_e x_e 一阶非谐项；ν̃₀₁ ≈ ω_e − 2ω_e x_e（含高阶项时略有出入）
+   nu01 = ν̃₀₁  基频带中心（v=0→1，红外里真正看到的数）
+   Be   = B_e   平衡构型转动常数；B0 = B_e − α_e/2（v=0 有效值）
+   谱线位置用 nu01 与 B0；we / Be 只作对照展示。 */
+const SPECIES_REF = {
+  'H|H':  { name: 'H₂',  we: 4401.21, wexe: 121.34, nu01: 4161.17, Be: 60.853,  B0: 59.322 },
+  'H|F':  { name: 'HF',  we: 4138.32, wexe: 89.88,  nu01: 3961.42, Be: 20.956,  B0: 20.557 },
+  'H|Cl': { name: 'H³⁵Cl', we: 2990.95, wexe: 52.82, nu01: 2885.98, Be: 10.593, B0: 10.440 },
+  'D|Cl': { name: 'D³⁵Cl', we: 2145.03, wexe: 27.18, nu01: 2090.67, Be: 5.449,  B0: 5.392 },
+  'H|Br': { name: 'H⁷⁹Br', we: 2648.98, wexe: 45.22, nu01: 2558.54, Be: 8.465,  B0: 8.348 },
+  'H|I':  { name: 'HI',  we: 2309.01, wexe: 39.64,  nu01: 2229.73, Be: 6.512,   B0: 6.426 },
+  'C|O':  { name: 'CO',  we: 2169.81, wexe: 13.29,  nu01: 2143.27, Be: 1.9313,  B0: 1.9225 },
+  'N|N':  { name: 'N₂',  we: 2358.57, wexe: 14.32,  nu01: 2329.92, Be: 1.9982,  B0: 1.9896 },
+  'O|O':  { name: 'O₂',  we: 1580.19, wexe: 11.98,  nu01: 1556.23, Be: 1.4456,  B0: 1.4377 },
+  'N|O':  { name: 'NO',  we: 1904.20, wexe: 14.08,  nu01: 1876.05, Be: 1.7046,  B0: 1.6957 },
+  'I|I':  { name: 'I₂',  we: 214.50,  wexe: 0.61,   nu01: 213.27,  Be: 0.03736, B0: 0.03730 },
+  'O|H':  { name: 'OH·', we: 3737.76, wexe: 84.88,  nu01: 3569.60, Be: 18.910,  B0: 18.548 },
+  'C|N':  { name: 'CN·', we: 2068.59, wexe: 13.09,  nu01: 2042.42, Be: 1.8997,  B0: 1.8910 }
 };
 
 function niceTicks(lo, hi, n) {
@@ -821,18 +835,19 @@ const state = {
   dirty: true
 };
 
-/* 由元素选择构建自定义二元分子：B 优先取实验值，否则由 μ、r 估算；ν̃₀ 同理 */
+/* 自定义二元分子：有实验参考 → 用 ν̃₀₁ 与 B₀；否则为“假想振子”，模型估算 */
 function rebuildCustom() {
   const A = ELEMENTS[state.custom.a], B = ELEMENTS[state.custom.b];
   const chg = state.custom.charge;
-  const chgKey = chg ? '|' + chg : '';
-  const ref = DIATOM_REF[A.sym + '|' + B.sym + chgKey] || DIATOM_REF[B.sym + '|' + A.sym + chgKey] || null;
+  const ref = chg === 0
+    ? (SPECIES_REF[A.sym + '|' + B.sym] || SPECIES_REF[B.sym + '|' + A.sym] || null)
+    : null;   /* 带电组合暂无可靠实验表项，一律按假想振子处理 */
 
   const muU = A.m * B.m / (A.m + B.m);
   const muKg = muU * U_KG;
   const r0 = (A.r + B.r) * (chg ? 0.9 : 1);
-  const Bc = ref ? ref.B : H_PLANCK / (8 * Math.PI * Math.PI * C_CM * muKg * Math.pow(r0 * 1e-10, 2));
-  const nu0 = ref ? ref.nu : Math.sqrt(500 / muKg) / (2 * Math.PI * C_CM);
+  const Bc = ref ? ref.B0 : H_PLANCK / (8 * Math.PI * Math.PI * C_CM * muKg * Math.pow(r0 * 1e-10, 2));
+  const nu0 = ref ? ref.nu01 : Math.sqrt(500 / muKg) / (2 * Math.PI * C_CM);
   const dEN = Math.abs(A.en - B.en);
   const qMag = (A.sym === B.sym) ? 0 : clamp(0.1875 * dEN, 0.02, 0.45);
   const q0 = dEN < 0.01 ? 0 : (A.en > B.en ? -qMag : qMag);
@@ -872,17 +887,35 @@ function rebuildCustom() {
 
   state.custom.info = {
     B: Bc, nu0, ir: Math.abs(q0) > 1e-6, rot, rovib, axis, ticks,
-    labels: [A.sym, B.sym], ref: ref ? '实验参考值' : '模型估算',
+    labels: [A.sym, B.sym], ref: ref ? '实验参考' : '假想振子',
+    constants: ref,   /* we / wexe / nu01 / Be / B0 原样带出 */
     muU, r0, q: qMag, charge: chg, formula
   };
   MODES.CUSTOM = [{
     id: 'custom', sym: 'ν', name: A.sym + '–' + B.sym + ' 伸缩', nu: Math.round(nu0),
-    ir: Math.abs(q0) > 1e-6, raman: true, sub: ref ? '实验参考值' : '模型估算',
+    ir: Math.abs(q0) > 1e-6, raman: true, sub: ref ? '实验参考 · ' + ref.name : '假想振子 · 估算',
     note: ref
-      ? '该组合有实验参考值：B ≈ ' + Bc.toFixed(2) + ' cm⁻¹，基频 ≈ ' + Math.round(nu0) + ' cm⁻¹。'
-      : '该组合未收录实验值：B 由 μ 与共价半径算出，基频按 k ≈ 500 N/m 估算，只看趋势。'
+      ? '实验物种 ' + ref.name + '：基频 ν̃₀₁ = ' + ref.nu01.toFixed(1) + ' cm⁻¹（不是 ω_e = ' + ref.we.toFixed(1) + '），谱线用 B₀ = ' + ref.B0.toFixed(3) + ' cm⁻¹。'
+      : '假想振子：无实验表项。B 由 μ 与共价半径估算，基频按 k ≈ 500 N/m 的谐振估算，数值不代表任何真实分子，只看趋势。'
   }];
 }
+
+/* HCl / DCl 同轴对照：全部用实验常数（ν̃₀₁、B₀），不做教学取整 */
+const ISO_CMP = (() => {
+  const mk = (tag, sp) => {
+    const out = [];
+    for (let J = 1; J <= 6; J++) {
+      out.push({ id: 'iso-' + tag + '-P-' + J, species: tag, nu: sp.nu01 - 2 * sp.B0 * J, branch: 'P', view: 'iso', Jpp: J, Jp: J - 1, vpp: 0, vp: 1, label: tag + ' P(' + J + ')' });
+    }
+    for (let J = 0; J <= 6; J++) {
+      out.push({ id: 'iso-' + tag + '-R-' + J, species: tag, nu: sp.nu01 + 2 * sp.B0 * (J + 1), branch: 'R', view: 'iso', Jpp: J, Jp: J + 1, vpp: 0, vp: 1, label: tag + ' R(' + J + ')' });
+    }
+    return out;
+  };
+  const h = SPECIES_REF['H|Cl'], d = SPECIES_REF['D|Cl'];
+  return { HCl: h, DCl: d, recs: mk('HCl', h).concat(mk('DCl', d)),
+    axis: [1980, 3080], ticks: [2000, 2200, 2400, 2600, 2800, 3000] };
+})();
 
 /* 固定谱线记录：所有光谱、能级图、详情面板共用同一批记录 */
 const HCL_ROT = (() => {
@@ -918,7 +951,7 @@ const HCL_INFO = {
   rot: HCL_ROT, rovib: HCL_ROVIB,
   axis: { rot: [0, 178], rovib: [2742, 3050] },
   ticks: { rot: [0, 40, 80, 120, 160], rovib: [2750, 2800, 2850, 2900, 2950, 3000] },
-  labels: ['H', 'Cl'], ref: '实验参考值', charge: 0, formula: 'HCl'
+  labels: ['H', 'Cl'], ref: '教学取整', charge: 0, formula: 'HCl'
 };
 function diatomicInfo() {
   return state.mol === 'HCl' ? HCL_INFO : state.custom.info;
@@ -926,7 +959,8 @@ function diatomicInfo() {
 const recById = id => {
   if (state.mol === 'CO2') return null;
   const info = diatomicInfo();
-  return info.rot.find(r => r.id === id) || info.rovib.find(r => r.id === id) || null;
+  return info.rot.find(r => r.id === id) || info.rovib.find(r => r.id === id) ||
+    ISO_CMP.recs.find(r => r.id === id) || null;
 };
 const modeOf = id => (MODES[state.mol] || []).find(m => m.id === id) || MODES[state.mol][0];
 
@@ -1770,6 +1804,7 @@ function drawHclSpectrum() {
   const ctx = specCtx;
   const info = diatomicInfo();
   const view = state.spec.hclView;
+  if (view === 'iso') { drawIsoSpectrum(ctx, w, h); return; }
   const recs = view === 'rot' ? info.rot : info.rovib;
   const [lo, hi] = info.axis[view];
   const ticks = info.ticks[view];
@@ -1882,6 +1917,85 @@ function drawHclSpectrum() {
   updateSpecA11y(recs, sel);
 }
 
+/* HCl / DCl 同轴对照：上半 HCl、下半 DCl，共用一条波数轴 */
+function drawIsoSpectrum(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+  specHits = [];
+  specPillHit = null;
+  const [lo, hi] = ISO_CMP.axis;
+  const base = specGrid(ctx, w, h, lo, hi, ISO_CMP.ticks);
+  const mid = Math.round((30 + base) / 2);
+  const topH = 42, topD = base - 8;
+  const sel = recById(state.spec.hclSel);
+
+  /* 中线 */
+  ctx.save();
+  ctx.strokeStyle = 'rgba(140,185,225,.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(AX.l, mid + .5); ctx.lineTo(w - AX.r, mid + .5); ctx.stroke();
+  ctx.restore();
+
+  /* 两个带中心 */
+  for (const [tag, sp, color] of [['HCl', ISO_CMP.HCl, 'rgba(95,211,255,.7)'], ['DCl', ISO_CMP.DCl, 'rgba(255,176,122,.75)']]) {
+    const xc = axisX(sp.nu01, lo, hi, w);
+    ctx.save();
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(xc, 26); ctx.lineTo(xc, base); ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = color;
+    ctx.font = '8px ' + MONO;
+    ctx.textAlign = 'center';
+    ctx.fillText(tag + ' ν̃₀₁ ' + sp.nu01.toFixed(1), xc, 18);
+  }
+
+  /* 图例 */
+  ctx.font = '8.5px ' + SANS;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(95,211,255,.8)';
+  ctx.fillText('HCl ↑', AX.l + 2, mid - 6);
+  ctx.fillStyle = 'rgba(255,176,122,.85)';
+  ctx.fillText('DCl ↓', AX.l + 2, mid + 12);
+
+  /* 棒线：HCl 向上、DCl 向下 */
+  for (const rec of ISO_CMP.recs) {
+    const x = axisX(rec.nu, lo, hi, w);
+    const up = rec.species === 'HCl';
+    const y1 = up ? topH : mid + 2;
+    const y0 = up ? mid - 2 : topD;
+    const isSel = sel && sel.id === rec.id;
+    const col = up ? 'rgba(95,211,255,.6)' : 'rgba(255,176,122,.6)';
+    ctx.save();
+    if (isSel) {
+      ctx.strokeStyle = 'rgba(255,209,102,.22)';
+      ctx.lineWidth = 7;
+      ctx.beginPath(); ctx.moveTo(x, up ? mid : mid + 2); ctx.lineTo(x, up ? topH : topD); ctx.stroke();
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 2.4;
+    } else {
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 1.5;
+    }
+    ctx.beginPath(); ctx.moveTo(x, up ? mid - 2 : mid + 2); ctx.lineTo(x, up ? topH : topD); ctx.stroke();
+    ctx.fillStyle = isSel ? '#ffe6a8' : col;
+    ctx.beginPath(); ctx.arc(x, up ? topH : topD, isSel ? 2.4 : 1.4, 0, TAU); ctx.fill();
+    ctx.restore();
+    specHits.push({ kind: 'stick', x, y0: Math.min(y0, y1) - 6, y1: Math.max(y0, y1) + 6, rec });
+
+    if (isSel) {
+      ctx.save();
+      ctx.fillStyle = '#ffe6a8';
+      ctx.font = '600 8.5px ' + MONO;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = up ? 'bottom' : 'top';
+      ctx.fillText(rec.label + ' ' + rec.nu.toFixed(1), clamp(x, AX.l + 40, w - AX.r - 40), up ? topH - 4 : topD + 4);
+      ctx.restore();
+    }
+  }
+  specCanvas.setAttribute('aria-label', 'HCl 与 DCl 振转带同轴对照' + (sel ? '，选中 ' + sel.label : ''));
+}
+
 function updateSpecA11y(recs, sel) {
   const el = $('#specCanvas');
   if (!el) return;
@@ -1899,6 +2013,7 @@ function drawHclLevels() {
   const ctx = levelCtx;
   ctx.clearRect(0, 0, w, h);
   const info = diatomicInfo();
+  if (state.spec.hclView === 'iso') return;
   if (state.spec.hclView === 'rot') drawRotLadder(ctx, w, h, info);
   else drawRovibLadder(ctx, w, h, info);
 }
@@ -2354,10 +2469,10 @@ function setHclView(v) {
   state.spec.hclView = v;
   state.spec.compare = false;
   const info = diatomicInfo();
-  const recs = v === 'rot' ? info.rot : info.rovib;
+  const recs = v === 'iso' ? ISO_CMP.recs : v === 'rot' ? info.rot : info.rovib;
   if (!recs.some(r => r.id === state.spec.hclSel)) {
     const r0 = v === 'rovib' ? info.rovib.find(r => r.branch === 'R' && r.Jpp === 0) : null;
-    state.spec.hclSel = r0 ? r0.id : recs[0].id;
+    state.spec.hclSel = v === 'iso' ? 'iso-HCl-R-0' : (r0 ? r0.id : recs[0].id);
   }
   renderAll();
 }
@@ -2480,7 +2595,9 @@ function renderSpecTabs() {
   const isCO2 = state.mol === 'CO2';
   const tabs = isCO2
     ? [{ id: 'ir', label: '红外' }, { id: 'raman', label: '拉曼' }, { id: 'rot', label: '纯转动' }]
-    : [{ id: 'rot', label: '纯转动吸收' }, { id: 'rovib', label: '红外振转吸收' }];
+    : state.mol === 'HCl'
+      ? [{ id: 'rot', label: '纯转动' }, { id: 'rovib', label: '红外振转' }, { id: 'iso', label: 'HCl/DCl 对照' }]
+      : [{ id: 'rot', label: '纯转动吸收' }, { id: 'rovib', label: '红外振转吸收' }];
   const cur = isCO2 ? state.spec.co2View : state.spec.hclView;
   box.innerHTML = '';
   for (const t of tabs) {
@@ -2502,32 +2619,40 @@ function renderChrome() {
   $('#molBadge').textContent = MOLS[state.mol].plain;
 
   let title, badge, caption;
-  if (!isCO2) {
+  if (!isCO2 && state.spec.hclView === 'iso') {
+    const sel = recById(state.spec.hclSel);
+    title = 'HCl / DCl 同轴对照';
+    badge = sel && sel.species ? sel.label : '—';
+    caption = '<span class="src-tag">实验常数</span>同一波数轴：上排 HCl、下排 DCl。' +
+      '线位用基频 ν̃₀₁ 与 B₀（非 ω_e / B_e）；同位素只改质量，不改势能面。';
+  } else if (!isCO2) {
     const rot = state.spec.hclView === 'rot';
     const sel = recById(state.spec.hclSel);
     title = MOLS[state.mol].plain + (rot ? ' 纯转动吸收' : ' 红外振转吸收');
     badge = sel ? sel.label : '—';
-    caption = rot
-      ? '等高棒线，线高仅作示意。横轴为波数 / cm⁻¹：ν̃ = 2B(J+1)，B ≈ ' + fmtNu(info.B) + ' cm⁻¹。'
-      : '等高棒线，线高仅作示意。横轴为波数 / cm⁻¹；灰色虚线为带中心 ν̃₀ = ' + fmtNu(info.nu0) + ' cm⁻¹。';
-    if (!info.ir) caption = '该分子偶极矩恒为 0，没有电偶极吸收；坐标保留作对照。';
-    else if (info.ref === '模型估算') caption += ' B、ν̃₀ 为估算值，只看趋势。';
+    const srcCls = info.ref === '假想振子' ? 'src-tag fict' : 'src-tag';
+    caption = '<span class="' + srcCls + '">' + info.ref + '</span>' + (rot
+      ? '等高棒线，线高仅作示意。ν̃ = 2B₀(J+1)，B₀ ≈ ' + fmtNu(info.B) + ' cm⁻¹。'
+      : '等高棒线，线高仅作示意。虚线为基频带中心 ν̃₀₁ = ' + fmtNu(info.nu0) + ' cm⁻¹。');
+    if (!info.ir) caption += ' 该分子偶极矩恒为 0，没有电偶极吸收；坐标保留作对照。';
+    else if (info.ref === '假想振子') caption += ' 数值为估算，不代表真实分子。';
+    else if (info.ref === '教学取整') caption += ' B₀≈10.44、ν̃₀₁≈2886 已取整为 10.4 / 2886。';
   } else {
     const v = state.spec.co2View;
     title = v === 'ir' ? 'CO₂ 红外活性带' : v === 'raman' ? 'CO₂ 拉曼活性带' : 'CO₂ 纯转动吸收';
     badge = m.sym;
-    caption = v === 'ir'
-      ? '横轴为波数 / cm⁻¹；虚线带表示该模式没有红外活性。带宽与形状仅示意，第一版不分辨转动细结构。'
+    caption = '<span class="src-tag">实验参考</span>' + (v === 'ir'
+      ? '虚线带表示该模式没有红外活性。带宽与形状仅示意，不分辨转动细结构。'
       : v === 'raman'
-        ? '横轴为波数 / cm⁻¹；1333 cm⁻¹ 是对称伸缩的模式参考值，第一版只示意活性，不画费米共振双峰。'
-        : '理想线形 CO₂ 没有永久偶极矩，常规纯转动电偶极吸收谱中没有对应谱线。';
+        ? '1333 cm⁻¹ 是对称伸缩的模式参考值，只示意活性，不画费米共振双峰。'
+        : '理想线形 CO₂ 没有永久偶极矩，纯转动电偶极吸收谱中没有对应谱线。');
   }
   $('#specTitle').textContent = title;
   $('#specBadge').textContent = badge;
   $('#specCaption').innerHTML = caption;
 
   const wrap = $('#compareWrap');
-  if (!isCO2 && state.spec.hclView === 'rovib' && info.ir) {
+  if (!isCO2 && state.spec.hclView === 'rovib' && info && info.ir) {
     wrap.hidden = false;
     if (!wrap.querySelector('button')) {
       wrap.innerHTML = '<button class="hint-btn" type="button" data-act="compare">虚线附近：比较 P(1) 与 R(0)</button>';
@@ -2541,7 +2666,7 @@ function renderChrome() {
   }
 
   const rot = !isCO2 && state.spec.hclView === 'rot';
-  $('#energyCard').hidden = isCO2;
+  $('#energyCard').hidden = isCO2 || state.spec.hclView === 'iso' && !isCO2;
   $('#energyHead').textContent = rot ? '纯转动能级' : '振转能级与跃迁';
   $('#energySub').textContent = rot ? 'E = B J(J+1) · J 等距示意' : 'P / R 支 · 带中心压缩显示';
   $('#co2Card').hidden = !isCO2;
@@ -2555,6 +2680,30 @@ function renderChrome() {
 
 function renderDetail() {
   const el = $('#detail');
+  if (state.mol !== 'CO2' && state.spec.hclView === 'iso') {
+    const H = ISO_CMP.HCl, D = ISO_CMP.DCl;
+    const sel = recById(state.spec.hclSel);
+    const row = (lab, hv, dv) => '<dt>' + lab + '</dt><dd>HCl ' + hv + '　·　DCl ' + dv + '</dd>';
+    const muH = 1.008 * 35.45 / (1.008 + 35.45), muD = 2.014 * 35.45 / (2.014 + 35.45);
+    el.innerHTML =
+      '<div class="d-title"><b>同位素效应</b><span>μ 比 ' + (muH / muD).toFixed(3) + '</span></div>' +
+      '<div class="d-sub">D 换 H 只改质量：势能面（k、r_e）不变，ω_e、B_e 按 μ 缩放。</div>' +
+      '<dl class="drows">' +
+      row('ω_e', H.we.toFixed(1), D.we.toFixed(1)) +
+      row('ω_e x_e', H.wexe.toFixed(1), D.wexe.toFixed(1)) +
+      row('ν̃₀₁', '<span class="hi">' + H.nu01.toFixed(1) + '</span>', '<span class="hi">' + D.nu01.toFixed(1) + '</span>') +
+      row('B_e', H.Be.toFixed(3), D.Be.toFixed(3)) +
+      row('B₀', '<span class="hi">' + H.B0.toFixed(3) + '</span>', '<span class="hi">' + D.B0.toFixed(3) + '</span>') +
+      '</dl>' +
+      '<div class="d-note">ν̃₀₁ 比 ≈ √(μ_H/μ_D) ≈ ' + Math.sqrt(muH / muD).toFixed(3) +
+      '（实测 ' + (H.nu01 / D.nu01).toFixed(3) + '）；B₀ 比 ≈ μ_H/μ_D ≈ ' + (muH / muD).toFixed(3) +
+      '（实测 ' + (H.B0 / D.B0).toFixed(3) + '）。' +
+      (sel && sel.species
+        ? '<br>选中 <b>' + sel.label + '</b>：(' + sel.vpp + ',' + sel.Jpp + ')→(' + sel.vp + ',' + sel.Jp + ')，' +
+          'ν̃ = ' + sel.nu.toFixed(1) + ' cm⁻¹（' + sel.branch + ' 支，ΔJ = ' + (sel.branch === 'P' ? '−1' : '+1') + '）。'
+        : '') + '</div>';
+    return;
+  }
   if (state.mol !== 'CO2') {
     const info = diatomicInfo();
     const rec = recById(state.spec.hclSel);
@@ -2927,12 +3076,17 @@ function renderCustomBox() {
   $('#custA').value = state.custom.a;
   $('#custB').value = state.custom.b;
   $$('#custCharge button').forEach(b => b.classList.toggle('active', Number(b.dataset.chg) === state.custom.charge));
-  $('#custRef').textContent = info.ref === '实验参考值' ? '实验参考' : '模型估算';
-  $('#custNote').innerHTML =
-    'r₀ ≈ ' + info.r0.toFixed(2) + ' Å（共价半径和' + (info.charge ? ' ×0.9' : '') + '）<br>' +
-    'μ = ' + info.muU.toFixed(3) + ' u；B ≈ ' + (info.B < 1 ? info.B.toFixed(4) : info.B.toFixed(2)) + ' cm⁻¹<br>' +
-    'ν̃₀ ≈ ' + Math.round(info.nu0) + ' cm⁻¹（' + info.ref + '）<br>' +
-    '位移比 ' + A.sym + ' : ' + B.sym + ' = ' + (A.sym === B.sym ? '1.00' : (B.m / A.m).toFixed(2)) + ' : 1';
+  const c = info.constants;
+  $('#custRef').textContent = c ? '实验物种 · ' + c.name : '假想振子';
+  $('#custNote').innerHTML = c
+    ? 'ω_e = ' + c.we.toFixed(1) + '　ω_e x_e = ' + c.wexe.toFixed(1) + ' cm⁻¹<br>' +
+      '基频 <b>ν̃₀₁ = ' + c.nu01.toFixed(1) + '</b> cm⁻¹（谱线用它）<br>' +
+      'B_e = ' + c.Be.toFixed(3) + '　<b>B₀ = ' + c.B0.toFixed(3) + '</b> cm⁻¹（谱线用 B₀）<br>' +
+      'μ = ' + info.muU.toFixed(3) + ' u；位移比 ' + A.sym + ':' + B.sym + ' = ' + (A.sym === B.sym ? '1.00' : (B.m / A.m).toFixed(2)) + ':1'
+    : '无实验表项 → <b>假想振子</b>，只看趋势<br>' +
+      'r₀ ≈ ' + info.r0.toFixed(2) + ' Å（共价半径和' + (info.charge ? ' ×0.9' : '') + '）<br>' +
+      'μ = ' + info.muU.toFixed(3) + ' u；B 估算 ≈ ' + (info.B < 1 ? info.B.toFixed(4) : info.B.toFixed(2)) + ' cm⁻¹<br>' +
+      'ν̃ 估算 ≈ ' + Math.round(info.nu0) + ' cm⁻¹（k ≈ 500 N/m）';
 }
 function applyCustomChange() {
   rebuildCustom();
@@ -3078,7 +3232,8 @@ function bindCanvases() {
       const d = Math.abs(x - h.x);
       if (h.kind === 'stick') {
         if (d <= 10 && y >= h.y0 - 6 && y <= h.y1 + 8) {
-          if (!stick || d < stick.d) stick = { kind: 'stick', rec: h.rec, d };
+          const score = d + ((y < h.y0 || y > h.y1) ? 4 : 0);
+          if (!stick || score < stick.d) stick = { kind: 'stick', rec: h.rec, d: score };
         }
       } else if (d <= h.half && d < bd) {
         bd = d;
